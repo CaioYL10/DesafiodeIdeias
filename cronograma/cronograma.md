@@ -11,7 +11,7 @@
 | 17/09/2026 | Quinta | 3. Imersão | Estudo detalhado do problema e desenvolvimento da Persona. | Persona | Grupos | Concluído | 100% |
 | 18/09/2026 | Sexta | 3. Imersão | Desenvolvimento do Mapa de Empatia e identificação das dores e necessidades. | Mapa de Empatia | Grupos | Concluído | 100% |
 | **24/09/2026** | Quinta | **4. Preparação da entrevista** | Construção e revisão do roteiro de entrevista com a empresa. | Roteiro de entrevista | Grupos / Docente | **Concluído** (planilha oficial ainda marcava "Em andamento / 50%" na data do download) | 100%* |
-| **25/09/2026** | Sexta | **4. Preparação da entrevista** | Levantamento de certezas, suposições e dúvidas; preparação para contato com a indústria. | CSD inicial + roteiro validado | Grupos / Docente | **Próxima etapa (a começar)** | 0% |
+| **25/09/2026** | Sexta | **4. Preparação da entrevista** | Levantamento de certezas, suposições e dúvidas; preparação para contato com a indústria. | CSD inicial + roteiro validado | Grupos / Docente | **CSD inicial concluída**; falta o roteiro validado pelo docente | 50%* |
 | 01/10/2026 | Quinta | 5. Validação com a indústria | Entrevista exploratória com a empresa e registro das respostas. | Registro da entrevista | Grupos / Empresa | Não iniciado | 0% |
 | 02/10/2026 | Sexta | 5. Validação com a indústria | Complementação da entrevista e consolidação das necessidades, restrições e expectativas. | Síntese da entrevista | Grupos | Não iniciado | 0% |
 | 08/10/2026 | Quinta | 6. Matriz CSD | Análise das informações obtidas e atualização da Matriz CSD. | Matriz CSD atualizada | Grupos | Não iniciado | 0% |
@@ -32,4 +32,5 @@
 ## Onde estamos agora (24/09/2026)
 
 - Concluído: **roteiro de entrevista do GR1** revisado e formatado ([`../entregas/Roteiro_Entrevista_GR1_Atualizado.docx`](../entregas/Roteiro_Entrevista_GR1_Atualizado.docx)), com 3 perguntas novas aprovadas pelo Caio (setor prioritário, comunidade/colaboração, disponibilidade para nova rodada de validação).
-- Próxima etapa (25/09/2026): montar a **CSD inicial** (Certezas / Suposições / Dúvidas) com o que já sabemos hoje, antes da entrevista, e conseguir o **roteiro validado** — essa validação é ação do Docente (stakeholder), não nossa.
+- Concluído: **CSD inicial** ([`../entregas/CSD_Inicial_GR1.docx`](../entregas/CSD_Inicial_GR1.docx)) e **hipóteses de resposta do roteiro** ([`../entregas/Hipoteses_Respostas_Roteiro_GR1.docx`](../entregas/Hipoteses_Respostas_Roteiro_GR1.docx)).
+- Falta: o **roteiro validado** pelo docente — essa validação é ação do Docente (stakeholder), não nossa.

@@ -27,7 +27,9 @@ Ver [`cronograma/cronograma.md`](cronograma/cronograma.md) para o cronograma com
   - Pergunta 6 (seção A): setor/mercado prioritário para o piloto.
   - Pergunta 12 (seção B): comunidade/colaboração entre usuários.
   - Pergunta 23 (nova seção E): disponibilidade da empresa para validar o protótipo depois da entrevista.
-- 🔜 **Próxima etapa (25/09/2026):** montar a **CSD inicial** (Certezas / Suposições / Dúvidas) com o que já sabemos hoje sobre a demanda, antes da entrevista com a Avanade, e conseguir o **roteiro validado** pelo docente. A validação do roteiro é ação do professor (stakeholder), não nossa — nossa parte é preparar a CSD inicial.
+- ✅ Concluído: **CSD inicial** (Certezas / Suposições / Dúvidas) — [`entregas/CSD_Inicial_GR1.docx`](entregas/CSD_Inicial_GR1.docx) / [.pdf](entregas/CSD_Inicial_GR1.pdf), montada a partir da demanda, do roteiro de entrevista e da persona/mapa de empatia.
+- ✅ Concluído: **Hipóteses de resposta para as 23 perguntas do roteiro** — [`entregas/Hipoteses_Respostas_Roteiro_GR1.docx`](entregas/Hipoteses_Respostas_Roteiro_GR1.docx) / [.pdf](entregas/Hipoteses_Respostas_Roteiro_GR1.pdf). Depois da entrevista real (01–02/10), comparar cada hipótese com a resposta verdadeira (confirmada/parcial/errada) — isso alimenta a Matriz CSD atualizada.
+- 🔜 **Falta:** o **roteiro validado** pelo docente — essa validação é ação do professor (stakeholder), não nossa. Depois disso, entrevista real com a Avanade.
 - Depois disso: entrevista real com a Avanade (01–02/10), atualização da Matriz CSD (08–09/10), brainstorming (15–16/10), seleção da solução (22–23/10), protótipo V1 (29–30/10) e V2 (05–06/11), consolidação e entrega final da 1ª fase (12–13/11).
 
 ## Convenção de pastas neste PC
@@ -41,6 +43,7 @@ Neste computador (perfil `Dev_2o_Ano`), todo projeto novo do Caio vai em `Docume
 - `fontes/` — PDFs originais recebidos do SENAI (roteiro-modelo do GR1, orientações gerais de entrevista, cronograma). Não editar, são referência.
 - `entregas/` — entregáveis finais já prontos (ex.: roteiro de entrevista atualizado em .docx).
 - `scripts/generate_roteiro.js` — script Node (usa o pacote `docx`) que gera o `.docx` do roteiro replicando fielmente o layout visual do modelo original (cores, fontes, logo extraída do PDF, tabelas com borda). Rodar com `node scripts/generate_roteiro.js` depois de `npm install` para regenerar o roteiro se o conteúdo mudar.
+- `scripts/generate_csd_hipoteses.js` — gera `entregas/CSD_Inicial_GR1.docx` e `entregas/Hipoteses_Respostas_Roteiro_GR1.docx`. Os `.pdf` correspondentes são exportados a partir desses `.docx` via automação COM do Word (pacote Python `pywin32`, instalado em escopo de usuário nesta máquina) — não há LibreOffice instalado aqui.
 
 ## Preferências de trabalho do Caio (aplicam-se a este projeto também)
 
