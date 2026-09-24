@@ -7,8 +7,9 @@ Leia este arquivo antes de ajudar o Caio com qualquer coisa neste repositório. 
 Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turma **2IEDS | 2026**), disciplina "Desafio de Ideias": os alunos pegam uma demanda real cadastrada no site **SENAI Saga** por uma empresa parceira e conduzem um processo de descoberta/prototipação com ela.
 
 - **Grupo:** GR1 (existem também GR2, GR3, GR4 na turma, cada um com sua própria demanda/empresa — não confundir os cronogramas, todos compartilham o mesmo calendário mas entregas são por grupo).
+- **Integrantes do GR1:** Caio Yuri Lima, Enzo Yudi Kadooka, Evellyn Silva de Lima, Gabrielly Carvalho Alves, Isabella Dias da Silva, Isabella Radael, Isabella Trópico Puzenato, Nicoly Ribeiro de Souza. Escola SENAI de Informática, Santo André.
 - **Empresa/demanda:** Avanade do Brasil Ltda. — Projeto Integrador 2025/02 1.34 08: "Desenvolvimento de Jogo-Aplicativo Gamificado com RA e ChatBot para Reviews de Produtos e Serviços". Detalhes completos da demanda (benefícios esperados, justificativa) estão no roteiro de entrevista, seção "2. GR1".
-- **Docente responsável:** Paulo Cesar de Camargo. Coordenação do curso: Marcos Alves. Coordenação pedagógica: Antônio Marcos.
+- **Docente responsável (roteiro geral da turma):** Paulo Cesar de Camargo. Coordenação do curso: Marcos Alves. Coordenação pedagógica: Antônio Marcos. **Orientadores do relatório do GR1:** Prof. Paulo e Prof. Raul.
 
 ## Fluxo do programa — não pular etapas
 
@@ -21,6 +22,7 @@ Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turm
 
 Ver [`cronograma/cronograma.md`](cronograma/cronograma.md) para o cronograma completo da turma. Resumo do estado atual:
 
+- ✅ Concluído (etapa 3. Imersão, 17–18/09): **Persona** (Adriana Lima, 38, empresária, São Caetano do Sul/SP) e **Mapa de Empatia**, registrados em `entregas/RelatorioDesafioIdeias_Imersao.pdf` (fotos dos formulários preenchidos à mão) e transcritos em [`entregas/persona_e_mapa_empatia.md`](entregas/persona_e_mapa_empatia.md) para ficar pesquisável. **Atenção:** o resumo desse relatório descreve o projeto como um "sistema de coleta/análise de dados sobre inteligência artificial", o que não bate com a demanda real (app de reviews gamificado) — parece texto reaproveitado de outro modelo; vale o Caio conferir com o grupo antes da entrega oficial.
 - ✅ Concluído: **Roteiro de entrevista do GR1**, revisado e formatado em Word — [`entregas/Roteiro_Entrevista_GR1_Atualizado.docx`](entregas/Roteiro_Entrevista_GR1_Atualizado.docx). Partiu do modelo oficial (`fontes/Roteiro_Entrevista_GR1_original.pdf`, 20 perguntas em 4 seções A–D) e ganhou 3 perguntas novas, aprovadas pelo Caio, para fechar lacunas encontradas contra o checklist de encerramento do documento de orientações gerais (`fontes/Orientacoes_Gerais_Entrevistas.pdf`):
   - Pergunta 6 (seção A): setor/mercado prioritário para o piloto.
   - Pergunta 12 (seção B): comunidade/colaboração entre usuários.
