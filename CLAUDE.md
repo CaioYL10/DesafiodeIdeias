@@ -18,7 +18,7 @@ Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turm
 
 **Implicação prática:** enquanto estivermos na fase SENAI Saga, não sugerir nem começar implementação de código de app — o trabalho certo aqui é documentação de descoberta e prototipação visual.
 
-## Onde estamos (atualizado em 24/09/2026)
+## Onde estamos (atualizado em 02/10/2026)
 
 Ver [`cronograma/cronograma.md`](cronograma/cronograma.md) para o cronograma completo da turma. Resumo do estado atual:
 
@@ -29,8 +29,10 @@ Ver [`cronograma/cronograma.md`](cronograma/cronograma.md) para o cronograma com
   - Pergunta 23 (nova seção E): disponibilidade da empresa para validar o protótipo depois da entrevista.
 - ✅ Concluído: **CSD inicial** (Certezas / Suposições / Dúvidas) — [`entregas/CSD_Inicial_GR1.docx`](entregas/CSD_Inicial_GR1.docx) / [.pdf](entregas/CSD_Inicial_GR1.pdf), montada a partir da demanda, do roteiro de entrevista e da persona/mapa de empatia.
 - ✅ Concluído: **Hipóteses de resposta para as 23 perguntas do roteiro** — [`entregas/Hipoteses_Respostas_Roteiro_GR1.docx`](entregas/Hipoteses_Respostas_Roteiro_GR1.docx) / [.pdf](entregas/Hipoteses_Respostas_Roteiro_GR1.pdf). Depois da entrevista real (01–02/10), comparar cada hipótese com a resposta verdadeira (confirmada/parcial/errada) — isso alimenta a Matriz CSD atualizada.
-- 🔜 **Falta:** o **roteiro validado** pelo docente — essa validação é ação do professor (stakeholder), não nossa. Depois disso, entrevista real com a Avanade.
-- Depois disso: entrevista real com a Avanade (01–02/10), atualização da Matriz CSD (08–09/10), brainstorming (15–16/10), seleção da solução (22–23/10), protótipo V1 (29–30/10) e V2 (05–06/11), consolidação e entrega final da 1ª fase (12–13/11).
+- ✅ Concluído: **roteiro validado** pelo Prof. Paulo (confirmado pelo Caio em 02/10). Etapa 4 (Preparação da entrevista) fechada.
+- ⚠️ **Bloqueio atual:** a Avanade **não respondeu ao e-mail** do grupo até 02/10, então o registro da entrevista (01/10) e a síntese (02/10) estão atrasados. Caminhos em andamento: avisar o docente, reenviar o e-mail com o roteiro validado e opção de resposta por escrito (5–7 perguntas críticas), checar o contato "Dani CRI" (nota da planilha) e, sem esperar, entrevistar usuários reais do perfil da persona e pesquisar concorrentes. Registrar datas das tentativas de contato.
+- 🔜 **Próxima entrega:** Matriz CSD atualizada (08/10).
+- Depois disso: entrevista real com a Avanade (prevista 01–02/10, pendente), atualização da Matriz CSD (08–09/10), brainstorming (15–16/10), seleção da solução (22–23/10), protótipo V1 (29–30/10) e V2 (05–06/11), consolidação e entrega final da 1ª fase (12–13/11).
 
 ## Convenção de pastas neste PC
 

@@ -11,9 +11,9 @@
 | 17/09/2026 | Quinta | 3. Imersão | Estudo detalhado do problema e desenvolvimento da Persona. | Persona | Grupos | Concluído | 100% |
 | 18/09/2026 | Sexta | 3. Imersão | Desenvolvimento do Mapa de Empatia e identificação das dores e necessidades. | Mapa de Empatia | Grupos | Concluído | 100% |
 | **24/09/2026** | Quinta | **4. Preparação da entrevista** | Construção e revisão do roteiro de entrevista com a empresa. | Roteiro de entrevista | Grupos / Docente | **Concluído** (planilha oficial ainda marcava "Em andamento / 50%" na data do download) | 100%* |
-| **25/09/2026** | Sexta | **4. Preparação da entrevista** | Levantamento de certezas, suposições e dúvidas; preparação para contato com a indústria. | CSD inicial + roteiro validado | Grupos / Docente | **CSD inicial concluída**; falta o roteiro validado pelo docente | 50%* |
-| 01/10/2026 | Quinta | 5. Validação com a indústria | Entrevista exploratória com a empresa e registro das respostas. | Registro da entrevista | Grupos / Empresa | Não iniciado | 0% |
-| 02/10/2026 | Sexta | 5. Validação com a indústria | Complementação da entrevista e consolidação das necessidades, restrições e expectativas. | Síntese da entrevista | Grupos | Não iniciado | 0% |
+| **25/09/2026** | Sexta | **4. Preparação da entrevista** | Levantamento de certezas, suposições e dúvidas; preparação para contato com a indústria. | CSD inicial + roteiro validado | Grupos / Docente | **CSD inicial concluída** e **roteiro validado pelo Prof. Paulo** (confirmado em 02/10) | 100%* |
+| 01/10/2026 | Quinta | 5. Validação com a indústria | Entrevista exploratória com a empresa e registro das respostas. | Registro da entrevista | Grupos / Empresa | **Atrasado** — Avanade não respondeu ao e-mail | 0% |
+| 02/10/2026 | Sexta | 5. Validação com a indústria | Complementação da entrevista e consolidação das necessidades, restrições e expectativas. | Síntese da entrevista | Grupos | **Bloqueado** — depende da entrevista | 0% |
 | 08/10/2026 | Quinta | 6. Matriz CSD | Análise das informações obtidas e atualização da Matriz CSD. | Matriz CSD atualizada | Grupos | Não iniciado | 0% |
 | 09/10/2026 | Sexta | 6. Matriz CSD | Redefinição/validação do problema e dos requisitos iniciais. | Problema validado | Grupos / Docente | Não iniciado | 0% |
 | 15/10/2026 | Quinta | 7. Ideação | Brainstorming para geração de alternativas de solução, sem programação. | Registro de ideias | Grupos | Não iniciado | 0% |
@@ -29,8 +29,10 @@
 
 **Observação da planilha original:** na linha de 01/10/2026 consta a nota "Conversar com Dani CRI".
 
-## Onde estamos agora (24/09/2026)
+## Onde estamos agora (02/10/2026)
 
 - Concluído: **roteiro de entrevista do GR1** revisado e formatado ([`../entregas/Roteiro_Entrevista_GR1_Atualizado.docx`](../entregas/Roteiro_Entrevista_GR1_Atualizado.docx)), com 3 perguntas novas aprovadas pelo Caio (setor prioritário, comunidade/colaboração, disponibilidade para nova rodada de validação).
 - Concluído: **CSD inicial** ([`../entregas/CSD_Inicial_GR1.docx`](../entregas/CSD_Inicial_GR1.docx)) e **hipóteses de resposta do roteiro** ([`../entregas/Hipoteses_Respostas_Roteiro_GR1.docx`](../entregas/Hipoteses_Respostas_Roteiro_GR1.docx)).
-- Falta: o **roteiro validado** pelo docente — essa validação é ação do Docente (stakeholder), não nossa.
+- Concluído: **roteiro validado** pelo Prof. Paulo (confirmado pelo Caio em 02/10).
+- **Bloqueio:** a Avanade não respondeu ao e-mail até 02/10; registro (01/10) e síntese (02/10) da entrevista estão atrasados. Plano: avisar o docente, reenviar com o roteiro validado e opção de resposta por escrito, checar o contato "Dani CRI", e avançar com entrevistas a usuários reais e pesquisa de concorrentes.
+- Próxima entrega: **Matriz CSD atualizada (08/10)**.
