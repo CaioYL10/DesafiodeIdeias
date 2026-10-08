@@ -29,7 +29,11 @@
 
 **Observações da planilha original (versão atualizada pelo docente):** na linha de 25/09 consta "Roteiro encaminhado para as unidades"; na de 01/10, "Conversado com Dani CRI, em 28-09, e a mesma encaminhou o roteiro de perguntas para as unidades". Na entrevista, GR1/GR3/GR4 estão "Em andamento" e o GR2 "Concluído" (25% geral).
 
-## Onde estamos agora (02/10/2026)
+## Atualização de 08/10/2026 — mudança de escopo (CTI)
+
+Após reunião com a equipe da empresa, o GR1 passou a trabalhar com a **CTI**: sistema de armazenamento e análise de feedbacks dos serviços, com relatórios para a gestão (ChatBot e IA excluídos). As datas do cronograma da turma não mudam. A Matriz CSD (08/10) deve ser refeita com a CTI. Detalhes: [`../contexto/mudanca_de_escopo_cti.md`](../contexto/mudanca_de_escopo_cti.md). O bloco abaixo é o histórico da versão Avanade.
+
+## Onde estamos agora (02/10/2026, versão Avanade)
 
 - Concluído: **roteiro de entrevista do GR1** revisado e formatado ([`../entregas/Roteiro_Entrevista_GR1_Atualizado.docx`](../entregas/Roteiro_Entrevista_GR1_Atualizado.docx)), com 3 perguntas novas aprovadas pelo Caio (setor prioritário, comunidade/colaboração, disponibilidade para nova rodada de validação).
 - Concluído: **CSD inicial** ([`../entregas/CSD_Inicial_GR1.docx`](../entregas/CSD_Inicial_GR1.docx)) e **hipóteses de resposta do roteiro** ([`../entregas/Hipoteses_Respostas_Roteiro_GR1.docx`](../entregas/Hipoteses_Respostas_Roteiro_GR1.docx)).

@@ -8,7 +8,8 @@ Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turm
 
 - **Grupo:** GR1 (existem também GR2, GR3, GR4 na turma, cada um com sua própria demanda/empresa — não confundir os cronogramas, todos compartilham o mesmo calendário mas entregas são por grupo).
 - **Integrantes do GR1:** Caio Yuri Lima, Enzo Yudi Kadooka, Evellyn Silva de Lima, Gabrielly Carvalho Alves, Isabella Dias da Silva, Isabella Radael, Isabella Trópico Puzenato, Nicoly Ribeiro de Souza. Escola SENAI de Informática, Santo André.
-- **Empresa/demanda:** Avanade do Brasil Ltda. — Projeto Integrador 2025/02 1.34 08: "Desenvolvimento de Jogo-Aplicativo Gamificado com RA e ChatBot para Reviews de Produtos e Serviços". Detalhes completos da demanda (benefícios esperados, justificativa) estão no roteiro de entrevista, seção "2. GR1".
+- **⚠️ Escopo mudou em outubro/2026 (ler [`contexto/mudanca_de_escopo_cti.md`](contexto/mudanca_de_escopo_cti.md)):** após reunião com a equipe da empresa, o GR1 passou a atender a **CTI** (https://www.cti.com.br — provedor de internet corporativa, cloud e cibersegurança, B2B, desde 1992). A CTI **não tem setor de análise de qualidade**; o que ela precisa é de um **sistema de armazenamento e análise de feedbacks sobre os seus serviços, com relatórios para a gestão**. **ChatBot e IA foram excluídos**; RA e gamificação deixaram de ser o núcleo. Fonte: [`fontes/Plano_de_Ensino_GR1_v2.docx`](fontes/Plano_de_Ensino_GR1_v2.docx). Tudo abaixo marcado como "Avanade" é o histórico da versão anterior.
+- **Empresa/demanda (versão original, histórico):** Avanade do Brasil Ltda. — Projeto Integrador 2025/02 1.34 08: "Desenvolvimento de Jogo-Aplicativo Gamificado com RA e ChatBot para Reviews de Produtos e Serviços". Detalhes completos da demanda (benefícios esperados, justificativa) estão no roteiro de entrevista, seção "2. GR1".
 - **Docente responsável (roteiro geral da turma):** Paulo Cesar de Camargo. Coordenação do curso: Marcos Alves. Coordenação pedagógica: Antônio Marcos. **Orientadores do relatório do GR1:** Prof. Paulo e Prof. Raul.
 
 ## Fluxo do programa — não pular etapas
@@ -18,7 +19,15 @@ Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turm
 
 **Implicação prática:** enquanto estivermos na fase SENAI Saga, não sugerir nem começar implementação de código de app — o trabalho certo aqui é documentação de descoberta e prototipação visual.
 
-## Onde estamos (atualizado em 02/10/2026)
+## Onde estamos (atualizado em 08/10/2026)
+
+- **Mudança de escopo registrada** em [`contexto/mudanca_de_escopo_cti.md`](contexto/mudanca_de_escopo_cti.md): empresa CTI, foco em armazenar e analisar feedbacks, ChatBot/IA fora. A entrevista de contexto com a empresa já aconteceu (conforme o Plano de Ensino v2), mas **as respostas ainda não foram registradas no repo**. Não inventar conteúdo: pedir ao Caio as anotações.
+- **Papéis do grupo:** Caio = Product Owner; Isabella Dias da Silva = Scrum Master; demais = Developers.
+- **Matriz CSD da CTI feita por suposições (08/10):** [`entregas/Matriz_CSD_CTI_GR1.docx`](entregas/Matriz_CSD_CTI_GR1.docx) / [.pdf](entregas/Matriz_CSD_CTI_GR1.pdf), gerada por `scripts/generate_matriz_csd_cti.js` (7 certezas com fonte, 13 suposições, 14 dúvidas). O grupo ainda **não conversou com a CTI** sobre esses pontos; a ideia de trabalho é um sistema tipo **CRM focado em feedback** (entendimento do Caio). Suposições não são fatos: só marcar veredito com resposta real.
+- **Próximo passo imediato:** conversar com a CTI (dúvidas de prioridade Alta) e validar a matriz. Os entregáveis da fase Avanade (roteiro, CSD inicial, hipóteses, matriz pré-preenchida, síntese) ficam como histórico e podem ser regenerados pelos scripts.
+- **Pontos em aberto** (lista completa no arquivo de contexto): Plano de Ensino cita "RA e ChatBot" na linha 3 do Plano de Aula, contradizendo a Contextualização; Plano fala em protótipo funcional/Full Stack enquanto o cronograma diz que a 1ª fase não exige software; a persona Adriana é consumidora B2C e o cliente da CTI é B2B.
+
+### Histórico até 02/10/2026 (versão Avanade)
 
 Ver [`cronograma/cronograma.md`](cronograma/cronograma.md) para o cronograma completo da turma. Resumo do estado atual:
 
@@ -43,10 +52,13 @@ Neste computador (perfil `Dev_2o_Ano`), todo projeto novo do Caio vai em `Docume
 
 - `CLAUDE.md` — este arquivo (contexto para qualquer sessão do Claude).
 - `cronograma/cronograma.md` — cronograma completo da turma + onde o GR1 está.
+- `contexto/mudanca_de_escopo_cti.md` — nova empresa (CTI), novo escopo, comparação antes × depois, impacto nos entregáveis e pontos em aberto.
+- `fontes/Plano_de_Ensino_GR1_v2.docx` — Plano de Ensino do GR1 com a Contextualização e o Desafio refatorados (cópia de referência).
 - `fontes/` — PDFs originais recebidos do SENAI (roteiro-modelo do GR1, orientações gerais de entrevista, cronograma). Não editar, são referência.
 - `entregas/` — entregáveis finais já prontos (ex.: roteiro de entrevista atualizado em .docx).
 - `scripts/generate_roteiro.js` — script Node (usa o pacote `docx`) que gera o `.docx` do roteiro replicando fielmente o layout visual do modelo original (cores, fontes, logo extraída do PDF, tabelas com borda). Rodar com `node scripts/generate_roteiro.js` depois de `npm install` para regenerar o roteiro se o conteúdo mudar.
 - `scripts/generate_sintese_matriz.js` — gera `entregas/Sintese_Entrevista_Modelo_GR1.docx` e `entregas/Matriz_CSD_Pre_Preenchida_GR1.docx` (mesmo estilo visual; PDFs exportados pelo Word como no item abaixo).
+- `scripts/generate_matriz_csd_cti.js` — gera `entregas/Matriz_CSD_CTI_GR1.docx` (versão CTI, por suposições); PDF exportado pelo Word via COM como os demais.
 - `scripts/generate_csd_hipoteses.js` — gera `entregas/CSD_Inicial_GR1.docx` e `entregas/Hipoteses_Respostas_Roteiro_GR1.docx`. Os `.pdf` correspondentes são exportados a partir desses `.docx` via automação COM do Word (pacote Python `pywin32`, instalado em escopo de usuário nesta máquina) — não há LibreOffice instalado aqui.
 
 ## Preferências de trabalho do Caio (aplicam-se a este projeto também)
