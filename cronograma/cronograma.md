@@ -1,42 +1,40 @@
 # Cronograma — Desafio de Ideias 2026 (2IEDS)
 
-> Transcrito de `fontes/Cronograma_2026.pdf` (baixado em 24/09/2026). Este arquivo é uma cópia de referência do cronograma oficial da turma, usado por GR1, GR2, GR3 e GR4 — o % de conclusão e o status "oficiais" são mantidos pelo docente na planilha original. As anotações de status do **GR1** aqui refletem o que o Caio confirmou nesta sessão, podendo estar um passo à frente da planilha oficial até o docente atualizá-la.
+> Transcrito de [`../fontes/Cronograma_2026_atualizado_08-10.pdf`](../fontes/Cronograma_2026_atualizado_08-10.pdf) (versão atualizada pelo docente, recebida em 08/10/2026), que substitui a de 24/09 (`../fontes/Cronograma_2026.pdf`, mantida como histórico). A planilha oficial é do docente; este arquivo é uma cópia de referência para consulta.
 
-| Data | Dia | Etapa | Atividade / Entrega | Entregável | Responsável | Status GR1 (nosso) | % |
-|---|---|---|---|---|---|---|---|
-| 03/09/2026 | Quinta | 1. Abertura | Apresentação do Desafio de Ideias, organização dos grupos, acesso às demandas e entendimento das regras. | Grupos organizados e demandas conhecidas | Docente / Grupos | Concluído | 100% |
-| 04/09/2026 | Sexta | 1. Abertura | Continuidade da análise das demandas e organização interna dos grupos. | Registro inicial das demandas | Grupos | Concluído | 100% |
-| 10/09/2026 | Quinta | 2. Seleção da demanda | Análise comparativa das demandas disponíveis e escolha por grupo. | Demanda selecionada | Grupos | Concluído | 100% |
-| 11/09/2026 | Sexta | 2. Seleção da demanda | Elaboração e revisão da justificativa da demanda escolhida. | Justificativa da Demanda | Grupos / Docente | Concluído | 100% |
-| 17/09/2026 | Quinta | 3. Imersão | Estudo detalhado do problema e desenvolvimento da Persona. | Persona | Grupos | Concluído | 100% |
-| 18/09/2026 | Sexta | 3. Imersão | Desenvolvimento do Mapa de Empatia e identificação das dores e necessidades. | Mapa de Empatia | Grupos | Concluído | 100% |
-| **24/09/2026** | Quinta | **4. Preparação da entrevista** | Construção e revisão do roteiro de entrevista com a empresa. | Roteiro de entrevista | Grupos / Docente | **Concluído** (planilha oficial ainda marcava "Em andamento / 50%" na data do download) | 100%* |
-| **25/09/2026** | Sexta | **4. Preparação da entrevista** | Levantamento de certezas, suposições e dúvidas; preparação para contato com a indústria. | CSD inicial + roteiro validado | Grupos / Docente | **CSD inicial concluída** e **roteiro validado pelo Prof. Paulo** (100% na planilha oficial; obs.: "Roteiro encaminhado para as unidades") | 100% |
-| 01/10/2026 | Quinta | 5. Validação com a indústria | Entrevista exploratória com a empresa e registro das respostas. | Registro da entrevista | Grupos / Empresa | **Em andamento** (GR1) — aguardando retorno da empresa; contato com Dani CRI em 28/09 e, em 02/10, ligação para o SENAI São Caetano (coordenador Juscelino, retornar após 13h) | 25% |
-| 02/10/2026 | Sexta | 5. Validação com a indústria | Complementação da entrevista e consolidação das necessidades, restrições e expectativas. | Síntese da entrevista | Grupos | Não iniciado — depende do retorno da entrevista | 0% |
-| 08/10/2026 | Quinta | 6. Matriz CSD | Análise das informações obtidas e atualização da Matriz CSD. | Matriz CSD atualizada | Grupos | Não iniciado | 0% |
-| 09/10/2026 | Sexta | 6. Matriz CSD | Redefinição/validação do problema e dos requisitos iniciais. | Problema validado | Grupos / Docente | Não iniciado | 0% |
-| 15/10/2026 | Quinta | 7. Ideação | Brainstorming para geração de alternativas de solução, sem programação. | Registro de ideias | Grupos | Não iniciado | 0% |
-| 16/10/2026 | Sexta | 7. Ideação | Organização, refinamento e agrupamento das ideias. | Diagrama/agrupamento de ideias | Grupos | Não iniciado | 0% |
-| 22/10/2026 | Quinta | 8. Seleção da solução | Avaliação das ideias por valor, impacto, complexidade e viabilidade. | Matriz de decisão/priorização | Grupos | Não iniciado | 0% |
-| 23/10/2026 | Sexta | 8. Seleção da solução | Definição e justificativa da solução que será prototipada. | Solução selecionada | Grupos / Docente | Não iniciado | 0% |
-| 29/10/2026 | Quinta | 9. Protótipo V1 | Construção dos fluxos, esboços e wireframes de baixa fidelidade. | Fluxo do usuário + wireframes | Grupos | Não iniciado | 0% |
-| 30/10/2026 | Sexta | 9. Protótipo V1 | Conclusão da primeira versão do protótipo de baixa fidelidade. | Protótipo V1 | Grupos | Não iniciado | 0% |
-| 05/11/2026 | Quinta | 10. Protótipo V2 | Teste do protótipo com colegas/docentes e coleta de feedback. | Registro dos testes e feedbacks | Grupos / Docente | Não iniciado | 0% |
-| 06/11/2026 | Sexta | 10. Protótipo V2 | Ajustes e evolução do protótipo de baixa fidelidade. | Protótipo V2 revisado | Grupos | Não iniciado | 0% |
-| 12/11/2026 | Quinta | 11. Consolidação | Revisão final das evidências, protótipo e preparação da apresentação/pitch. | Pacote final + pitch | Grupos / Docente | Não iniciado | 0% |
-| 13/11/2026 | Sexta | 12. Entrega | Entrega e apresentação final da 1ª fase. Não será exigido software funcional. | Entrega final da 1ª fase | Grupos / Banca | Não iniciado | 0% |
+| Data (2026) | Dia | Etapa | Atividade / Entrega | Entregável | Responsável | GR1 | GR2 | GR3 | GR4 | % | Observações |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 03/09 | Qui | 1. Abertura | Apresentação do Desafio de Ideias, organização dos grupos, acesso às demandas e entendimento das regras. | Grupos organizados e demandas conhecidas | Docente / Grupos | Concluído | Concluído | Concluído | Concluído | 100% |  |
+| 04/09 | Sex | 1. Abertura | Continuidade da análise das demandas e organização interna dos grupos. | Registro inicial das demandas | Grupos | Concluído | Concluído | Concluído | Concluído | 100% |  |
+| 10/09 | Qui | 2. Seleção da demanda | Análise comparativa das demandas disponíveis e escolha por grupo. | Demanda selecionada | Grupos | Concluído | Concluído | Concluído | Concluído | 100% |  |
+| 11/09 | Sex | 2. Seleção da demanda | Elaboração e revisão da justificativa da demanda escolhida. | Justificativa da Demanda | Grupos / Docente | Concluído | Concluído | Concluído | Concluído | 100% |  |
+| 17/09 | Qui | 3. Imersão | Estudo detalhado do problema e desenvolvimento da Persona. | Persona | Grupos | Concluído | Concluído | Concluído | Concluído | 100% |  |
+| 18/09 | Sex | 3. Imersão | Desenvolvimento do Mapa de Empatia e identificação das dores e necessidades. | Mapa de Empatia | Grupos | Concluído | Concluído | Concluído | Concluído | 100% |  |
+| 24/09 | Qui | 4. Preparação da entrevista | Construção e revisão do roteiro de entrevista com a empresa. | Roteiro de entrevista | Grupos / Docente | Concluído | Concluído | Concluído | Concluído | 100% |  |
+| 25/09 | Sex | 4. Preparação da entrevista | Levantamento de certezas, suposições e dúvidas; preparação para contato com a indústria. | CSD inicial + roteiro validado | Grupos / Docente | Concluído | Concluído | Concluído | Concluído | 100% | Roteiro encaminhado para as unidades. |
+| 01/10 | Qui | 5. Validação com a indústria | Entrevista exploratória com a empresa e registro das respostas. | Registro da entrevista | Grupos / Empresa | Concluído | Concluído | Concluído | Não iniciado | 75% | Conversado com Dani CRI em 28/09, que encaminhou o roteiro às unidades. Em 24/09, aguardando retorno do prof. Jucelino (São Caetano) e da profa. Telma (Ribeirão). |
+| 02/10 | Sex | 5. Validação com a indústria | Complementação da entrevista e consolidação das necessidades, restrições e expectativas. | Síntese da entrevista | Grupos | Concluído | Concluído | Concluído | Não iniciado | 75% | Em 02/10, aguardando retorno dos professores do SENAI: Telma (Ribeirão) e Jucelino (São Caetano). |
+| **08/10** | Qui | **6. Matriz CSD** | Análise das informações obtidas e atualização da Matriz CSD. | Matriz CSD atualizada | Grupos | Em andamento | Em andamento | Em andamento | Não iniciado | 75% | Em 05/10, recebido o último arquivo pendente do roteiro de respostas do prof. Jucelino, que o GR1 trabalhará em 08/10. Em 08/10, será necessário realinhar o roadmap do GR4, pela descontinuidade da demanda pela empresa parceira (redefinir a demanda, analisar impactos no cronograma e reorganizar as próximas etapas). Em 07/10, o prof. Jucelino informou o contato das duas empresas em que os GR1, 2 e 3 atuarão; a CTI retornou disponibilizando reunião em 08/10 com os grupos 1 e 2. |
+| 09/10 | Sex | 6. Matriz CSD | Redefinição/validação do problema e dos requisitos iniciais. | Problema validado | Grupos / Docente | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 15/10 | Qui | 7. Ideação | Brainstorming para geração de alternativas de solução, sem programação. | Registro de ideias | Grupos | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 16/10 | Sex | 7. Ideação | Organização, refinamento e agrupamento das ideias. | Diagrama/agrupamento de ideias | Grupos | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 22/10 | Qui | 8. Seleção da solução | Avaliação das ideias por valor, impacto, complexidade e viabilidade. | Matriz de decisão/priorização | Grupos | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 23/10 | Sex | 8. Seleção da solução | Definição e justificativa da solução que será prototipada. | Solução selecionada | Grupos / Docente | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 29/10 | Qui | 9. Protótipo V1 | Construção dos fluxos, esboços e wireframes de baixa fidelidade. | Fluxo do usuário + wireframes | Grupos | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 30/10 | Sex | 9. Protótipo V1 | Conclusão da primeira versão do protótipo de baixa fidelidade. | Protótipo V1 | Grupos | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 05/11 | Qui | 10. Protótipo V2 | Teste do protótipo com colegas/docentes e coleta de feedback. | Registro dos testes e feedbacks | Grupos / Docente | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 06/11 | Sex | 10. Protótipo V2 | Ajustes e evolução do protótipo de baixa fidelidade. | Protótipo V2 revisado | Grupos | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 12/11 | Qui | 11. Consolidação | Revisão final das evidências, protótipo e preparação da apresentação/pitch. | Pacote final + pitch | Grupos / Docente | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
+| 13/11 | Sex | 12. Entrega | Entrega e apresentação final da 1ª fase. Não será exigido software funcional. | Entrega final da 1ª fase | Grupos / Banca | Não iniciado | Não iniciado | Não iniciado | Não iniciado | 0% |  |
 
-**Observações da planilha original (versão atualizada pelo docente):** na linha de 25/09 consta "Roteiro encaminhado para as unidades"; na de 01/10, "Conversado com Dani CRI, em 28-09, e a mesma encaminhou o roteiro de perguntas para as unidades". Na entrevista, GR1/GR3/GR4 estão "Em andamento" e o GR2 "Concluído" (25% geral).
+## Onde o GR1 está (08/10/2026)
 
-## Atualização de 08/10/2026 — mudança de escopo (CTI)
+- **Entrevista (etapa 5):** a planilha oficial marca o GR1 como **Concluído** (75% geral da etapa, porque o GR4 não iniciou). O GR1 e o GR2 tinham reunião com a **CTI** disponibilizada para 08/10, depois que o prof. Jucelino passou os contatos das empresas em 07/10. O Caio relatou que essa reunião mudou o escopo (ver [`../contexto/mudanca_de_escopo_cti.md`](../contexto/mudanca_de_escopo_cti.md)).
+- **Matriz CSD (etapa 6, 08/10):** **Em andamento.** Versão por suposições em [`../entregas/Matriz_CSD_CTI_GR1.docx`](../entregas/Matriz_CSD_CTI_GR1.docx) e versão visual (Canva) exportada em `../fontes/Matriz CSD — CTI/`. As suposições ainda precisam ser validadas com a CTI.
+- **Problema validado (09/10):** não iniciado.
+- **GR4:** a empresa parceira descontinuou a demanda; o docente vai realinhar o roadmap do grupo.
+- Próximas datas: ideação (15 e 16/10), seleção da solução (22 e 23/10), protótipo V1 (29 e 30/10), V2 (05 e 06/11), consolidação (12/11) e entrega final (13/11, sem exigência de software funcional).
 
-Após reunião com a equipe da empresa, o GR1 passou a trabalhar com a **CTI**: sistema de armazenamento e análise de feedbacks dos serviços, com relatórios para a gestão (ChatBot e IA excluídos). As datas do cronograma da turma não mudam. A Matriz CSD (08/10) deve ser refeita com a CTI. Detalhes: [`../contexto/mudanca_de_escopo_cti.md`](../contexto/mudanca_de_escopo_cti.md). O bloco abaixo é o histórico da versão Avanade.
+## Histórico da versão Avanade (até 02/10/2026)
 
-## Onde estamos agora (02/10/2026, versão Avanade)
-
-- Concluído: **roteiro de entrevista do GR1** revisado e formatado ([`../entregas/Roteiro_Entrevista_GR1_Atualizado.docx`](../entregas/Roteiro_Entrevista_GR1_Atualizado.docx)), com 3 perguntas novas aprovadas pelo Caio (setor prioritário, comunidade/colaboração, disponibilidade para nova rodada de validação).
-- Concluído: **CSD inicial** ([`../entregas/CSD_Inicial_GR1.docx`](../entregas/CSD_Inicial_GR1.docx)) e **hipóteses de resposta do roteiro** ([`../entregas/Hipoteses_Respostas_Roteiro_GR1.docx`](../entregas/Hipoteses_Respostas_Roteiro_GR1.docx)).
-- Concluído: **roteiro validado** pelo Prof. Paulo (confirmado pelo Caio em 02/10).
-- **Em andamento:** o roteiro foi repassado às unidades via Dani CRI (28/09) e a Avanade ainda não retornou até 02/10; registro (01/10) e síntese (02/10) dependem disso. Em 02/10 a Dani CRI orientou falar com o **coordenador Juscelino, do SENAI São Caetano** (unidade que cadastrou a demanda); o grupo ligou e foi orientado a **ligar novamente em 02/10 após as 13h**. Plano: obter o contato direto da Avanade ou uma data de retorno, perguntar ao GR2 como obteve a resposta, e avançar com entrevistas a usuários reais e pesquisa de concorrentes.
-- Próxima entrega: **Matriz CSD atualizada (08/10)**.
+O GR1 trabalhava a demanda da Avanade (jogo-aplicativo gamificado com RA e ChatBot). Roteiro de entrevista, CSD inicial, hipóteses, Matriz CSD pré-preenchida e modelo de síntese foram feitos nessa fase e ficam em `entregas/` como histórico. O contato com a empresa passou pela Dani CRI (28/09) e pelo coordenador do SENAI São Caetano (prof. Jucelino, grafia do cronograma oficial; o repo antigo escrevia "Juscelino").
