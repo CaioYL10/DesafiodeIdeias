@@ -13,7 +13,7 @@ Registro da refatoração do projeto após a reunião com a equipe da empresa. F
 
 ## O que a empresa realmente quer
 
-Segundo o Caio: a CTI **ainda não tem um setor de análise de qualidade**. O que ela precisa é de um **sistema de armazenamento e análise de feedbacks** sobre os seus serviços, que gere informação útil para a gestão.
+Segundo o Caio, na entrevista de 08/10: a CTI **ainda não tem um setor de análise de qualidade**. O que ela precisa é de um **sistema de armazenamento e análise de feedbacks** sobre os seus serviços, que gere informação útil para a gestão.
 
 ## Antes × depois
 

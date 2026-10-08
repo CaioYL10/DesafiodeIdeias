@@ -21,7 +21,7 @@ Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turm
 
 ## Onde estamos (atualizado em 08/10/2026)
 
-- **Mudança de escopo registrada** em [`contexto/mudanca_de_escopo_cti.md`](contexto/mudanca_de_escopo_cti.md): empresa CTI, foco em armazenar e analisar feedbacks, ChatBot/IA fora. A entrevista de contexto com a empresa já aconteceu (conforme o Plano de Ensino v2), mas **as respostas ainda não foram registradas no repo**. Não inventar conteúdo: pedir ao Caio as anotações.
+- **Mudança de escopo registrada** em [`contexto/mudanca_de_escopo_cti.md`](contexto/mudanca_de_escopo_cti.md): empresa CTI, foco em armazenar e analisar feedbacks, ChatBot/IA fora. A entrevista de contexto com a CTI já aconteceu em 08/10 (confirmado pelo Caio) e foi dela que veio a mudança de escopo, mas **as respostas ainda não foram registradas no repo**. Não inventar conteúdo: pedir ao Caio as anotações.
 - **Papéis do grupo:** Caio = Product Owner; Isabella Dias da Silva = Scrum Master; demais = Developers.
 - **Matriz CSD da CTI feita por suposições (08/10):** [`entregas/Matriz_CSD_CTI_GR1.docx`](entregas/Matriz_CSD_CTI_GR1.docx) / [.pdf](entregas/Matriz_CSD_CTI_GR1.pdf), gerada por `scripts/generate_matriz_csd_cti.js` (7 certezas com fonte, 13 suposições, 14 dúvidas). O grupo ainda **não conversou com a CTI** sobre esses pontos; a ideia de trabalho é um sistema tipo **CRM focado em feedback** (entendimento do Caio). Suposições não são fatos: só marcar veredito com resposta real.
 - **Próximo passo imediato:** conversar com a CTI (dúvidas de prioridade Alta) e validar a matriz. Os entregáveis da fase Avanade (roteiro, CSD inicial, hipóteses, matriz pré-preenchida, síntese) ficam como histórico e podem ser regenerados pelos scripts.

@@ -29,7 +29,7 @@
 
 ## Onde o GR1 está (08/10/2026)
 
-- **Entrevista (etapa 5):** a planilha oficial marca o GR1 como **Concluído** (75% geral da etapa, porque o GR4 não iniciou). O GR1 e o GR2 tinham reunião com a **CTI** disponibilizada para 08/10, depois que o prof. Jucelino passou os contatos das empresas em 07/10. O Caio relatou que essa reunião mudou o escopo (ver [`../contexto/mudanca_de_escopo_cti.md`](../contexto/mudanca_de_escopo_cti.md)).
+- **Entrevista (etapa 5):** a planilha oficial marca o GR1 como **Concluído** (75% geral da etapa, porque o GR4 não iniciou). O prof. Jucelino passou os contatos das empresas em 07/10, e a **CTI** abriu reunião em 08/10 com os grupos 1 e 2. **A entrevista com a CTI já ocorreu (confirmado pelo Caio em 08/10) e foi dela que veio a mudança de escopo** (ver [`../contexto/mudanca_de_escopo_cti.md`](../contexto/mudanca_de_escopo_cti.md)).
 - **Matriz CSD (etapa 6, 08/10):** **Em andamento.** Versão por suposições em [`../entregas/Matriz_CSD_CTI_GR1.docx`](../entregas/Matriz_CSD_CTI_GR1.docx) e versão visual (Canva) exportada em `../fontes/Matriz CSD — CTI/`. As suposições ainda precisam ser validadas com a CTI.
 - **Problema validado (09/10):** não iniciado.
 - **GR4:** a empresa parceira descontinuou a demanda; o docente vai realinhar o roadmap do grupo.
