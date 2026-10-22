@@ -12,20 +12,23 @@ Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turm
 - **Empresa/demanda (versão original, histórico):** Avanade do Brasil Ltda. — Projeto Integrador 2025/02 1.34 08: "Desenvolvimento de Jogo-Aplicativo Gamificado com RA e ChatBot para Reviews de Produtos e Serviços". Detalhes completos da demanda (benefícios esperados, justificativa) estão no roteiro de entrevista, seção "2. GR1".
 - **Docente responsável (roteiro geral da turma):** Paulo Cesar de Camargo. Coordenação do curso: Marcos Alves. Coordenação pedagógica: Antônio Marcos. **Orientadores do relatório do GR1:** Prof. Paulo e Prof. Raul.
 
-## Fluxo do programa — não pular etapas
+## Fluxo do programa — atualização de escopo em 22/10/2026
 
-1. **SENAI Saga** (fase atual): descoberta → entrevista com a empresa → Matriz CSD → brainstorming → seleção da solução → **protótipo de baixa/média fidelidade**. Entregável desta fase é só protótipo (wireframes, fluxos), **não** um app funcional.
-2. Só se a empresa aprovar a ideia nessa fase é que o projeto migra para o **Inova SENAI**, onde aí sim entra desenvolvimento de aplicação real.
+1. A etapa inicial do **SENAI Saga** cobriu descoberta, entrevista com a CTI, Matriz CSD, brainstorming e seleção da solução.
+2. Em 22/10/2026, Caio informou que, por solicitação do professor, o grupo deve avançar de prototipação de baixa fidelidade para um **MVP funcional**. Esta é a orientação de execução mais recente para o GR1.
+3. O escopo do MVP continua sendo a coleta, o armazenamento e a análise de feedbacks dos serviços da CTI, com informações e relatórios para a gestão. ChatBot e IA permanecem fora do escopo.
 
-**Implicação prática:** enquanto estivermos na fase SENAI Saga, não sugerir nem começar implementação de código de app — o trabalho certo aqui é documentação de descoberta e prototipação visual.
+**Divergência documental:** o cronograma recebido em 08/10 ainda diz que software funcional não será exigido na entrega de 13/11. O Plano de Ensino v3, por sua vez, prevê desenvolvimento Full Stack conforme viabilidade, testes e demonstração funcional. A orientação do professor relatada em 22/10 prevalece para o trabalho atual; registrar eventual atualização oficial do cronograma/plano quando disponível. Não voltar a restringir o trabalho a wireframes sem considerar essa orientação.
 
-## Onde estamos (atualizado em 08/10/2026)
+## Onde estamos (atualizado em 22/10/2026)
 
 - **Mudança de escopo registrada** em [`contexto/mudanca_de_escopo_cti.md`](contexto/mudanca_de_escopo_cti.md): empresa CTI, foco em armazenar e analisar feedbacks, ChatBot/IA fora. A entrevista de contexto com a CTI já aconteceu em 08/10 (confirmado pelo Caio) e foi dela que veio a mudança de escopo, mas **as respostas ainda não foram registradas no repo**. Não inventar conteúdo: pedir ao Caio as anotações.
 - **Papéis do grupo:** Caio = Product Owner; Isabella Dias da Silva = Scrum Master; demais = Developers.
 - **Matriz CSD da CTI feita por suposições (08/10):** [`entregas/Matriz_CSD_CTI_GR1.docx`](entregas/Matriz_CSD_CTI_GR1.docx) / [.pdf](entregas/Matriz_CSD_CTI_GR1.pdf), gerada por `scripts/generate_matriz_csd_cti.js` (7 certezas com fonte, 13 suposições, 14 dúvidas). O grupo ainda **não conversou com a CTI** sobre esses pontos; a ideia de trabalho é um sistema tipo **CRM focado em feedback** (entendimento do Caio). Suposições não são fatos: só marcar veredito com resposta real.
-- **Próximo passo imediato:** conversar com a CTI (dúvidas de prioridade Alta) e validar a matriz. Os entregáveis da fase Avanade (roteiro, CSD inicial, hipóteses, matriz pré-preenchida, síntese) ficam como histórico e podem ser regenerados pelos scripts.
-- **Pontos em aberto** (lista completa no arquivo de contexto): Plano de Ensino cita "RA e ChatBot" na linha 3 do Plano de Aula, contradizendo a Contextualização; Plano fala em protótipo funcional/Full Stack enquanto o cronograma diz que a 1ª fase não exige software; a persona Adriana é consumidora B2C e o cliente da CTI é B2B.
+- **Etapa atual:** seleção da solução (22–23/10), com preparação para o MVP funcional. As ideias do brainstorming de 15/10 estão em [`entregas/Atividade_Brainstorming_GR1_15-10-2026.docx`](entregas/Atividade_Brainstorming_GR1_15-10-2026.docx).
+- **Divisão da equipe e entregáveis de 22/10:** ver [`contexto/divisao_tarefas_mvp_22-10-2026.md`](contexto/divisao_tarefas_mvp_22-10-2026.md). A lousa distribui prototipação, análise de mercado, roteiro/vídeo/edição, slides/ABNT e prompts; indica concluir análise e roteiro no dia e iniciar as demais frentes.
+- Os entregáveis da fase Avanade (roteiro, CSD inicial, hipóteses, matriz pré-preenchida, síntese) ficam como histórico e podem ser regenerados pelos scripts.
+- **Pontos em aberto** (lista completa no arquivo de contexto): respostas da entrevista da CTI ainda não foram transcritas no repo; validar as suposições da Matriz CSD; resolver a divergência entre a orientação de MVP funcional de 22/10 e o cronograma de 08/10; revisar a persona Adriana, que é B2C, para o contexto B2B da CTI.
 
 ### Histórico até 02/10/2026 (versão Avanade)
 
@@ -53,7 +56,8 @@ Neste computador (perfil `Dev_2o_Ano`), todo projeto novo do Caio vai em `Docume
 - `CLAUDE.md` — este arquivo (contexto para qualquer sessão do Claude).
 - `cronograma/cronograma.md` — cronograma completo da turma + onde o GR1 está.
 - `contexto/mudanca_de_escopo_cti.md` — nova empresa (CTI), novo escopo, comparação antes × depois, impacto nos entregáveis e pontos em aberto.
-- `fontes/Plano_de_Ensino_GR1_v2.docx` — Plano de Ensino do GR1 com a Contextualização e o Desafio refatorados (cópia de referência).
+- `contexto/divisao_tarefas_mvp_22-10-2026.md` — orientação mais recente sobre MVP, divisão da equipe e entregáveis registrados na lousa em 22/10.
+- `fontes/Plano_de_Ensino_GR1_v2.docx` e `fontes/Plano_de_Ensino_GR1_v3.docx` — versões do Plano de Ensino do GR1; v2/v3 registram a refatoração para a CTI, e a v3 prevê implementação Full Stack conforme viabilidade.
 - `fontes/` — PDFs originais recebidos do SENAI (roteiro-modelo do GR1, orientações gerais de entrevista, cronograma). Não editar, são referência.
 - `entregas/` — entregáveis finais já prontos (ex.: roteiro de entrevista atualizado em .docx).
 - `scripts/generate_roteiro.js` — script Node (usa o pacote `docx`) que gera o `.docx` do roteiro replicando fielmente o layout visual do modelo original (cores, fontes, logo extraída do PDF, tabelas com borda). Rodar com `node scripts/generate_roteiro.js` depois de `npm install` para regenerar o roteiro se o conteúdo mudar.

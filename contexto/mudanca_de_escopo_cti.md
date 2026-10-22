@@ -41,7 +41,7 @@ Nenhum desses arquivos foi alterado ou apagado. Os `.docx` são gerados por scri
 ## Pontos em aberto (para o grupo/docente resolver)
 
 1. **Plano de Ensino inconsistente.** A Contextualização exclui ChatBot e IA, mas a linha 3 do Plano de Aula ainda cita "RA e ChatBot conforme viabilidade". Pedir correção ao Prof. Paulo antes da assinatura.
-2. **Protótipo × software funcional.** O Plano de Ensino fala em "protótipo funcional evolutivo" e em implementação Full Stack/APIs. O cronograma oficial diz que na 1ª fase **não será exigido software funcional**. Confirmar com o docente qual vale.
+2. **MVP funcional × cronograma oficial.** Em 22/10/2026, Caio informou que o professor solicitou que o GR1 avance para um MVP funcional, além da prototipação de baixa fidelidade. Isso é coerente com o Plano de Ensino v3, que prevê desenvolvimento Full Stack/APIs conforme viabilidade, testes e demonstração funcional. O cronograma oficial recebido em 08/10 ainda diz que software funcional não será exigido em 13/11. A orientação mais recente do professor guia o trabalho do grupo; a divergência formal dos documentos segue pendente de atualização.
 3. **Quem são os avaliadores?** Clientes corporativos da CTI (após um chamado de suporte, por exemplo)? Colaboradores internos? Os dois?
 4. **O que é "serviço" a avaliar?** Internet, cloud, segurança, suporte técnico, atendimento comercial?
 5. **Quais relatórios a gestão precisa?** (NPS/CSAT, tendência por serviço, nota por técnico, motivos de reclamação, tempo de resposta.)
