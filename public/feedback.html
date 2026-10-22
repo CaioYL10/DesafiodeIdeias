@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feedback de serviços</title><link rel="stylesheet" href="/styles.css"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
+</head>
+<body class="public-page">
+  <div id="site-navigation"></div>
+  <main class="public-layout">
+    <section class="public-intro"><p class="eyebrow">SUA EXPERIÊNCIA IMPORTA</p><h1>Conte como foi<br>o seu atendimento.</h1><p>Seu comentário ajuda a equipe a entender o que está funcionando e onde pode melhorar.</p><div class="privacy-note"><span>◉</span><p>Este protótipo é para demonstração. <strong>Não use dados reais de clientes</strong> nem inclua nomes, e-mails, telefones ou informações confidenciais.</p></div></section>
+    <section class="form-card"><div class="form-heading"><div><p class="eyebrow">NOVO FEEDBACK</p><h2>Compartilhe sua avaliação</h2></div><span class="step-badge">~2 min</span></div>
+      <form id="feedback-form">
+        <label for="service">Qual serviço você avaliou?</label><select id="service" name="service" required><option value="">Selecione um serviço</option><option value="internet">Internet</option><option value="cloud">Cloud</option><option value="ciberseguranca">Cibersegurança</option><option value="suporte">Suporte</option><option value="outro">Outro</option></select>
+        <fieldset class="rating-field"><legend>Como você avalia sua experiência?</legend><div class="rating-options" role="radiogroup" aria-label="Nota de 1 a 5"><label><input type="radio" name="rating" value="1" required><span>1</span></label><label><input type="radio" name="rating" value="2"><span>2</span></label><label><input type="radio" name="rating" value="3"><span>3</span></label><label><input type="radio" name="rating" value="4"><span>4</span></label><label><input type="radio" name="rating" value="5"><span>5</span></label></div><div class="rating-captions"><span>Poderia melhorar</span><span>Ótima experiência</span></div></fieldset>
+        <label for="comment">Conte um pouco mais <span class="required-note">Obrigatório</span></label><textarea id="comment" name="comment" rows="5" maxlength="1000" placeholder="O que aconteceu? Como podemos melhorar?" required></textarea><div class="field-meta"><span>Não informe dados pessoais ou sigilosos.</span><span id="char-count">0 / 1.000</span></div>
+        <label class="demo-check"><input id="demo-data" type="checkbox"><span>Este comentário é <strong>fictício</strong> e pode ser enviado à IA para uma demonstração de análise de sentimento.</span></label>
+        <button class="button button-primary button-wide" type="submit">Enviar avaliação <span aria-hidden="true">→</span></button><p id="form-message" class="form-message" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+  <footer class="site-footer">Protótipo acadêmico · Dados de demonstração</footer>
+  <script src="/navigation.js" defer></script><script src="/app.js" defer></script>
+</body></html>
