@@ -31,17 +31,18 @@
 
 - **Etapa do cronograma:** seleção da solução (22 e 23/10). A entrega prevista é uma matriz de decisão/priorização e a definição justificada da solução.
 - **Nova orientação do professor:** conforme informado por Caio em 22/10, o GR1 deve avançar para um **MVP funcional**, em vez de se limitar à prototipação de baixa fidelidade. O escopo continua sendo coleta, armazenamento e análise de feedbacks dos serviços da CTI, com relatórios para a gestão; ChatBot e IA permanecem fora.
+- **Análise de mercado:** concluída em 22/10/2026; relatório DOCX e PDF em [`../entregas/cti/analise_mercado/`](../entregas/cti/analise_mercado/).
 - **Organização da equipe e entregáveis do dia:** registrados em [`../contexto/divisao_tarefas_mvp_22-10-2026.md`](../contexto/divisao_tarefas_mvp_22-10-2026.md).
 - **Divergência documental:** a linha de 13/11, transcrita da versão oficial recebida em 08/10, ainda diz que não será exigido software funcional. O Plano de Ensino v3 prevê implementação Full Stack conforme viabilidade, testes e demonstração funcional. Até chegar uma atualização formal dos documentos, esta cronologia preserva o texto original como histórico, e a orientação relatada em 22/10 guia o trabalho do GR1.
 
 ## Situação anterior do GR1 (08/10/2026)
 
 - **Entrevista (etapa 5):** a planilha oficial marca o GR1 como **Concluído** (75% geral da etapa, porque o GR4 não iniciou). O prof. Jucelino passou os contatos das empresas em 07/10, e a **CTI** abriu reunião em 08/10 com os grupos 1 e 2. **A entrevista com a CTI já ocorreu (confirmado pelo Caio em 08/10) e foi dela que veio a mudança de escopo** (ver [`../contexto/mudanca_de_escopo_cti.md`](../contexto/mudanca_de_escopo_cti.md)).
-- **Matriz CSD (etapa 6, 08/10):** **Em andamento.** Versão por suposições em [`../entregas/Matriz_CSD_CTI_GR1.docx`](../entregas/Matriz_CSD_CTI_GR1.docx) e versão visual (Canva) exportada em `../fontes/Matriz CSD — CTI/`. As suposições ainda precisam ser validadas com a CTI.
+- **Matriz CSD (etapa 6, 08/10):** **Em andamento.** Versão por suposições em [`../entregas/cti/descoberta/Matriz_CSD_CTI_GR1.docx`](../entregas/cti/descoberta/Matriz_CSD_CTI_GR1.docx) e versão visual (Canva) exportada em `../fontes/Matriz CSD — CTI/`. As suposições ainda precisam ser validadas com a CTI.
 - **Problema validado (09/10):** não iniciado.
 - **GR4:** a empresa parceira descontinuou a demanda; o docente vai realinhar o roadmap do grupo.
 - Próximas datas registradas naquela versão: ideação (15 e 16/10), seleção da solução (22 e 23/10), protótipo V1 (29 e 30/10), V2 (05 e 06/11), consolidação (12/11) e entrega final (13/11, sem exigência de software funcional). A orientação de MVP funcional de 22/10 está registrada acima.
 
 ## Histórico da versão Avanade (até 02/10/2026)
 
-O GR1 trabalhava a demanda da Avanade (jogo-aplicativo gamificado com RA e ChatBot). Roteiro de entrevista, CSD inicial, hipóteses, Matriz CSD pré-preenchida e modelo de síntese foram feitos nessa fase e ficam em `entregas/` como histórico. O contato com a empresa passou pela Dani CRI (28/09) e pelo coordenador do SENAI São Caetano (prof. Jucelino, grafia do cronograma oficial; o repo antigo escrevia "Juscelino").
+O GR1 trabalhava a demanda da Avanade (jogo-aplicativo gamificado com RA e ChatBot). Roteiro de entrevista, CSD inicial, hipóteses, Matriz CSD pré-preenchida e modelo de síntese foram feitos nessa fase e ficam em `entregas/historico_avanade/` como histórico. O contato com a empresa passou pela Dani CRI (28/09) e pelo coordenador do SENAI São Caetano (prof. Jucelino, grafia do cronograma oficial; o repo antigo escrevia "Juscelino").

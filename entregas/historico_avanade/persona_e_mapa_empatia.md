@@ -1,6 +1,6 @@
 # Persona e Mapa de Empatia (etapa 3. Imersão)
 
-> Transcrição de apoio do conteúdo manuscrito registrado em `entregas/RelatorioDesafioIdeias_Imersao.pdf` (Figuras 3 e 4), para ficar pesquisável por texto. É uma transcrição de letra manuscrita/fotografada — mesmo revisada com zoom em alta resolução, pode conter pequenas imprecisões. **O PDF com as fotos originais dos formulários é sempre a fonte oficial**, principalmente em caso de dúvida.
+> Transcrição de apoio do conteúdo manuscrito registrado em `entregas/historico_avanade/RelatorioDesafioIdeias_Imersao.pdf` (Figuras 3 e 4), para ficar pesquisável por texto. É uma transcrição de letra manuscrita/fotografada — mesmo revisada com zoom em alta resolução, pode conter pequenas imprecisões. **O PDF com as fotos originais dos formulários é sempre a fonte oficial**, principalmente em caso de dúvida.
 
 ## Persona: Adriana Lima
 

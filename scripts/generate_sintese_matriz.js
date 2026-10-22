@@ -1,4 +1,4 @@
-// Gera entregas/Sintese_Entrevista_Modelo_GR1.docx e entregas/Matriz_CSD_Pre_Preenchida_GR1.docx
+// Gera entregas/historico_avanade/Sintese_Entrevista_Modelo_GR1.docx e entregas/historico_avanade/Matriz_CSD_Pre_Preenchida_GR1.docx
 // Uso: node scripts/generate_sintese_matriz.js (depois de npm install)
 const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
@@ -301,9 +301,10 @@ const matrizChildren = [
 
 const matrizDoc = new Document({ numbering, sections: [{ properties: landscape, children: matrizChildren }] });
 
+fs.mkdirSync("entregas/historico_avanade", { recursive: true });
 Packer.toBuffer(sinteseDoc)
-  .then((b) => fs.writeFileSync("entregas/Sintese_Entrevista_Modelo_GR1.docx", b))
+  .then((b) => fs.writeFileSync("entregas/historico_avanade/Sintese_Entrevista_Modelo_GR1.docx", b))
   .then(() => console.log("Sintese ok"));
 Packer.toBuffer(matrizDoc)
-  .then((b) => fs.writeFileSync("entregas/Matriz_CSD_Pre_Preenchida_GR1.docx", b))
+  .then((b) => fs.writeFileSync("entregas/historico_avanade/Matriz_CSD_Pre_Preenchida_GR1.docx", b))
   .then(() => console.log("Matriz ok"));

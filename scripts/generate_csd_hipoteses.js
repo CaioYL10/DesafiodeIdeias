@@ -250,5 +250,6 @@ const hipotesesDoc = new Document({
   ],
 });
 
-Packer.toBuffer(csdDoc).then((buffer) => fs.writeFileSync("entregas/CSD_Inicial_GR1.docx", buffer)).then(() => console.log("CSD ok"));
-Packer.toBuffer(hipotesesDoc).then((buffer) => fs.writeFileSync("entregas/Hipoteses_Respostas_Roteiro_GR1.docx", buffer)).then(() => console.log("Hipoteses ok"));
+fs.mkdirSync("entregas/historico_avanade", { recursive: true });
+Packer.toBuffer(csdDoc).then((buffer) => fs.writeFileSync("entregas/historico_avanade/CSD_Inicial_GR1.docx", buffer)).then(() => console.log("CSD ok"));
+Packer.toBuffer(hipotesesDoc).then((buffer) => fs.writeFileSync("entregas/historico_avanade/Hipoteses_Respostas_Roteiro_GR1.docx", buffer)).then(() => console.log("Hipoteses ok"));

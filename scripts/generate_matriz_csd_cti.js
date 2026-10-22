@@ -1,4 +1,4 @@
-// Gera entregas/Matriz_CSD_CTI_GR1.docx (versão CTI da Matriz CSD, baseada em suposições do grupo)
+// Gera entregas/cti/descoberta/Matriz_CSD_CTI_GR1.docx (versão CTI da Matriz CSD, baseada em suposições do grupo)
 // Uso: node scripts/generate_matriz_csd_cti.js (depois de npm install)
 const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
@@ -199,6 +199,7 @@ const matrizChildren = [
 
 const matrizDoc = new Document({ numbering, sections: [{ properties: landscape, children: matrizChildren }] });
 
+fs.mkdirSync("entregas/cti/descoberta", { recursive: true });
 Packer.toBuffer(matrizDoc)
-  .then((b) => fs.writeFileSync("entregas/Matriz_CSD_CTI_GR1.docx", b))
+  .then((b) => fs.writeFileSync("entregas/cti/descoberta/Matriz_CSD_CTI_GR1.docx", b))
   .then(() => console.log("Matriz CTI ok"));

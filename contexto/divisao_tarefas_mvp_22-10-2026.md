@@ -26,13 +26,13 @@ Os nomes foram mantidos como aparecem na lousa. O cadastro de integrantes do rep
 | Frente | Formato / entrega |
 |---|---|
 | Prototipação | PDFs com telas simples |
-| Análise de mercado | Relatório em DOCX e PDF |
+| Análise de mercado | ✅ Concluída em 22/10/2026. Relatório DOCX e PDF em [`../entregas/cti/analise_mercado/`](../entregas/cti/analise_mercado/) |
 | Roteiro | DOCX e PDF |
 | Slides | PDF com as telas e o link |
 | Documentação | Arquivo em DOCX e PDF |
 | Prompt(s) | Arquivo Markdown (`.md`) |
 
-A lousa indica **concluir análise de mercado e roteiro no dia 22/10 e iniciar as demais frentes**. Também aparece a anotação “CRM — 12/11–19/11”, sem contexto suficiente no registro para determinar a que atividade ou prazo se refere; não foi convertida em prazo oficial.
+A lousa indicava concluir análise de mercado e roteiro em 22/10 e iniciar as demais frentes. **A análise de mercado foi concluída em 22/10/2026**; o roteiro permanece como a outra entrega prevista para essa data. Também aparece a anotação “CRM — 12/11–19/11”, sem contexto suficiente no registro para determinar a que atividade ou prazo se refere; não foi convertida em prazo oficial.
 
 ## Restrições de contexto
 

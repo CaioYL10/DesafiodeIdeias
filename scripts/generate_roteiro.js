@@ -4,6 +4,7 @@ const {
   VerticalAlign, ImageRun, TabStopType, TabStopPosition,
 } = require("docx");
 const fs = require("fs");
+const path = require("path");
 
 const BLUE = "1F4E78";
 const RED = "C00000";
@@ -217,6 +218,8 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buffer) => {
-  fs.writeFileSync("Roteiro_Entrevista_GR1_Atualizado.docx", buffer);
+  const outputPath = path.join(__dirname, "..", "entregas", "historico_avanade", "Roteiro_Entrevista_GR1_Atualizado.docx");
+  fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+  fs.writeFileSync(outputPath, buffer);
   console.log("done");
 });
