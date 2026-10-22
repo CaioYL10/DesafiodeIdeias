@@ -30,7 +30,8 @@
 ## Atualização do GR1 (22/10/2026)
 
 - **Etapa do cronograma:** seleção da solução (22 e 23/10). A entrega prevista é uma matriz de decisão/priorização e a definição justificada da solução.
-- **Nova orientação do professor:** conforme informado por Caio em 22/10, o GR1 deve avançar para um **MVP funcional**, em vez de se limitar à prototipação de baixa fidelidade. O escopo continua sendo coleta, armazenamento e análise de feedbacks dos serviços da CTI, com relatórios para a gestão; ChatBot e IA permanecem fora.
+- **Nova orientação do professor:** conforme informado por Caio em 22/10, o GR1 deve avançar para um **MVP funcional**, em vez de se limitar à prototipação de baixa fidelidade.
+- **Evolução da proposta do GR1 (22/10):** Caio definiu como hipótese um CRM focado na experiência do cliente integrado a uma gestão leve da qualidade. A IA sugere sentimento positivo, neutro ou negativo, com revisão humana; chatbot segue fora. Essa ampliação ainda não foi validada pela CTI e não altera a transcrição oficial da tabela acima. Detalhes em [`../docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`](../docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md).
 - **Análise de mercado:** concluída em 22/10/2026; relatório DOCX e PDF em [`../entregas/cti/analise_mercado/`](../entregas/cti/analise_mercado/).
 - **Organização da equipe e entregáveis do dia:** registrados em [`../contexto/divisao_tarefas_mvp_22-10-2026.md`](../contexto/divisao_tarefas_mvp_22-10-2026.md).
 - **Divergência documental:** a linha de 13/11, transcrita da versão oficial recebida em 08/10, ainda diz que não será exigido software funcional. O Plano de Ensino v3 prevê implementação Full Stack conforme viabilidade, testes e demonstração funcional. Até chegar uma atualização formal dos documentos, esta cronologia preserva o texto original como histórico, e a orientação relatada em 22/10 guia o trabalho do GR1.
