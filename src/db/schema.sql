@@ -42,3 +42,54 @@ CREATE TABLE IF NOT EXISTS products (
   type TEXT NOT NULL CHECK (type IN ('product', 'service')),
   created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS clients (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, contact TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS client_products (
+  client_id INTEGER NOT NULL REFERENCES clients(id),
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  PRIMARY KEY (client_id, product_id)
+);
+CREATE TABLE IF NOT EXISTS feedback_context (
+  feedback_id INTEGER PRIMARY KEY REFERENCES feedbacks(id),
+  client_id INTEGER REFERENCES clients(id), product_id INTEGER REFERENCES products(id),
+  kind TEXT NOT NULL CHECK (kind IN ('feedback', 'complaint', 'suggestion')),
+  manager_id INTEGER NOT NULL REFERENCES managers(id), updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sentiment_reviews (
+  id INTEGER PRIMARY KEY, feedback_id INTEGER NOT NULL REFERENCES feedbacks(id),
+  sentiment TEXT NOT NULL CHECK (sentiment IN ('positive', 'neutral', 'negative')),
+  note TEXT NOT NULL, manager_id INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_reviews_feedback ON sentiment_reviews(feedback_id, id);
+CREATE TABLE IF NOT EXISTS quality_problems (
+  id INTEGER PRIMARY KEY, title TEXT NOT NULL, category TEXT NOT NULL, analysis TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'closed')),
+  manager_id INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL, closed_at TEXT
+);
+CREATE TABLE IF NOT EXISTS problem_feedbacks (
+  problem_id INTEGER NOT NULL REFERENCES quality_problems(id),
+  feedback_id INTEGER NOT NULL REFERENCES feedbacks(id), PRIMARY KEY (problem_id, feedback_id)
+);
+CREATE TABLE IF NOT EXISTS quality_actions (
+  id INTEGER PRIMARY KEY, problem_id INTEGER NOT NULL REFERENCES quality_problems(id),
+  description TEXT NOT NULL, owner TEXT NOT NULL, due_date TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'effective', 'ineffective')),
+  evidence TEXT, completed_at TEXT, verification_note TEXT, verified_at TEXT,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS quality_events (
+  id INTEGER PRIMARY KEY, problem_id INTEGER NOT NULL REFERENCES quality_problems(id),
+  manager_id INTEGER NOT NULL REFERENCES managers(id), description TEXT NOT NULL, created_at TEXT NOT NULL
+);
+CREATE VIEW IF NOT EXISTS feedback_overview AS
+SELECT f.*, c.client_id, c.product_id, COALESCE(c.kind, 'feedback') AS kind,
+  cl.name AS client_name, p.name AS product_name,
+  r.sentiment AS reviewed_sentiment, r.created_at AS reviewed_at,
+  COALESCE(r.sentiment, f.sentiment) AS final_sentiment
+FROM feedbacks f
+LEFT JOIN feedback_context c ON c.feedback_id = f.id
+LEFT JOIN clients cl ON cl.id = c.client_id
+LEFT JOIN products p ON p.id = c.product_id
+LEFT JOIN sentiment_reviews r ON r.id = (SELECT MAX(id) FROM sentiment_reviews WHERE feedback_id = f.id);

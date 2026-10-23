@@ -5,6 +5,8 @@ const { createAuthRouter } = require('./routes/auth-routes');
 const { createManagerRouter } = require('./routes/manager-routes');
 const { createFeedbackRouter } = require('./routes/feedback-routes');
 const { createProductRouter } = require('./routes/product-routes');
+const { createCrmRouter } = require('./routes/crm-routes');
+const { createQualityRouter } = require('./routes/quality-routes');
 const { findManagerByToken, readCookie, SESSION_COOKIE } = require('./security/sessions');
 
 function createApp({ database, sentimentService }) {
@@ -15,6 +17,8 @@ function createApp({ database, sentimentService }) {
   app.use('/api/feedback', createFeedbackRouter(database, sentimentService));
   app.use('/api/auth', createAuthRouter(database));
   app.use('/api/manager/products', createProductRouter(database));
+  app.use('/api/manager/crm', createCrmRouter(database));
+  app.use('/api/manager/quality', createQualityRouter(database));
   app.use('/api/manager', createManagerRouter(database, sentimentService));
   function protectedPage(urls, filename, nextPath) {
     app.get(urls, (request, response) => {
@@ -26,6 +30,7 @@ function createApp({ database, sentimentService }) {
   }
   protectedPage(['/dashboard', '/dashboard.html'], 'dashboard.html', '/dashboard');
   protectedPage(['/products', '/products.html'], 'products.html', '/products');
+  protectedPage(['/workspace', '/workspace.html'], 'workspace.html', '/workspace');
   app.get('/feedback', (request, response) => response.type('html').send(fs.readFileSync(path.join(publicPath, 'feedback.html'))));
   app.get('/login', (request, response) => response.type('html').send(fs.readFileSync(path.join(publicPath, 'login.html'))));
   app.use(express.static(publicPath));

@@ -10,7 +10,7 @@ test('visitante acessa visão geral e formulário; gestão e API de produtos exi
   const url = await startServer(createApp({ database }), context);
   assert.match(await fetch(url + '/').then(r => r.text()), /id="home-title"/);
   assert.match(await fetch(url + '/feedback').then(r => r.text()), /id="feedback-form"/);
-  for (const path of ['/dashboard', '/dashboard.html', '/products', '/products.html']) {
+  for (const path of ['/dashboard', '/dashboard.html', '/products', '/products.html', '/workspace', '/workspace.html']) {
     const response = await fetch(url + path, { redirect: 'manual' }); assert.equal(response.status, 302, path);
   }
   assert.equal((await fetch(url + '/api/manager/products')).status, 401);
