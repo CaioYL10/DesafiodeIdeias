@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { once } = require('node:events');
-const Database = require('better-sqlite3');
+const { DatabaseSync: Database } = require('node:sqlite');
 const { createApp } = require('../src/app');
 
 test('login rejeita gestor inexistente sem criar cookie de sessão', async (t) => {

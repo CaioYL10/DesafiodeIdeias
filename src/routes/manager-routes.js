@@ -14,10 +14,10 @@ function queryFilters(query) {
   const filters = [];
   const values = [];
   if (query.service && services.has(query.service)) { filters.push('service = ?'); values.push(query.service); }
-  if (query.sentiment && ALLOWED_SENTIMENTS.has(query.sentiment)) { filters.push('sentiment = ?'); values.push(query.sentiment); }
+  if (query.sentiment && ALLOWED_SENTIMENTS.has(query.sentiment)) { filters.push('final_sentiment = ?'); values.push(query.sentiment); }
   if (query.status && ALLOWED_HANDLING_STATUSES.has(query.status)) { filters.push('handling_status = ?'); values.push(query.status); }
-  if (query.from && /^\d{4}-\d{2}-\d{2}$/.test(query.from)) { filters.push('created_at >= ?'); values.push(query.from + 'T00:00:00.000Z'); }
-  if (query.to && /^\d{4}-\d{2}-\d{2}$/.test(query.to)) { filters.push('created_at < ?'); values.push(new Date(Date.parse(query.to + 'T00:00:00.000Z') + 86400000).toISOString()); }
+  if (isIsoDate(query.from)) { filters.push('created_at >= ?'); values.push(query.from + 'T00:00:00.000Z'); }
+  if (isIsoDate(query.to)) { filters.push('created_at < ?'); values.push(new Date(Date.parse(query.to + 'T00:00:00.000Z') + 86400000).toISOString()); }
   if (typeof query.search === 'string' && query.search.trim()) {
     filters.push('(comment LIKE ? ESCAPE \'\\\' OR service LIKE ? ESCAPE \'\\\')');
     const escaped = '%' + query.search.trim().replace(/[\\%_]/g, '\\$&') + '%';
@@ -39,7 +39,7 @@ function createManagerRouter(database, sentimentService) {
   router.get('/summary', (request, response) => {
     const total = database.prepare('SELECT COUNT(*) AS total FROM feedbacks').get().total;
     const average = database.prepare('SELECT AVG(rating) AS average FROM feedbacks').get().average;
-    const sentimentRows = database.prepare("SELECT sentiment, COUNT(*) AS count FROM feedbacks WHERE sentiment IS NOT NULL GROUP BY sentiment").all();
+    const sentimentRows = database.prepare("SELECT final_sentiment AS sentiment, COUNT(*) AS count FROM feedback_overview WHERE final_sentiment IS NOT NULL GROUP BY final_sentiment").all();
     const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
     for (const row of sentimentRows) sentimentCounts[row.sentiment] = row.count;
     const rangeEnd = new Date();
@@ -56,8 +56,8 @@ function createManagerRouter(database, sentimentService) {
     const { where, values } = queryFilters(request.query);
     const page = Math.max(1, Number.parseInt(request.query.page, 10) || 1);
     const pageSize = Math.min(100, Math.max(1, Number.parseInt(request.query.pageSize, 10) || 50));
-    const total = database.prepare(`SELECT COUNT(*) AS total FROM feedbacks ${where}`).get(...values).total;
-    const rows = database.prepare(`SELECT * FROM feedbacks ${where} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`)
+    const total = database.prepare(`SELECT COUNT(*) AS total FROM feedback_overview ${where}`).get(...values).total;
+    const rows = database.prepare(`SELECT * FROM feedback_overview ${where} ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?`)
       .all(...values, pageSize, (page - 1) * pageSize);
     return response.json({ items: rows, total, page, pageSize });
   });
@@ -89,11 +89,11 @@ function createManagerRouter(database, sentimentService) {
 
   router.get('/export.csv', (request, response) => {
     const { where, values } = queryFilters(request.query);
-    const rows = database.prepare(`SELECT id, service, rating, comment, created_at, sentiment, sentiment_status, handling_status
-      FROM feedbacks ${where} ORDER BY created_at DESC, id DESC`).all(...values);
-    const header = ['ID', 'Serviço', 'Nota', 'Comentário', 'Criado em', 'Sentimento', 'Status da análise', 'Tratativa'];
+    const rows = database.prepare(`SELECT id, service, rating, comment, created_at, sentiment, sentiment_status, handling_status, reviewed_sentiment, final_sentiment
+      FROM feedback_overview ${where} ORDER BY created_at DESC, id DESC`).all(...values);
+    const header = ['ID', 'Serviço', 'Nota', 'Comentário', 'Criado em', 'Sugestão da IA', 'Status da análise', 'Tratativa', 'Revisão humana', 'Sentimento adotado'];
     const csv = '\uFEFF' + [header, ...rows.map((row) => [row.id, row.service, row.rating, row.comment, row.created_at,
-      row.sentiment, row.sentiment_status, row.handling_status])].map((line) => line.map(csvCell).join(',')).join('\r\n');
+      row.sentiment, row.sentiment_status, row.handling_status, row.reviewed_sentiment, row.final_sentiment])].map((line) => line.map(csvCell).join(',')).join('\r\n');
     response.setHeader('content-type', 'text/csv; charset=utf-8');
     response.setHeader('content-disposition', 'attachment; filename="feedbacks-cti.csv"');
     return response.send(csv);
