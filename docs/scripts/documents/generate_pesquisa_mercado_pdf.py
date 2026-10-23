@@ -13,7 +13,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether
 from xml.sax.saxutils import escape
 
-root = Path(__file__).resolve().parents[1]
+root = Path(__file__).resolve().parents[2]
 docx_path = root / 'entregas' / 'cti' / 'analise_mercado' / 'Pesquisa_Analise_Mercado_Feedback_CTI_GR1.docx'
 pdf_path = root / 'entregas' / 'cti' / 'analise_mercado' / 'Pesquisa_Analise_Mercado_Feedback_CTI_GR1.pdf'
 document = Document(docx_path)

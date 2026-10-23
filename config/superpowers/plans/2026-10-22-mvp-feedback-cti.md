@@ -10,7 +10,7 @@
 
 **Stack:** Node.js, Express, better-sqlite3, HTML, CSS, JavaScript, OpenAI API via `fetch` e `node:test`.
 
-**Especificação:** `docs/superpowers/specs/2026-10-22-mvp-feedback-cti-design.md`
+**Especificação:** `config/superpowers/specs/2026-10-22-mvp-feedback-cti-design.md`
 
 ## Restrições globais
 
@@ -31,34 +31,34 @@
 
 ## Arquivos e responsabilidades
 
-- `package.json` — scripts de execução, inicialização do gestor e verificação.
+- `app/package.json` — scripts de execução, inicialização do gestor e verificação.
 - `.gitignore` — proteger `.env`, bancos SQLite e diretórios temporários locais.
-- `.env.example` — nomes das variáveis sem valores secretos.
-- `src/server.js` — inicializar configuração, banco, rotas e servidor em loopback.
-- `src/app.js` — montar Express, middleware, API e arquivos estáticos.
-- `src/db/database.js` — abrir SQLite, configurar pragmas e executar o esquema.
-- `src/db/schema.sql` — tabelas e índices.
-- `src/db/feedback-repository.js` — gravação, consultas, status e métricas.
-- `src/db/manager-repository.js` — busca e criação de gestores e sessões.
-- `src/security/passwords.js` — hash e validação de senha por `scrypt`.
-- `src/security/sessions.js` — criar, consultar, expirar e remover sessões.
-- `src/middleware/require-manager.js` — negar rotas de gestão sem sessão válida.
-- `src/services/sentiment.js` — chamar OpenAI Responses API e validar os rótulos estruturados.
-- `src/routes/feedback-routes.js` — endpoint público de criação de feedback.
-- `src/routes/auth-routes.js` — login, sessão atual e logout.
-- `src/routes/manager-routes.js` — resumo, lista, alteração de status, nova análise e CSV.
-- `scripts/create-manager.js` — criar o primeiro gestor por comando local, sem senha padrão.
-- `public/index.html` — formulário público de feedback.
-- `public/login.html` — login de gestores.
-- `public/dashboard.html` — painel CRM de feedbacks.
-- `public/app.js` — estados e interações dos fluxos públicos e de gestão.
-- `public/styles.css` — apresentação neutra, responsiva e acessível, sem marca CTI.
-- `test/` — testes com banco temporário e provedor de sentimento simulado; sem chamadas externas.
+- `app/.env.example` — nomes das variáveis sem valores secretos.
+- `app/src/server.js` — inicializar configuração, banco, rotas e servidor em loopback.
+- `app/src/app.js` — montar Express, middleware, API e arquivos estáticos.
+- `app/src/db/database.js` — abrir SQLite, configurar pragmas e executar o esquema.
+- `app/src/db/schema.sql` — tabelas e índices.
+- `app/src/db/feedback-repository.js` — gravação, consultas, status e métricas.
+- `app/src/db/manager-repository.js` — busca e criação de gestores e sessões.
+- `app/src/security/passwords.js` — hash e validação de senha por `scrypt`.
+- `app/src/security/sessions.js` — criar, consultar, expirar e remover sessões.
+- `app/src/middleware/require-manager.js` — negar rotas de gestão sem sessão válida.
+- `app/src/services/sentiment.js` — chamar OpenAI Responses API e validar os rótulos estruturados.
+- `app/src/routes/feedback-routes.js` — endpoint público de criação de feedback.
+- `app/src/routes/auth-routes.js` — login, sessão atual e logout.
+- `app/src/routes/manager-routes.js` — resumo, lista, alteração de status, nova análise e CSV.
+- `app/scripts/create-manager.js` — criar o primeiro gestor por comando local, sem senha padrão.
+- `app/public/index.html` — formulário público de feedback.
+- `app/public/login.html` — login de gestores.
+- `app/public/dashboard.html` — painel CRM de feedbacks.
+- `app/public/app.js` — estados e interações dos fluxos públicos e de gestão.
+- `app/public/styles.css` — apresentação neutra, responsiva e acessível, sem marca CTI.
+- `app/test/` — testes com banco temporário e provedor de sentimento simulado; sem chamadas externas.
 - `README.md` — requisitos locais, configuração de ambiente, criação de gestor e execução do MVP.
 
 ## Tarefa 1: base local, banco e contas de gestor
 
-**Arquivos:** `package.json`, `.gitignore`, `.env.example`, `src/server.js`, `src/app.js`, `src/db/database.js`, `src/db/schema.sql`, `src/db/manager-repository.js`, `src/security/passwords.js`, `src/security/sessions.js`, `src/middleware/require-manager.js`, `src/routes/auth-routes.js`, `scripts/create-manager.js`, `test/auth.test.js`.
+**Arquivos:** `app/package.json`, `.gitignore`, `app/.env.example`, `app/src/server.js`, `app/src/app.js`, `app/src/db/database.js`, `app/src/db/schema.sql`, `app/src/db/manager-repository.js`, `app/src/security/passwords.js`, `app/src/security/sessions.js`, `app/src/middleware/require-manager.js`, `app/src/routes/auth-routes.js`, `app/scripts/create-manager.js`, `app/test/auth.test.js`.
 
 **Interfaces:**
 
@@ -112,7 +112,7 @@ Esperado: login inválido retorna 401; login válido cria cookie; sessão válid
 
 ## Tarefa 2: formulário público, persistência e classificação de sentimento
 
-**Arquivos:** `src/db/feedback-repository.js`, `src/services/sentiment.js`, `src/routes/feedback-routes.js`, `src/app.js`, `test/feedback.test.js`, `test/sentiment.test.js`.
+**Arquivos:** `app/src/db/feedback-repository.js`, `app/src/services/sentiment.js`, `app/src/routes/feedback-routes.js`, `app/src/app.js`, `app/test/feedback.test.js`, `app/test/sentiment.test.js`.
 
 **Interfaces:**
 
@@ -141,7 +141,7 @@ Esperado: entradas válidas persistem; inválidas são rejeitadas; cada rótulo 
 
 ## Tarefa 3: consulta protegida, métricas, status e exportação
 
-**Arquivos:** `src/db/feedback-repository.js`, `src/routes/manager-routes.js`, `src/app.js`, `test/manager.test.js`, `test/export.test.js`.
+**Arquivos:** `app/src/db/feedback-repository.js`, `app/src/routes/manager-routes.js`, `app/src/app.js`, `app/test/manager.test.js`, `app/test/export.test.js`.
 
 **Interfaces:**
 
@@ -169,7 +169,7 @@ Esperado: dados e métricas corretos; acesso sem sessão retorna 401; filtros n�
 
 ## Tarefa 4: interface pública e painel de gestão
 
-**Arquivos:** `public/index.html`, `public/login.html`, `public/dashboard.html`, `public/app.js`, `public/styles.css`, `src/app.js`, `test/app-routes.test.js`.
+**Arquivos:** `app/public/index.html`, `app/public/login.html`, `app/public/dashboard.html`, `app/public/app.js`, `app/public/styles.css`, `app/src/app.js`, `app/test/app-routes.test.js`.
 
 **Interfaces:**
 
@@ -198,7 +198,7 @@ Esperado: páginas e recursos estáticos respondem; painel não aparece sem logi
 
 ## Tarefa 5: configuração, documentação e revisão final
 
-**Arquivos:** `README.md`, `.env.example`, `.gitignore`, `package.json`, `test/`.
+**Arquivos:** `README.md`, `app/.env.example`, `.gitignore`, `app/package.json`, `app/test/`.
 
 - [ ] **Passo 1: documentar a instalação local.** Registrar a versão mínima de Node compatível com `better-sqlite3`, `npm install`, como definir `OPENAI_API_KEY` e `OPENAI_MODEL`, como criar gestor com variáveis de ambiente, como rodar a aplicação, onde fica o SQLite e como limpar dados de demonstração.
 - [ ] **Passo 2: revisar proteção contra dados secretos.** Confirmar que `.env`, bancos SQLite, arquivos WAL/SHM e exports gerados não entram no Git; confirmar que o navegador não recebe a chave.

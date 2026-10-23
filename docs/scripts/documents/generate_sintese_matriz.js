@@ -1,9 +1,9 @@
 // Gera entregas/historico_avanade/Sintese_Entrevista_Modelo_GR1.docx e entregas/historico_avanade/Matriz_CSD_Pre_Preenchida_GR1.docx
-// Uso: node scripts/generate_sintese_matriz.js (depois de npm install)
+// Uso: node scripts/documents/generate_sintese_matriz.js (depois de npm install)
 const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, WidthType, BorderStyle, ShadingType, VerticalAlign, PageOrientation,
-} = require("docx");
+} = require(require.resolve('docx', { paths: [require('node:path').resolve(__dirname, '../../../app')] }));
 const fs = require("fs");
 
 const BLUE = "1F4E78";
@@ -301,10 +301,10 @@ const matrizChildren = [
 
 const matrizDoc = new Document({ numbering, sections: [{ properties: landscape, children: matrizChildren }] });
 
-fs.mkdirSync("entregas/historico_avanade", { recursive: true });
+fs.mkdirSync("docs/entregas/historico_avanade", { recursive: true });
 Packer.toBuffer(sinteseDoc)
-  .then((b) => fs.writeFileSync("entregas/historico_avanade/Sintese_Entrevista_Modelo_GR1.docx", b))
+  .then((b) => fs.writeFileSync("docs/entregas/historico_avanade/Sintese_Entrevista_Modelo_GR1.docx", b))
   .then(() => console.log("Sintese ok"));
 Packer.toBuffer(matrizDoc)
-  .then((b) => fs.writeFileSync("entregas/historico_avanade/Matriz_CSD_Pre_Preenchida_GR1.docx", b))
+  .then((b) => fs.writeFileSync("docs/entregas/historico_avanade/Matriz_CSD_Pre_Preenchida_GR1.docx", b))
   .then(() => console.log("Matriz ok"));

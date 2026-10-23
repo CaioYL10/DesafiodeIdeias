@@ -34,7 +34,7 @@ Caio, como Product Owner do GR1, decidiu adotar como **hipótese de solução**,
 
 O recorte proposto inclui cadastro básico de clientes e serviços, histórico de interações e feedbacks, triagem humana, registro de problemas de qualidade, ações com responsáveis e prazos, verificação de eficácia e indicadores gerenciais. A IA apenas sugere sentimento positivo, neutro ou negativo; a equipe pode revisar a classe e decide se o relato gera caso de qualidade. A IA não identifica causas nem cria ações automaticamente.
 
-Chatbot, CRM comercial amplo e SGQ completo ficam fora. “Problema de qualidade” é o termo provisório; o uso formal de “não conformidade” e os critérios para abrir e encerrar casos dependem do processo real da CTI. Ver a [especificação vigente](../docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md).
+Chatbot, CRM comercial amplo e SGQ completo ficam fora. “Problema de qualidade” é o termo provisório; o uso formal de “não conformidade” e os critérios para abrir e encerrar casos dependem do processo real da CTI. Ver a [especificação vigente](../../config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md).
 
 ## Impacto nos entregáveis já feitos
 

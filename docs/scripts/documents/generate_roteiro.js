@@ -2,7 +2,7 @@ const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   Header, Footer, AlignmentType, WidthType, BorderStyle, ShadingType,
   VerticalAlign, ImageRun, TabStopType, TabStopPosition,
-} = require("docx");
+} = require(require.resolve('docx', { paths: [require('node:path').resolve(__dirname, '../../../app')] }));
 const fs = require("fs");
 const path = require("path");
 
@@ -94,7 +94,7 @@ function twoColTable(rows, valueMinLines) {
   });
 }
 
-const logoBuffer = fs.readFileSync("senai_logo.png");
+const logoBuffer = fs.readFileSync(require("node:path").resolve(__dirname, "../../assets/senai_logo.png"));
 
 const doc = new Document({
   sections: [
@@ -218,7 +218,7 @@ const doc = new Document({
 });
 
 Packer.toBuffer(doc).then((buffer) => {
-  const outputPath = path.join(__dirname, "..", "entregas", "historico_avanade", "Roteiro_Entrevista_GR1_Atualizado.docx");
+  const outputPath = path.join(__dirname, "..", "..", "entregas", "historico_avanade", "Roteiro_Entrevista_GR1_Atualizado.docx");
   fs.mkdirSync(path.dirname(outputPath), { recursive: true });
   fs.writeFileSync(outputPath, buffer);
   console.log("done");

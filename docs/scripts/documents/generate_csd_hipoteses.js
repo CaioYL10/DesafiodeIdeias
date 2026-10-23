@@ -2,7 +2,7 @@ const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   AlignmentType, WidthType, BorderStyle, ShadingType, VerticalAlign,
   HeadingLevel, convertInchesToTwip,
-} = require("docx");
+} = require(require.resolve('docx', { paths: [require('node:path').resolve(__dirname, '../../../app')] }));
 const fs = require("fs");
 
 const BLUE = "1F4E78";
@@ -250,6 +250,6 @@ const hipotesesDoc = new Document({
   ],
 });
 
-fs.mkdirSync("entregas/historico_avanade", { recursive: true });
-Packer.toBuffer(csdDoc).then((buffer) => fs.writeFileSync("entregas/historico_avanade/CSD_Inicial_GR1.docx", buffer)).then(() => console.log("CSD ok"));
-Packer.toBuffer(hipotesesDoc).then((buffer) => fs.writeFileSync("entregas/historico_avanade/Hipoteses_Respostas_Roteiro_GR1.docx", buffer)).then(() => console.log("Hipoteses ok"));
+fs.mkdirSync("docs/entregas/historico_avanade", { recursive: true });
+Packer.toBuffer(csdDoc).then((buffer) => fs.writeFileSync("docs/entregas/historico_avanade/CSD_Inicial_GR1.docx", buffer)).then(() => console.log("CSD ok"));
+Packer.toBuffer(hipotesesDoc).then((buffer) => fs.writeFileSync("docs/entregas/historico_avanade/Hipoteses_Respostas_Roteiro_GR1.docx", buffer)).then(() => console.log("Hipoteses ok"));

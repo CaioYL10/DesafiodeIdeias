@@ -4,7 +4,7 @@
 
 Em 22/10/2026, Caio informou que, por solicitação do professor, o grupo não deve se limitar à prototipação de baixa fidelidade e precisa avançar para um **MVP funcional**. Esta é a orientação mais recente para a execução do GR1.
 
-Em 22/10, Caio definiu para o GR1 a hipótese ampliada de solução: **CRM focado no relacionamento com clientes + gestão leve da qualidade**. O fluxo proposto reúne cadastro básico de clientes/serviços, histórico de feedbacks, triagem humana de problemas, ações com responsável e prazo e verificação de eficácia. A IA pode sugerir sentimento positivo, neutro ou negativo; a equipe revisa quando necessário e decide se abre um problema. Chatbot, CRM comercial amplo e SGQ completo ficam fora. A proposta ainda precisa ser validada com a CTI; ver a [especificação vigente](../docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md).
+Em 22/10, Caio definiu para o GR1 a hipótese ampliada de solução: **CRM focado no relacionamento com clientes + gestão leve da qualidade**. O fluxo proposto reúne cadastro básico de clientes/serviços, histórico de feedbacks, triagem humana de problemas, ações com responsável e prazo e verificação de eficácia. A IA pode sugerir sentimento positivo, neutro ou negativo; a equipe revisa quando necessário e decide se abre um problema. Chatbot, CRM comercial amplo e SGQ completo ficam fora. A proposta ainda precisa ser validada com a CTI; ver a [especificação vigente](../../config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md).
 
 O Plano de Ensino v3 prevê desenvolvimento incremental, integração Full Stack e APIs conforme viabilidade, testes, documentação e demonstração. Já o cronograma recebido em 08/10 diz que software funcional não será exigido em 13/11; essa divergência documental foi preservada em [`../cronograma/cronograma.md`](../cronograma/cronograma.md), sem apagar o texto da fonte oficial.
 
@@ -28,7 +28,7 @@ Os nomes foram mantidos como aparecem na lousa. O cadastro de integrantes do rep
 | Frente | Formato / entrega |
 |---|---|
 | Prototipação | PDFs com telas simples |
-| Análise de mercado | ✅ Concluída em 22/10/2026. Relatório DOCX e PDF em [`../entregas/cti/analise_mercado/`](../entregas/cti/analise_mercado/) |
+| Análise de mercado | ✅ Concluída em 22/10/2026. Relatório DOCX e PDF em [`../entregas/cti/analise_mercado/`](../entregas/cti/analise_mercado) |
 | Roteiro | DOCX e PDF |
 | Slides | PDF com as telas e o link |
 | Documentação | Arquivo em DOCX e PDF |

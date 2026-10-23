@@ -20,7 +20,7 @@
 
 ### Tarefa 1: atualizar a fonte detalhada do escopo CTI
 
-**Arquivos:** `contexto/mudanca_de_escopo_cti.md`.
+**Arquivos:** `docs/contexto/mudanca_de_escopo_cti.md`.
 
 - [x] Registrar a evolução da proposta CTI em 22/10, separando informação relatada pela empresa de hipótese do grupo.
 - [x] Descrever CRM focado na experiência, gestão leve da qualidade, sentimento por IA, fluxo humano de triagem e pontos a validar.
@@ -28,21 +28,21 @@
 
 ### Tarefa 2: alinhar o registro do MVP e do cronograma
 
-**Arquivos:** `contexto/divisao_tarefas_mvp_22-10-2026.md`, `cronograma/cronograma.md`.
+**Arquivos:** `docs/contexto/divisao_tarefas_mvp_22-10-2026.md`, `docs/cronograma/cronograma.md`.
 
 - [x] Registrar que o MVP funcional segue a especificação CRM + SGQ leve, sem inventar decisão sobre arquitetura, provedor de IA ou divisão de equipe.
 - [x] Atualizar a nota recente do cronograma e manter intacta a linha transcrita da fonte oficial.
 
 ### Tarefa 3: sincronizar os resumos e o índice
 
-**Arquivos:** `AGENTS.md`, `CLAUDE.md`, `README.md`, `entregas/README.md`.
+**Arquivos:** `AGENTS.md`, `CLAUDE.md`, `README.md`, `docs/entregas/README.md`.
 
 - [x] Atualizar resumos executivos, fase atual, pontos em aberto e links para a especificação canônica.
 - [x] Distinguir o escopo atual da CTI do histórico Avanade.
 
 ### Tarefa 4: retirar autoridade de documentos substituídos
 
-**Arquivos:** `docs/superpowers/specs/2026-10-22-mvp-feedback-cti-design.md`, `docs/superpowers/plans/2026-10-22-mvp-feedback-cti.md`.
+**Arquivos:** `config/superpowers/specs/2026-10-22-mvp-feedback-cti-design.md`, `config/superpowers/plans/2026-10-22-mvp-feedback-cti.md`.
 
 - [x] Preservar os documentos antigos, mas marcá-los como substituídos e não executáveis para o novo escopo.
 - [x] Apontar a especificação CRM + SGQ leve como referência vigente; não inventar novo stack nem contratos de API.

@@ -2,11 +2,11 @@ const {
   Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
   HeadingLevel, AlignmentType, WidthType, BorderStyle, ShadingType,
   PageNumber, Footer, Header
-} = require('docx');
+} = require(require.resolve('docx', { paths: [require('node:path').resolve(__dirname, '../../../app')] }));
 const fs = require('fs');
 const path = require('path');
 
-const outputPath = path.join(__dirname, '..', 'entregas', 'cti', 'analise_mercado', 'Pesquisa_Analise_Mercado_Feedback_CTI_GR1.docx');
+const outputPath = path.join(__dirname, '..', '..', 'entregas', 'cti', 'analise_mercado', 'Pesquisa_Analise_Mercado_Feedback_CTI_GR1.docx');
 const navy = '17365D';
 const teal = '0F6B78';
 const lightBlue = 'EAF1F7';

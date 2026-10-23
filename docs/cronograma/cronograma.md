@@ -31,8 +31,8 @@
 
 - **Etapa do cronograma:** seleção da solução (22 e 23/10). A entrega prevista é uma matriz de decisão/priorização e a definição justificada da solução.
 - **Nova orientação do professor:** conforme informado por Caio em 22/10, o GR1 deve avançar para um **MVP funcional**, em vez de se limitar à prototipação de baixa fidelidade.
-- **Evolução da proposta do GR1 (22/10):** Caio definiu como hipótese um CRM focado na experiência do cliente integrado a uma gestão leve da qualidade. A IA sugere sentimento positivo, neutro ou negativo, com revisão humana; chatbot segue fora. Essa ampliação ainda não foi validada pela CTI e não altera a transcrição oficial da tabela acima. Detalhes em [`../docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`](../docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md).
-- **Análise de mercado:** concluída em 22/10/2026; relatório DOCX e PDF em [`../entregas/cti/analise_mercado/`](../entregas/cti/analise_mercado/).
+- **Evolução da proposta do GR1 (22/10):** Caio definiu como hipótese um CRM focado na experiência do cliente integrado a uma gestão leve da qualidade. A IA sugere sentimento positivo, neutro ou negativo, com revisão humana; chatbot segue fora. Essa ampliação ainda não foi validada pela CTI e não altera a transcrição oficial da tabela acima. Detalhes em [`../docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`](../../config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md).
+- **Análise de mercado:** concluída em 22/10/2026; relatório DOCX e PDF em [`../entregas/cti/analise_mercado/`](../entregas/cti/analise_mercado).
 - **Organização da equipe e entregáveis do dia:** registrados em [`../contexto/divisao_tarefas_mvp_22-10-2026.md`](../contexto/divisao_tarefas_mvp_22-10-2026.md).
 - **Divergência documental:** a linha de 13/11, transcrita da versão oficial recebida em 08/10, ainda diz que não será exigido software funcional. O Plano de Ensino v3 prevê implementação Full Stack conforme viabilidade, testes e demonstração funcional. Até chegar uma atualização formal dos documentos, esta cronologia preserva o texto original como histórico, e a orientação relatada em 22/10 guia o trabalho do GR1.
 
@@ -46,4 +46,4 @@
 
 ## Histórico da versão Avanade (até 02/10/2026)
 
-O GR1 trabalhava a demanda da Avanade (jogo-aplicativo gamificado com RA e ChatBot). Roteiro de entrevista, CSD inicial, hipóteses, Matriz CSD pré-preenchida e modelo de síntese foram feitos nessa fase e ficam em `entregas/historico_avanade/` como histórico. O contato com a empresa passou pela Dani CRI (28/09) e pelo coordenador do SENAI São Caetano (prof. Jucelino, grafia do cronograma oficial; o repo antigo escrevia "Juscelino").
+O GR1 trabalhava a demanda da Avanade (jogo-aplicativo gamificado com RA e ChatBot). Roteiro de entrevista, CSD inicial, hipóteses, Matriz CSD pré-preenchida e modelo de síntese foram feitos nessa fase e ficam em `docs/entregas/historico_avanade/` como histórico. O contato com a empresa passou pela Dani CRI (28/09) e pelo coordenador do SENAI São Caetano (prof. Jucelino, grafia do cronograma oficial; o repo antigo escrevia "Juscelino").

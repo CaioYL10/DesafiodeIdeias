@@ -2,7 +2,7 @@
 
 **Objetivo:** continuar o MVP existente com o fluxo cliente → feedback → triagem humana → problema → ação → eficácia.
 **Arquitetura:** manter Express, páginas HTML/JS e SQLite; tabelas adicionais preservam os feedbacks existentes. APIs de gestão exigem a sessão atual. Não há novas dependências.
-**Especificação:** `docs/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`, aprovada por Caio em 22/10.
+**Especificação:** `config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`, aprovada por Caio em 22/10.
 
 ## Restrições
 - A proposta segue pendente de validação pela CTI.
@@ -14,10 +14,10 @@
 
 ## Etapas
 - [x] Testar cadastro de clientes, vínculo de serviços e feedbacks, revisão humana, autorização e fluxo de qualidade antes da implementação.
-- [x] Criar tabelas auxiliares em `src/db/schema.sql`: clientes, serviços contratados, contexto do relato, revisões, problemas, vínculos, ações e eventos. Reabrir banco não deve apagar dados.
-- [x] Implementar `src/routes/crm-routes.js` com cadastro e histórico do cliente, associação do relato e revisões. Rejeitar IDs inexistentes, textos vazios e serviços não vinculados ao cliente.
-- [x] Implementar `src/routes/quality-routes.js`: abertura humana com feedbacks, ações, conclusão com evidência, verificação posterior e encerramento somente com todas as ações eficazes. Registrar cada mudança no histórico.
-- [x] Integrar rotas e páginas protegidas em `src/app.js`; ajustar indicadores e filtros para considerar o sentimento revisado, preservando sugestão original.
+- [x] Criar tabelas auxiliares em `app/src/db/schema.sql`: clientes, serviços contratados, contexto do relato, revisões, problemas, vínculos, ações e eventos. Reabrir banco não deve apagar dados.
+- [x] Implementar `app/src/routes/crm-routes.js` com cadastro e histórico do cliente, associação do relato e revisões. Rejeitar IDs inexistentes, textos vazios e serviços não vinculados ao cliente.
+- [x] Implementar `app/src/routes/quality-routes.js`: abertura humana com feedbacks, ações, conclusão com evidência, verificação posterior e encerramento somente com todas as ações eficazes. Registrar cada mudança no histórico.
+- [x] Integrar rotas e páginas protegidas em `app/src/app.js`; ajustar indicadores e filtros para considerar o sentimento revisado, preservando sugestão original.
 - [x] Criar telas de clientes, triagem e qualidade usando componentes e identidade existentes. Exibir estados vazios, mensagens de erro, datas, responsáveis e histórico; permitir o fluxo completo pela interface.
 - [x] Executar `npm.cmd test`, verificar navegação e fluxo no navegador em desktop e celular, revisar o diff e registrar limitações reais.
 
