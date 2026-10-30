@@ -29,6 +29,7 @@ function createApp({ database, sentimentService }) {
     });
   }
   protectedPage(['/dashboard', '/dashboard.html'], 'dashboard.html', '/dashboard');
+  protectedPage(['/feedbacks', '/feedbacks.html'], 'manager-feedbacks.html', '/feedbacks');
   protectedPage(['/products', '/products.html'], 'products.html', '/products');
   protectedPage(['/workspace', '/workspace.html'], 'workspace.html', '/workspace');
   app.get('/feedback', (request, response) => response.type('html').send(fs.readFileSync(path.join(publicPath, 'feedback.html'))));

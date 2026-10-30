@@ -46,7 +46,7 @@ if (loginForm) {
 }
 
 const rowsElement = document.querySelector('#feedback-rows');
-if (rowsElement) {
+if (document.querySelector('#metric-total') || rowsElement) {
   let currentPage = 1;
   const filtersForm = document.querySelector('#filters-form');
   const filterParams = () => new URLSearchParams(new FormData(filtersForm));
@@ -56,6 +56,7 @@ if (rowsElement) {
   async function loadSummary() {
     const response = await api('/api/manager/summary'); if (!response.ok) return;
     const summary = await response.json(); const sentiments = summary.sentimentCounts;
+    if (!document.querySelector('#metric-total')) return;
     document.querySelector('#metric-total').textContent = summary.total;
     document.querySelector('#metric-average').textContent = summary.averageRating === null ? '—' : summary.averageRating.toFixed(1);
     document.querySelector('#metric-positive').textContent = sentiments.positive;
@@ -66,7 +67,7 @@ if (rowsElement) {
     const analyzed = sentiments.positive + sentiments.neutral + sentiments.negative;
     for (const [key, value] of Object.entries(sentiments)) document.querySelector(`#bar-${key}`).style.width = `${analyzed ? value / analyzed * 100 : 0}%`;
     document.querySelector('#metric-positive-foot').textContent = analyzed ? `${Math.round(sentiments.positive / analyzed * 100)}% dos comentários analisados` : 'Ainda sem comentários analisados';
-    document.querySelector('#analysis-pending').textContent = summary.total > analyzed ? `${summary.total - analyzed} aguardando análise ou sem uso de IA` : `${analyzed} comentários analisados`;
+    document.querySelector('#analysis-pending').textContent = summary.total > analyzed ? `${summary.total - analyzed} sem análise de sentimento` : `${analyzed} comentários analisados`;
     drawTrend(summary.trend);
   }
 
@@ -84,10 +85,11 @@ if (rowsElement) {
     const result = await response.json();
     document.querySelector('#result-count').textContent = `${result.total} ${result.total === 1 ? 'registro' : 'registros'}`;
     if (!result.items.length) rowsElement.innerHTML = '<tr><td colspan="7" class="table-empty">Nenhum feedback encontrado com esses filtros.</td></tr>';
-    else rowsElement.innerHTML = result.items.map((item) => `<tr><td class="comment-cell"><a href="/workspace#triage/${item.id}">${safe(item.comment)}</a>${item.demo_data ? '<span class="demo-chip">DEMO</span>' : ''}</td><td>${SERVICE_LABELS[item.service] || safe(item.service)}</td><td><span class="rating-value">★ ${item.rating}</span></td><td>${item.final_sentiment ? `<span class="sentiment-pill ${item.final_sentiment}">${SENTIMENT_LABELS[item.final_sentiment]}${item.reviewed_at ? ' · revisado' : ' · IA'}</span>` : `<span class="sentiment-pill pending">${item.sentiment_status === 'failed' ? 'Falhou' : 'Pendente'}</span>`}</td><td class="date-cell">${formatDate(item.created_at)}</td><td><select class="status-select ${item.handling_status}" data-status-id="${item.id}" aria-label="Status da tratativa">${Object.entries(STATUS_LABELS).map(([key, value]) => `<option value="${key}" ${item.handling_status === key ? 'selected' : ''}>${value}</option>`).join('')}</select></td><td>${item.demo_data && item.sentiment_status !== 'completed' ? `<button class="icon-button" data-reanalyze-id="${item.id}" title="Tentar análise novamente" aria-label="Tentar análise novamente">↻</button>` : ''}</td></tr>`).join('');
+    else rowsElement.innerHTML = result.items.map((item) => `<tr><td class="comment-cell"><a href="/workspace#triage/${item.id}">${safe(item.comment)}</a></td><td>${SERVICE_LABELS[item.service] || safe(item.service)}</td><td><span class="rating-value">★ ${item.rating}</span></td><td>${item.final_sentiment ? `<span class="sentiment-pill ${item.final_sentiment}">${SENTIMENT_LABELS[item.final_sentiment]}${item.reviewed_at ? ' · revisado' : ' · IA'}</span>` : `<span class="sentiment-pill pending">${item.sentiment_status === 'failed' ? 'Falhou' : 'Pendente'}</span>`}</td><td class="date-cell">${formatDate(item.created_at)}</td><td><select class="status-select ${item.handling_status}" data-status-id="${item.id}" aria-label="Status da tratativa">${Object.entries(STATUS_LABELS).map(([key, value]) => `<option value="${key}" ${item.handling_status === key ? 'selected' : ''}>${value}</option>`).join('')}</select></td><td>${item.demo_data && item.sentiment_status !== 'completed' ? `<button class="icon-button" data-reanalyze-id="${item.id}" title="Tentar análise novamente" aria-label="Tentar análise novamente">↻</button>` : ''}</td></tr>`).join('');
     document.querySelector('#pagination').innerHTML = `<span>Página ${result.page} · ${result.total} registros</span><div><button class="button button-quiet" data-page="${Math.max(1, currentPage - 1)}" ${currentPage <= 1 ? 'disabled' : ''}>← Anterior</button><button class="button button-quiet" data-page="${currentPage + 1}" ${currentPage * result.pageSize >= result.total ? 'disabled' : ''}>Próxima →</button></div>`;
   }
 
+  if (rowsElement) {
   filtersForm.addEventListener('submit', (event) => { event.preventDefault(); currentPage = 1; loadFeedback(); });
   filtersForm.querySelector('[name="search"]').addEventListener('search', () => { currentPage = 1; loadFeedback(); });
   rowsElement.addEventListener('change', async (event) => {
@@ -107,11 +109,13 @@ if (rowsElement) {
   });
   document.querySelector('#pagination').addEventListener('click', (event) => { const page = Number(event.target.dataset.page); if (page) { currentPage = page; loadFeedback(); } });
   document.querySelector('#logout-button')?.addEventListener('click', async () => { await api('/api/auth/logout', { method: 'POST' }); location.assign('/login'); });
+  }
   async function init() {
     const response = await api('/api/auth/session'); const session = await response.json();
     if (!session.authenticated) { location.assign('/login'); return; }
     if (document.querySelector('#manager-email')) document.querySelector('#manager-email').textContent = session.email || 'Gestão';
-    await Promise.all([loadSummary(), loadFeedback()]);
+    await loadSummary();
+    if (rowsElement) await loadFeedback();
   }
   init();
 }
