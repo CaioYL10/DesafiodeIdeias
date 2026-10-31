@@ -156,3 +156,57 @@ test('migração de banco antigo preserva contato livre sem duplicar', (context)
   assert.equal(db.prepare('SELECT COUNT(*) AS total FROM client_contacts').get().total, 1);
   db.close();
 });
+
+test('servicos contratados aceitam multiplas instancias e preservam contexto', async (context) => {
+  const { request, db } = await setup(context);
+  const client = await request('/api/manager/crm/clients', 'POST', { name: 'Empresa teste', productIds: [1] });
+  const path = '/api/manager/crm/clients/' + client.body.id;
+  let detail = (await request(path)).body;
+  assert.equal(detail.serviceInstances.length, 1);
+  assert.equal(detail.serviceInstances[0].legacy, 1);
+  const payload = { productId: 1, name: 'Unidade A', location: 'Santo Andre', externalId: 'LINK-1', description: 'Acesso principal', active: true };
+  const first = await request(path + '/services', 'POST', payload);
+  const second = await request(path + '/services', 'POST', { ...payload, name: 'Unidade B', externalId: 'LINK-2' });
+  assert.equal(first.status, 201);
+  assert.equal(second.status, 201);
+  assert.equal((await request(path + '/services')).body.items.length, 3);
+  assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: client.body.id, productId: 1, serviceInstanceId: first.body.id, kind: 'complaint' })).status, 200);
+  assert.equal((await request('/api/manager/crm/feedback/1')).body.feedback.service_instance_name, 'Unidade A');
+  assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: client.body.id, productId: null, serviceInstanceId: first.body.id, kind: 'complaint' })).status, 400);
+  assert.equal((await request(path + '/services/' + first.body.id, 'PUT', { ...payload, name: 'Unidade A atualizada', active: false })).status, 200);
+  assert.equal((await request('/api/manager/crm/feedback/1')).body.feedback.service_instance_name, 'Unidade A atualizada');
+  const problem = await request('/api/manager/quality', 'POST', { title: 'Falha', category: 'Rede', analysis: 'Investigar', feedbackIds: [1] });
+  assert.equal((await request('/api/manager/quality/' + problem.body.id)).body.problem.service_instance_id, first.body.id);
+  assert.equal((await request('/api/manager/quality/' + problem.body.id + '/service', 'PUT', { serviceInstanceId: second.body.id })).status, 200);
+  assert.equal((await request('/api/manager/quality/' + problem.body.id + '/service', 'PUT', { serviceInstanceId: 999 })).status, 400);
+  assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: client.body.id, productId: 1, serviceInstanceId: null, kind: 'complaint' })).status, 200);
+  assert.equal((await request('/api/manager/crm/feedback/1')).body.feedback.service_instance_id, null);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM feedbacks').get().count, 1);
+});
+
+test('migracao associa vinculos antigos sem recriar instancia na reabertura', (context) => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { DatabaseSync } = require('node:sqlite');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cti-services-'));
+  context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const filename = path.join(directory, 'database.sqlite');
+  const old = new DatabaseSync(filename);
+  old.exec(fs.readFileSync(path.join(__dirname, '../src/db/schema.sql'), 'utf8'));
+  old.prepare("INSERT INTO managers VALUES (1, 'm@demo.test', 'salt', 'hash', '2026-10-31')").run();
+  old.prepare("INSERT INTO products VALUES (1, 'Internet dedicada', '', 'service', '2026-10-31')").run();
+  old.prepare("INSERT INTO clients VALUES (1, 'Empresa', '', '2026-10-31', '')").run();
+  old.prepare('INSERT INTO client_products VALUES (1, 1)').run();
+  old.prepare("INSERT INTO feedbacks(service, rating, comment, created_at) VALUES ('internet', 4, 'Teste', '2026-10-31')").run();
+  old.prepare("INSERT INTO feedback_context VALUES (1, 1, 1, 'feedback', 1, '2026-10-31')").run();
+  old.close();
+  let db = openDatabase(filename);
+  assert.equal(db.prepare('SELECT service_instance_name FROM feedback_overview').get().service_instance_name, 'Internet dedicada');
+  db.prepare('UPDATE feedback_context SET service_instance_id = NULL WHERE feedback_id = 1').run();
+  db.close();
+  db = openDatabase(filename);
+  assert.equal(db.prepare('SELECT service_instance_id FROM feedback_overview').get().service_instance_id, null);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM service_instances').get().count, 1);
+  db.close();
+});

@@ -18,7 +18,10 @@ function createQualityRouter(db) {
     if (!text(title, 160) || !text(category, 80) || !text(analysis, 2000) || !ids(feedbackIds) || !feedbackIds.length ||
       feedbackIds.some((id) => !db.prepare('SELECT id FROM feedbacks WHERE id = ?').get(id))) return res.status(400).json({ error: 'Informe título, categoria, análise e ao menos um feedback válido.' });
     const id = atomic(db, () => {
-      const result = db.prepare('INSERT INTO quality_problems(title, category, analysis, manager_id, created_at) VALUES (?, ?, ?, ?, ?)').run(title.trim(), category.trim(), analysis.trim(), req.manager.id, new Date().toISOString());
+      const instances = db.prepare(`SELECT DISTINCT service_instance_id FROM feedback_overview
+        WHERE id IN (${feedbackIds.map(() => '?').join(',')})`).all(...feedbackIds);
+      const instanceId = instances.length === 1 ? instances[0].service_instance_id : null;
+      const result = db.prepare('INSERT INTO quality_problems(title, category, analysis, manager_id, created_at, service_instance_id) VALUES (?, ?, ?, ?, ?, ?)').run(title.trim(), category.trim(), analysis.trim(), req.manager.id, new Date().toISOString(), instanceId);
       for (const feedbackId of feedbackIds) db.prepare('INSERT INTO problem_feedbacks VALUES (?, ?)').run(result.lastInsertRowid, feedbackId);
       event(result.lastInsertRowid, req.manager.id, 'Problema aberto após triagem humana.');
       return result.lastInsertRowid;
@@ -26,12 +29,25 @@ function createQualityRouter(db) {
     return res.status(201).json({ id });
   });
   router.get('/:id', (req, res) => {
-    const problem = db.prepare('SELECT * FROM quality_problems WHERE id = ?').get(req.params.id);
+    const problem = db.prepare(`SELECT p.*, s.name AS service_instance_name, s.client_id AS service_client_id,
+      s.product_id AS service_product_id FROM quality_problems p
+      LEFT JOIN service_instances s ON s.id = p.service_instance_id WHERE p.id = ?`).get(req.params.id);
     if (!problem) return res.status(404).json({ error: 'Problema não encontrado.' });
     return res.json({ problem,
       feedbacks: db.prepare('SELECT f.* FROM feedback_overview f JOIN problem_feedbacks pf ON pf.feedback_id = f.id WHERE pf.problem_id = ?').all(problem.id),
       actions: db.prepare('SELECT * FROM quality_actions WHERE problem_id = ? ORDER BY id').all(problem.id),
       events: db.prepare('SELECT e.*, m.email AS actor FROM quality_events e JOIN managers m ON m.id = e.manager_id WHERE problem_id = ? ORDER BY e.id DESC').all(problem.id) });
+  });
+  router.put('/:id/service', (req, res) => {
+    if (!db.prepare('SELECT id FROM quality_problems WHERE id = ?').get(req.params.id)) return res.status(404).json({ error: 'Problema não encontrado.' });
+    const { serviceInstanceId = null } = req.body || {};
+    if (serviceInstanceId !== null && (!Number.isSafeInteger(serviceInstanceId) ||
+      !db.prepare(`SELECT 1 FROM service_instances s JOIN problem_feedbacks pf ON pf.problem_id = ?
+        JOIN feedback_context c ON c.feedback_id = pf.feedback_id WHERE s.id = ? AND s.client_id = c.client_id
+        LIMIT 1`).get(req.params.id, serviceInstanceId))) return res.status(400).json({ error: 'Serviço contratado não pertence aos relatos do problema.' });
+    db.prepare('UPDATE quality_problems SET service_instance_id = ? WHERE id = ?').run(serviceInstanceId, req.params.id);
+    event(req.params.id, req.manager.id, serviceInstanceId === null ? 'Contexto do serviço removido.' : `Serviço contratado #${serviceInstanceId} associado ao problema.`);
+    return res.json({ updated: true });
   });
   router.post('/:id/actions', (req, res) => {
     const problem = db.prepare('SELECT * FROM quality_problems WHERE id = ?').get(req.params.id);

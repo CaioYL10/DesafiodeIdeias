@@ -41,7 +41,13 @@ Validação: `npm.cmd test`. Ainda fora desta etapa: edição/exclusão de clien
 
 Em **Clientes e qualidade → Clientes**, é possível cadastrar e atualizar a organização e seu responsável interno, manter vários contatos com função, e-mail e telefone opcionais, e registrar interações com tipo, data, resumo e contato relacionado opcional. O detalhe da organização reúne contatos, interações em ordem cronológica, serviços vinculados e relatos. O campo livre antigo é convertido em contato marcado como legado ao abrir o banco; os relatos existentes permanecem vinculados. Contatos e interações são atualizados sem exclusão física. Essas regras são premissas provisórias do MVP, ainda não validadas pela CTI.
 
-Esta é a **Etapa 1** do plano de 31/10. Serviços contratados específicos, origem dos relatos e análise estruturada de problemas pertencem às etapas seguintes.
+Esta é a **Etapa 1** do plano de 31/10.
+
+### Serviços contratados por organização (31/10)
+
+Na área **Clientes**, cada organização pode cadastrar várias instâncias do mesmo serviço do catálogo. Cada instância tem nome de referência, local/unidade, identificador externo, descrição curta e estado ativo ou inativo. A triagem permite escolher uma instância ou deixar o serviço específico sem identificação; o detalhe do problema mostra o contexto e permite completá-lo depois. O vínculo com o item genérico do catálogo continua disponível. Os vínculos antigos de organização e catálogo geram uma instância básica, sem local ou identificador inventados; relatos e problemas antigos recebem essa instância quando o vínculo é inequívoco. Nenhum registro é apagado na edição. Não se armazenam credenciais nem dados técnicos de acesso. Essas regras são premissas do MVP, ainda não validadas pela CTI.
+
+Esta é a **Etapa 2** do plano de 31/10. Origem e autor dos relatos e análise estruturada dos problemas seguem nas etapas 3 e 4.
 
 | Pasta | Responsabilidade |
 | --- | --- |

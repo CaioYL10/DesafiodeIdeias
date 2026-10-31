@@ -67,6 +67,21 @@ CREATE TABLE IF NOT EXISTS client_products (
   product_id INTEGER NOT NULL REFERENCES products(id),
   PRIMARY KEY (client_id, product_id)
 );
+CREATE TABLE IF NOT EXISTS service_instances (
+  id INTEGER PRIMARY KEY,
+  client_id INTEGER NOT NULL REFERENCES clients(id),
+  product_id INTEGER NOT NULL REFERENCES products(id),
+  name TEXT NOT NULL,
+  location TEXT NOT NULL DEFAULT '',
+  external_id TEXT NOT NULL DEFAULT '',
+  description TEXT NOT NULL DEFAULT '',
+  active INTEGER NOT NULL DEFAULT 1 CHECK (active IN (0, 1)),
+  legacy INTEGER NOT NULL DEFAULT 0 CHECK (legacy IN (0, 1)),
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_service_instances_client ON service_instances(client_id, product_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_service_instances_legacy ON service_instances(client_id, product_id) WHERE legacy = 1;
 CREATE TABLE IF NOT EXISTS feedback_context (
   feedback_id INTEGER PRIMARY KEY REFERENCES feedbacks(id),
   client_id INTEGER REFERENCES clients(id), product_id INTEGER REFERENCES products(id),
