@@ -112,3 +112,47 @@ test('banco existente mantém feedback legado ao reabrir', async (context) => {
   assert.equal(db.prepare('SELECT comment FROM feedback_overview').get().comment, 'Relato legado');
   db.close();
 });
+
+test('CRM preserva contatos e interações vinculados', async (context) => {
+  const { request } = await setup(context);
+  const created = await request('/api/manager/crm/clients', 'POST', { name: 'Empresa A', contact: 'Contato antigo', accountOwner: 'Caio', productIds: [1] });
+  const path = '/api/manager/crm/clients/' + created.body.id;
+  const first = await request(path + '/contacts', 'POST', { name: 'Ana', email: 'ana@empresa.test' });
+  const second = await request(path + '/contacts', 'POST', { name: 'Beto' });
+  assert.equal(first.status, 201);
+  assert.equal(second.status, 201);
+  assert.equal((await request(path + '/contacts/' + first.body.id, 'PUT', { name: 'Ana Silva' })).status, 200);
+  const interaction = await request(path + '/interactions', 'POST', { type: 'Reunião', occurredAt: '2026-10-31T12:00:00', summary: 'Alinhamento', contactId: first.body.id });
+  assert.equal(interaction.status, 201);
+  assert.equal((await request(path + '/interactions/' + interaction.body.id, 'PUT', { type: 'Ligação', occurredAt: '2026-10-31T13:00:00', summary: 'Retorno', contactId: second.body.id })).status, 200);
+  assert.equal((await request(path, 'PUT', { name: 'Empresa A atualizada', accountOwner: 'Enzo' })).status, 200);
+  assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: created.body.id, productId: 1, kind: 'feedback' })).status, 200);
+  const detail = (await request(path)).body;
+  assert.equal(detail.client.account_owner, 'Enzo');
+  assert.equal(detail.contacts.length, 3);
+  assert.ok(detail.contacts.some((item) => item.legacy && item.name === 'Contato antigo'));
+  assert.equal(detail.interactions[0].contact_name, 'Beto');
+  assert.equal(detail.feedbacks.length, 1);
+  assert.equal((await request(path + '/interactions', 'POST', { type: 'Teste', occurredAt: '2026-10-31', summary: 'Inválido', contactId: 999 })).status, 400);
+});
+
+test('migração de banco antigo preserva contato livre sem duplicar', (context) => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { DatabaseSync } = require('node:sqlite');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cti-crm-old-'));
+  context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const filename = path.join(directory, 'old.sqlite');
+  const old = new DatabaseSync(filename);
+  old.exec("CREATE TABLE clients(id INTEGER PRIMARY KEY, name TEXT NOT NULL, contact TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL)");
+  old.prepare('INSERT INTO clients(name, contact, created_at) VALUES (?, ?, ?)').run('Empresa antiga', 'Equipe antiga', '2026-10-01T00:00:00.000Z');
+  old.close();
+  let db = openDatabase(filename);
+  assert.equal(db.prepare('SELECT name FROM client_contacts').get().name, 'Equipe antiga');
+  assert.equal(db.prepare('SELECT account_owner FROM clients').get().account_owner, '');
+  db.close();
+  db = openDatabase(filename);
+  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM client_contacts').get().total, 1);
+  db.close();
+});

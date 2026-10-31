@@ -44,8 +44,24 @@ CREATE TABLE IF NOT EXISTS products (
 );
 
 CREATE TABLE IF NOT EXISTS clients (
-  id INTEGER PRIMARY KEY, name TEXT NOT NULL, contact TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, contact TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,
+  account_owner TEXT NOT NULL DEFAULT ''
 );
+CREATE TABLE IF NOT EXISTS client_contacts (
+  id INTEGER PRIMARY KEY, client_id INTEGER NOT NULL REFERENCES clients(id),
+  name TEXT NOT NULL, role TEXT NOT NULL DEFAULT '', email TEXT NOT NULL DEFAULT '',
+  phone TEXT NOT NULL DEFAULT '', legacy INTEGER NOT NULL DEFAULT 0 CHECK (legacy IN (0, 1)),
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_client_legacy_contact ON client_contacts(client_id) WHERE legacy = 1;
+CREATE INDEX IF NOT EXISTS idx_client_contacts_client ON client_contacts(client_id);
+CREATE TABLE IF NOT EXISTS client_interactions (
+  id INTEGER PRIMARY KEY, client_id INTEGER NOT NULL REFERENCES clients(id),
+  contact_id INTEGER REFERENCES client_contacts(id), type TEXT NOT NULL,
+  occurred_at TEXT NOT NULL, summary TEXT NOT NULL,
+  created_at TEXT NOT NULL, updated_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_client_interactions_client ON client_interactions(client_id, occurred_at DESC);
 CREATE TABLE IF NOT EXISTS client_products (
   client_id INTEGER NOT NULL REFERENCES clients(id),
   product_id INTEGER NOT NULL REFERENCES products(id),

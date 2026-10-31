@@ -37,6 +37,12 @@ Validação: `npm.cmd test`. Ainda fora desta etapa: edição/exclusão de clien
 
 ## Pastas
 
+### CRM de organizações e contatos (31/10)
+
+Em **Clientes e qualidade → Clientes**, é possível cadastrar e atualizar a organização e seu responsável interno, manter vários contatos com função, e-mail e telefone opcionais, e registrar interações com tipo, data, resumo e contato relacionado opcional. O detalhe da organização reúne contatos, interações em ordem cronológica, serviços vinculados e relatos. O campo livre antigo é convertido em contato marcado como legado ao abrir o banco; os relatos existentes permanecem vinculados. Contatos e interações são atualizados sem exclusão física. Essas regras são premissas provisórias do MVP, ainda não validadas pela CTI.
+
+Esta é a **Etapa 1** do plano de 31/10. Serviços contratados específicos, origem dos relatos e análise estruturada de problemas pertencem às etapas seguintes.
+
 | Pasta | Responsabilidade |
 | --- | --- |
 | `app/src/` | Backend Express, regras, autenticação e banco SQLite |
