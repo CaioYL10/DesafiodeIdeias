@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { openDatabase } = require('../src/db/database');
 const { createApp } = require('../src/app');
 const { startServer } = require('../test-support/server');
+const publicBody = (body) => ({ reportedOrganization: 'Empresa Exemplo', reportedContact: 'Pessoa Exemplo', ...body });
 
 test('salva feedback mesmo quando a análise de sentimento falha', async (context) => {
   const database = openDatabase(':memory:');
@@ -11,7 +12,7 @@ test('salva feedback mesmo quando a análise de sentimento falha', async (contex
   const baseUrl = await startServer(app, context);
   const response = await fetch(baseUrl + '/api/feedback', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ service: 'internet', rating: 2, comment: 'A conexão caiu várias vezes durante o expediente.', demoData: true })
+    body: JSON.stringify(publicBody({ service: 'internet', rating: 2, comment: 'A conexão caiu várias vezes durante o expediente.', demoData: true }))
   });
   assert.equal(response.status, 201);
   const saved = database.prepare('SELECT * FROM feedbacks').get();
@@ -31,7 +32,7 @@ test('rejeita feedback sem comentário, serviço inválido ou nota fora do inter
     { service: 'internet', rating: 6, comment: 'comentário' }
   ]) {
     const response = await fetch(baseUrl + '/api/feedback', {
-      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body)
+      method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(publicBody(body))
     });
     assert.equal(response.status, 400);
   }
@@ -45,7 +46,7 @@ test('não encaminha comentários sem confirmação de demonstração à IA', as
   const baseUrl = await startServer(createApp({ database, sentimentService: { classify: async () => { calls += 1; return { sentiment: 'neutral' }; } } }), context);
   const response = await fetch(baseUrl + '/api/feedback', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ service: 'suporte', rating: 3, comment: 'Texto sem confirmação.' })
+    body: JSON.stringify(publicBody({ service: 'suporte', rating: 3, comment: 'Texto sem confirmação.' }))
   });
   assert.equal(response.status, 201);
   assert.equal(calls, 0);
@@ -59,7 +60,7 @@ test('classifica apenas comentário explicitamente marcado como demonstrativo', 
   const baseUrl = await startServer(createApp({ database, sentimentService: { classify: async (comment) => { received = comment; return { sentiment: 'positive' }; } } }), context);
   const response = await fetch(baseUrl + '/api/feedback', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ service: 'cloud', rating: 5, comment: '  Comentário fictício.  ', demoData: true })
+    body: JSON.stringify(publicBody({ service: 'cloud', rating: 5, comment: '  Comentário fictício.  ', demoData: true }))
   });
   assert.equal(response.status, 201);
   assert.equal(received, 'Comentário fictício.');
@@ -73,7 +74,7 @@ test('deixa a análise pendente quando o provedor não tem chave configurada', a
   const baseUrl = await startServer(createApp({ database, sentimentService: createSentimentService({ apiKey: '' }) }), context);
   const response = await fetch(baseUrl + '/api/feedback', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ service: 'internet', rating: 4, comment: 'Comentário fictício para testar chave ausente.', demoData: true })
+    body: JSON.stringify(publicBody({ service: 'internet', rating: 4, comment: 'Comentário fictício para testar chave ausente.', demoData: true }))
   });
   assert.equal(response.status, 201);
   assert.equal((await response.json()).sentimentStatus, 'pending');

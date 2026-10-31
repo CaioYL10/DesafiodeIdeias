@@ -25,7 +25,7 @@ Para uso local persistente, dentro de `app/`, configure `.env` a partir de `.env
 ### Fluxo implementado em 23/10
 
 1. Cadastre serviços no catálogo e clientes com seus serviços vinculados.
-2. Receba feedback pelo formulário existente. Em **Clientes e qualidade → Triagem**, associe cliente/serviço e tipo do relato.
+2. Receba o relato pelo formulário público com organização e contato informados ou registre e-mail, telefone e atendimento interno na **Triagem**. Depois vincule organização, contato e serviço contratado existentes.
 3. Registre a revisão humana do sentimento. A sugestão da IA permanece intacta e cada revisão guarda gestor, data e observação.
 4. Na triagem, abra um problema com análise e categoria; podem ser relacionados vários relatos.
 5. Adicione ações com responsável e prazo, registre evidência da execução e verifique a eficácia posteriormente.
@@ -47,7 +47,13 @@ Esta é a **Etapa 1** do plano de 31/10.
 
 Na área **Clientes**, cada organização pode cadastrar várias instâncias do mesmo serviço do catálogo. Cada instância tem nome de referência, local/unidade, identificador externo, descrição curta e estado ativo ou inativo. A triagem permite escolher uma instância ou deixar o serviço específico sem identificação; o detalhe do problema mostra o contexto e permite completá-lo depois. O vínculo com o item genérico do catálogo continua disponível. Os vínculos antigos de organização e catálogo geram uma instância básica, sem local ou identificador inventados; relatos e problemas antigos recebem essa instância quando o vínculo é inequívoco. Nenhum registro é apagado na edição. Não se armazenam credenciais nem dados técnicos de acesso. Essas regras são premissas do MVP, ainda não validadas pela CTI.
 
-Esta é a **Etapa 2** do plano de 31/10. Origem e autor dos relatos e análise estruturada dos problemas seguem nas etapas 3 e 4.
+Esta é a **Etapa 2** do plano de 31/10.
+
+### Origem e autor dos relatos (31/10)
+
+O formulário público pede nome da organização e do contato, com e-mail opcional, sem listar clientes cadastrados. A equipe pode registrar relatos de e-mail, telefone ou atendimento interno na **Triagem**, com protocolo externo opcional. O relato guarda canal, data de recebimento, autor e organização informados; esses dados permanecem separados dos cadastros vinculados pela equipe. Na triagem, é possível associar ou corrigir organização, contato e instância do serviço. A avaliação exige nota de 1 a 5; reclamação e sugestão aceitam ausência de nota. Um protocolo repetido no mesmo canal gera aviso e pode ser registrado após confirmação humana. O comentário original, a sugestão de sentimento e as revisões humanas são preservados separadamente. A análise de sentimento só é solicitada para texto marcado como demonstrativo; falhas não impedem o registro. Bancos antigos são migrados ao abrir, preservando os relatos. Estas são premissas provisórias do MVP, não requisitos validados pela CTI.
+
+Esta é a **Etapa 3** do plano de 31/10. A análise estruturada dos problemas permanece na etapa 4.
 
 | Pasta | Responsabilidade |
 | --- | --- |

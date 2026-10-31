@@ -17,8 +17,15 @@ CREATE TABLE IF NOT EXISTS sessions (
 CREATE TABLE IF NOT EXISTS feedbacks (
   id INTEGER PRIMARY KEY,
   service TEXT NOT NULL,
-  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  rating INTEGER CHECK (rating BETWEEN 1 AND 5),
   comment TEXT NOT NULL,
+  source_channel TEXT NOT NULL DEFAULT 'form' CHECK (source_channel IN ('form', 'email', 'phone', 'internal')),
+  source_protocol TEXT NOT NULL DEFAULT '',
+  reported_organization TEXT NOT NULL DEFAULT '',
+  reported_contact TEXT NOT NULL DEFAULT '',
+  reported_email TEXT NOT NULL DEFAULT '',
+  received_at TEXT NOT NULL DEFAULT '',
+  source_kind TEXT NOT NULL DEFAULT 'feedback' CHECK (source_kind IN ('feedback', 'complaint', 'suggestion')),
   demo_data INTEGER NOT NULL DEFAULT 0 CHECK (demo_data IN (0, 1)),
   created_at TEXT NOT NULL,
   sentiment TEXT CHECK (sentiment IN ('positive', 'neutral', 'negative')),
@@ -32,6 +39,7 @@ CREATE INDEX IF NOT EXISTS idx_feedbacks_created_at ON feedbacks(created_at);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_service ON feedbacks(service);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_sentiment ON feedbacks(sentiment);
 CREATE INDEX IF NOT EXISTS idx_feedbacks_handling_status ON feedbacks(handling_status);
+CREATE INDEX IF NOT EXISTS idx_feedbacks_source_protocol ON feedbacks(source_channel, source_protocol);
 CREATE INDEX IF NOT EXISTS idx_sessions_expires_at ON sessions(expires_at);
 
 
@@ -85,6 +93,7 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_service_instances_legacy ON service_instan
 CREATE TABLE IF NOT EXISTS feedback_context (
   feedback_id INTEGER PRIMARY KEY REFERENCES feedbacks(id),
   client_id INTEGER REFERENCES clients(id), product_id INTEGER REFERENCES products(id),
+  contact_id INTEGER REFERENCES client_contacts(id),
   kind TEXT NOT NULL CHECK (kind IN ('feedback', 'complaint', 'suggestion')),
   manager_id INTEGER NOT NULL REFERENCES managers(id), updated_at TEXT NOT NULL
 );

@@ -47,7 +47,7 @@ function createManagerRouter(database, sentimentService) {
     rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 1);
     const rangeStart = new Date(rangeEnd.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString();
     const trend = database.prepare(`SELECT substr(created_at, 1, 10) AS date, ROUND(AVG(rating), 2) AS averageRating,
-      COUNT(*) AS total FROM feedbacks WHERE created_at >= ? AND created_at < ? GROUP BY date ORDER BY date`)
+      COUNT(*) AS total FROM feedbacks WHERE rating IS NOT NULL AND created_at >= ? AND created_at < ? GROUP BY date ORDER BY date`)
       .all(rangeStart, rangeEnd.toISOString());
     return response.json({ total, averageRating: average === null ? null : Number(average.toFixed(2)), sentimentCounts, trend });
   });

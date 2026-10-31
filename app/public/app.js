@@ -9,6 +9,11 @@ async function api(url, options = {}) {
 }
 
 const feedbackForm = document.querySelector('#feedback-form');
+const feedbackKind = document.querySelector('#feedback-kind');
+feedbackKind?.addEventListener('change', () => {
+  document.querySelectorAll('input[name="rating"]').forEach((input) => { input.required = feedbackKind.value === 'feedback' && input.value === '1'; });
+});
+feedbackKind?.dispatchEvent(new Event('change'));
 if (feedbackForm) {
   const comment = document.querySelector('#comment');
   comment.addEventListener('input', () => { document.querySelector('#char-count').textContent = `${comment.value.length} / 1.000`; });
@@ -19,7 +24,7 @@ if (feedbackForm) {
     const button = feedbackForm.querySelector('button[type="submit"]');
     button.disabled = true; button.textContent = 'Enviando…'; message.textContent = '';
     try {
-      const response = await api('/api/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ service: data.get('service'), rating: Number(data.get('rating')), comment: data.get('comment'), demoData: document.querySelector('#demo-data').checked }) });
+      const response = await api('/api/feedback', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ service: data.get('service'), kind: data.get('kind'), rating: data.get('rating') ? Number(data.get('rating')) : null, comment: data.get('comment'), reportedOrganization: data.get('reportedOrganization'), reportedContact: data.get('reportedContact'), reportedEmail: data.get('reportedEmail'), demoData: document.querySelector('#demo-data').checked }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || 'Não foi possível enviar.');
       feedbackForm.reset(); document.querySelector('#char-count').textContent = '0 / 1.000';
@@ -85,7 +90,7 @@ if (document.querySelector('#metric-total') || rowsElement) {
     const result = await response.json();
     document.querySelector('#result-count').textContent = `${result.total} ${result.total === 1 ? 'registro' : 'registros'}`;
     if (!result.items.length) rowsElement.innerHTML = '<tr><td colspan="7" class="table-empty">Nenhum feedback encontrado com esses filtros.</td></tr>';
-    else rowsElement.innerHTML = result.items.map((item) => `<tr><td class="comment-cell"><a href="/workspace#triage/${item.id}">${safe(item.comment)}</a></td><td>${SERVICE_LABELS[item.service] || safe(item.service)}</td><td><span class="rating-value">★ ${item.rating}</span></td><td>${item.final_sentiment ? `<span class="sentiment-pill ${item.final_sentiment}">${SENTIMENT_LABELS[item.final_sentiment]}${item.reviewed_at ? ' · revisado' : ' · IA'}</span>` : `<span class="sentiment-pill pending">${item.sentiment_status === 'failed' ? 'Falhou' : 'Pendente'}</span>`}</td><td class="date-cell">${formatDate(item.created_at)}</td><td><select class="status-select ${item.handling_status}" data-status-id="${item.id}" aria-label="Status da tratativa">${Object.entries(STATUS_LABELS).map(([key, value]) => `<option value="${key}" ${item.handling_status === key ? 'selected' : ''}>${value}</option>`).join('')}</select></td><td>${item.demo_data && item.sentiment_status !== 'completed' ? `<button class="icon-button" data-reanalyze-id="${item.id}" title="Tentar análise novamente" aria-label="Tentar análise novamente">↻</button>` : ''}</td></tr>`).join('');
+    else rowsElement.innerHTML = result.items.map((item) => `<tr><td class="comment-cell"><a href="/workspace#triage/${item.id}">${safe(item.comment)}</a></td><td>${SERVICE_LABELS[item.service] || safe(item.service)}</td><td>${item.rating === null ? "Sem nota" : `<span class="rating-value">★ ${item.rating}</span>`}</td><td>${item.final_sentiment ? `<span class="sentiment-pill ${item.final_sentiment}">${SENTIMENT_LABELS[item.final_sentiment]}${item.reviewed_at ? ' · revisado' : ' · IA'}</span>` : `<span class="sentiment-pill pending">${item.sentiment_status === 'failed' ? 'Falhou' : 'Pendente'}</span>`}</td><td class="date-cell">${formatDate(item.created_at)}</td><td><select class="status-select ${item.handling_status}" data-status-id="${item.id}" aria-label="Status da tratativa">${Object.entries(STATUS_LABELS).map(([key, value]) => `<option value="${key}" ${item.handling_status === key ? 'selected' : ''}>${value}</option>`).join('')}</select></td><td>${item.demo_data && item.sentiment_status !== 'completed' ? `<button class="icon-button" data-reanalyze-id="${item.id}" title="Tentar análise novamente" aria-label="Tentar análise novamente">↻</button>` : ''}</td></tr>`).join('');
     document.querySelector('#pagination').innerHTML = `<span>Página ${result.page} · ${result.total} registros</span><div><button class="button button-quiet" data-page="${Math.max(1, currentPage - 1)}" ${currentPage <= 1 ? 'disabled' : ''}>← Anterior</button><button class="button button-quiet" data-page="${currentPage + 1}" ${currentPage * result.pageSize >= result.total ? 'disabled' : ''}>Próxima →</button></div>`;
   }
 

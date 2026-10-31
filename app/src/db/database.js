@@ -15,6 +15,24 @@ function openDatabase(filename) {
   }
 
   const schema = fs.readFileSync(path.join(__dirname, 'schema.sql'), 'utf8');
+  const oldFeedback = database.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'feedbacks'").get();
+  if (oldFeedback && database.prepare('PRAGMA table_info(feedbacks)').all().some((column) => column.name === 'rating' && column.notnull)) {
+    const definition = schema.match(/CREATE TABLE IF NOT EXISTS feedbacks \([\s\S]*?\n\);/)[0]
+      .replace('CREATE TABLE IF NOT EXISTS feedbacks', 'CREATE TABLE feedbacks_new');
+    database.exec('PRAGMA foreign_keys = OFF');
+    try {
+      database.exec(`BEGIN; DROP VIEW IF EXISTS feedback_overview; ${definition}
+        INSERT INTO feedbacks_new(id, service, rating, comment, demo_data, created_at, sentiment, sentiment_status, handling_status)
+        SELECT id, service, rating, comment, demo_data, created_at, sentiment, sentiment_status, handling_status FROM feedbacks;
+        UPDATE feedbacks_new SET received_at = created_at;
+        DROP TABLE feedbacks; ALTER TABLE feedbacks_new RENAME TO feedbacks; COMMIT;`);
+    } catch (error) {
+      database.exec('ROLLBACK');
+      throw error;
+    } finally {
+      database.exec('PRAGMA foreign_keys = ON');
+    }
+  }
   database.exec(schema);
   if (!database.prepare('PRAGMA table_info(clients)').all().some((column) => column.name === 'account_owner')) {
     database.exec("ALTER TABLE clients ADD COLUMN account_owner TEXT NOT NULL DEFAULT ''");
@@ -23,6 +41,9 @@ function openDatabase(filename) {
   const migrateProblems = !database.prepare('PRAGMA table_info(quality_problems)').all().some((column) => column.name === 'service_instance_id');
   if (migrateFeedback) {
     database.exec('ALTER TABLE feedback_context ADD COLUMN service_instance_id INTEGER REFERENCES service_instances(id)');
+  }
+  if (!database.prepare('PRAGMA table_info(feedback_context)').all().some((column) => column.name === 'contact_id')) {
+    database.exec('ALTER TABLE feedback_context ADD COLUMN contact_id INTEGER REFERENCES client_contacts(id)');
   }
   if (migrateProblems) {
     database.exec('ALTER TABLE quality_problems ADD COLUMN service_instance_id INTEGER REFERENCES service_instances(id)');
@@ -46,13 +67,14 @@ function openDatabase(filename) {
         JOIN feedback_context c ON c.feedback_id = pf.feedback_id WHERE pf.problem_id = quality_problems.id) = 1;
     DROP VIEW feedback_overview;
     CREATE VIEW feedback_overview AS
-    SELECT f.*, c.client_id, c.product_id, c.service_instance_id, COALESCE(c.kind, 'feedback') AS kind,
-      cl.name AS client_name, p.name AS product_name, s.name AS service_instance_name,
+    SELECT f.*, c.client_id, c.contact_id, c.product_id, c.service_instance_id, COALESCE(c.kind, f.source_kind) AS kind,
+      cl.name AS client_name, cc.name AS contact_name, p.name AS product_name, s.name AS service_instance_name,
       r.sentiment AS reviewed_sentiment, r.created_at AS reviewed_at,
       COALESCE(r.sentiment, f.sentiment) AS final_sentiment
     FROM feedbacks f
     LEFT JOIN feedback_context c ON c.feedback_id = f.id
     LEFT JOIN clients cl ON cl.id = c.client_id
+    LEFT JOIN client_contacts cc ON cc.id = c.contact_id
     LEFT JOIN products p ON p.id = c.product_id
     LEFT JOIN service_instances s ON s.id = c.service_instance_id
     LEFT JOIN sentiment_reviews r ON r.id = (SELECT MAX(id) FROM sentiment_reviews WHERE feedback_id = f.id);`);

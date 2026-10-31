@@ -199,7 +199,7 @@ test('migracao associa vinculos antigos sem recriar instancia na reabertura', (c
   old.prepare("INSERT INTO clients VALUES (1, 'Empresa', '', '2026-10-31', '')").run();
   old.prepare('INSERT INTO client_products VALUES (1, 1)').run();
   old.prepare("INSERT INTO feedbacks(service, rating, comment, created_at) VALUES ('internet', 4, 'Teste', '2026-10-31')").run();
-  old.prepare("INSERT INTO feedback_context VALUES (1, 1, 1, 'feedback', 1, '2026-10-31')").run();
+  old.prepare("INSERT INTO feedback_context(feedback_id, client_id, product_id, kind, manager_id, updated_at) VALUES (1, 1, 1, 'feedback', 1, '2026-10-31')").run();
   old.close();
   let db = openDatabase(filename);
   assert.equal(db.prepare('SELECT service_instance_name FROM feedback_overview').get().service_instance_name, 'Internet dedicada');
