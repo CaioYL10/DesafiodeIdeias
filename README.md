@@ -55,6 +55,18 @@ O formulário público pede nome da organização e do contato, com e-mail opcio
 
 Esta é a **Etapa 3** do plano de 31/10. A análise estruturada dos problemas permanece na etapa 4.
 
+### Análise e tratamento de problemas de qualidade (31/10)
+
+Na triagem, a abertura de um problema continua sendo uma decisão humana. O formulário registra impacto (baixo, médio, alto ou crítico), prioridade (baixa, normal ou alta), contenção inicial, causa identificada quando conhecida e recorrência, com referência opcional a um problema anterior. A causa pode ficar pendente durante a investigação; **o encerramento exige causa identificada e todas as ações verificadas como eficazes**. O detalhe permite atualizar a análise enquanto o caso estiver aberto e mostra os relatos relacionados. Alterações de impacto, prioridade, contenção, causa e recorrência entram no histórico com gestor e data. Cada execução de ação tem sua própria evidência e verificação; uma tentativa ineficaz permanece consultável após nova execução. Problemas e ações antigos são preservados na migração, com impacto médio, prioridade normal e causa pendente quando esses dados não existiam.
+
+Esta é a **Etapa 4** do plano de 31/10. Os valores e regras são premissas do MVP, ainda não validados pela CTI.
+
+### Fluxo integrado e verificação (31/10)
+
+O cenário sintético automatizado em `app/test/crm-quality.test.js` cria organização, responsável, contato, interação e serviço contratado; recebe relatos por canal interno; associa os relatos na triagem; deixa uma reclamação sem problema e outro relato sem instância identificada; abre um caso com dois relatos e referência a um caso anterior; registra contenção, causa, ação, duas execuções e verificações (a primeira ineficaz); encerra após comprovação; e atualiza organização, contato e serviço para conferir os vínculos e o histórico. Execute com `cd app` e `node --test test/crm-quality.test.js`. A suíte completa usa `npm.cmd test`.
+
+Esta é a **Etapa 5** do plano de 31/10. Limitações das quatro áreas: o vínculo entre relatos e problemas é definido na abertura e não é editável depois; a recorrência aponta para um caso anterior, sem detecção automática; registros legados sem causa permanecem abertos até análise humana; a sugestão de sentimento é demonstrativa e não usa provedor externo.
+
 | Pasta | Responsabilidade |
 | --- | --- |
 | `app/src/` | Backend Express, regras, autenticação e banco SQLite |

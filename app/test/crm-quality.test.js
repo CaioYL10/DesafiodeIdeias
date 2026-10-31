@@ -44,6 +44,7 @@ test('fluxo CRM e qualidade preserva sugestão, exige evidência e verificação
   assert.equal((await request(actionPath + '/complete', 'POST', { evidence: 'Registro de teste sintético' })).status, 200);
   assert.equal((await request(path + '/close', 'POST')).status, 409);
   assert.equal((await request(actionPath + '/verify', 'POST', { effective: true, note: 'Sem oscilação no período observado' })).status, 200);
+  assert.equal((await request(path + '/analysis', 'PUT', { impact: 'high', priority: 'high', containment: 'Desvio temporário', cause: 'Falha no enlace', recurrent: false, relatedProblemId: null })).status, 200);
   assert.equal((await request(path + '/close', 'POST')).status, 200);
   const detail = (await request(path)).body;
   assert.equal(detail.problem.status, 'closed');
@@ -76,10 +77,12 @@ test('ação ineficaz impede encerramento e mantém evidências das tentativas n
   assert.equal((await request(path + '/close', 'POST')).status, 409);
   await request(actionPath + '/complete', 'POST', { evidence: 'Segunda tentativa' });
   await request(actionPath + '/verify', 'POST', { effective: true, note: 'Estável no teste posterior' });
+  assert.equal((await request(path + '/analysis', 'PUT', { impact: 'medium', priority: 'normal', containment: 'Acompanhamento manual', cause: 'Configuração incorreta', recurrent: false, relatedProblemId: null })).status, 200);
   assert.equal((await request(path + '/close', 'POST')).status, 200);
   const detail = (await request(path)).body;
   assert.ok(detail.events.some((e) => e.description.includes('Primeira tentativa')));
   assert.ok(detail.events.some((e) => e.description.includes('A oscilação persistiu')));
+  assert.deepEqual(detail.attempts.map((attempt) => attempt.effective), [0, 1]);
 });
 
 test('filtro e exportação usam revisão humana sem esconder a sugestão original', async (context) => {
@@ -208,5 +211,81 @@ test('migracao associa vinculos antigos sem recriar instancia na reabertura', (c
   db = openDatabase(filename);
   assert.equal(db.prepare('SELECT service_instance_id FROM feedback_overview').get().service_instance_id, null);
   assert.equal(db.prepare('SELECT COUNT(*) AS count FROM service_instances').get().count, 1);
+  db.close();
+});
+
+test('cenário integrado mantém CRM, relatos e tentativas de qualidade vinculados', async (context) => {
+  const { request, db } = await setup(context);
+  const client = await request('/api/manager/crm/clients', 'POST', { name: 'Organização sintética', accountOwner: 'Gestor', productIds: [1] });
+  const clientPath = `/api/manager/crm/clients/${client.body.id}`;
+  const contact = await request(clientPath + '/contacts', 'POST', { name: 'Ana', role: 'Operações' });
+  const interaction = await request(clientPath + '/interactions', 'POST', { type: 'Reunião', occurredAt: '2026-10-31T10:00:00', summary: 'Contexto do serviço', contactId: contact.body.id });
+  const service = await request(clientPath + '/services', 'POST', { productId: 1, name: 'Unidade A', location: 'Santo André', active: true });
+  assert.equal(interaction.status, 201);
+  assert.equal(service.status, 201);
+  const complaint = await request('/api/feedback/internal', 'POST', { sourceChannel: 'email', sourceProtocol: 'SYN-1', reportedOrganization: 'Organização sintética', reportedContact: 'Ana', service: 'internet', kind: 'complaint', comment: 'Oscilação sintética' });
+  const unlinked = await request('/api/feedback/internal', 'POST', { sourceChannel: 'phone', reportedOrganization: 'Organização sintética', reportedContact: 'Ana', service: 'internet', kind: 'complaint', comment: 'Relato sem instância identificada' });
+  assert.equal(complaint.status, 201);
+  assert.equal(unlinked.status, 201);
+  assert.equal((await request(`/api/manager/crm/feedback/${complaint.body.id}`, 'PUT', { clientId: client.body.id, contactId: contact.body.id, productId: 1, serviceInstanceId: service.body.id, kind: 'complaint' })).status, 200);
+  assert.equal((await request(`/api/manager/crm/feedback/${unlinked.body.id}`, 'PUT', { clientId: client.body.id, contactId: contact.body.id, productId: 1, serviceInstanceId: null, kind: 'complaint' })).status, 200);
+  assert.equal((await request(`/api/manager/crm/feedback/${unlinked.body.id}`)).body.feedback.service_instance_id, null);
+  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM quality_problems').get().total, 0);
+  const first = await request('/api/manager/quality', 'POST', { title: 'Primeiro caso', category: 'Rede', analysis: 'Análise humana', feedbackIds: [1], impact: 'low', priority: 'normal', containment: 'Monitorar', cause: 'Falha identificada', recurrent: false });
+  assert.equal(first.status, 201);
+  const second = await request('/api/manager/quality', 'POST', { title: 'Reincidência', category: 'Rede', analysis: 'Investigar', feedbackIds: [complaint.body.id, unlinked.body.id], impact: 'high', priority: 'high', containment: 'Desvio temporário', cause: '', recurrent: true, relatedProblemId: first.body.id });
+  assert.equal(second.status, 201);
+  const problemPath = `/api/manager/quality/${second.body.id}`;
+  assert.equal((await request(problemPath + '/close', 'POST')).status, 409);
+  assert.equal((await request(problemPath + '/analysis', 'PUT', { impact: 'invalid', priority: 'high', containment: 'Desvio', cause: '', recurrent: true, relatedProblemId: first.body.id })).status, 400);
+  assert.equal((await request(problemPath + '/analysis', 'PUT', { impact: 'critical', priority: 'high', containment: 'Rota alternativa', cause: 'Configuração do enlace', recurrent: true, relatedProblemId: first.body.id })).status, 200);
+  const action = await request(problemPath + '/actions', 'POST', { description: 'Corrigir enlace', owner: 'Equipe', dueDate: '2026-11-10' });
+  const actionPath = `/api/manager/quality/actions/${action.body.id}`;
+  await request(actionPath + '/complete', 'POST', { evidence: 'Primeira execução' });
+  await request(actionPath + '/verify', 'POST', { effective: false, note: 'Falha persistiu' });
+  assert.equal((await request(problemPath + '/close', 'POST')).status, 409);
+  await request(actionPath + '/complete', 'POST', { evidence: 'Segunda execução' });
+  await request(actionPath + '/verify', 'POST', { effective: true, note: 'Estável na verificação' });
+  assert.equal((await request(problemPath + '/close', 'POST')).status, 200);
+  assert.equal((await request(clientPath, 'PUT', { name: 'Organização atualizada', accountOwner: 'Outra gestora' })).status, 200);
+  assert.equal((await request(clientPath + `/contacts/${contact.body.id}`, 'PUT', { name: 'Ana Silva' })).status, 200);
+  assert.equal((await request(clientPath + `/services/${service.body.id}`, 'PUT', { productId: 1, name: 'Unidade A atualizada', location: 'Santo André', active: false })).status, 200);
+  const detail = (await request(problemPath)).body;
+  assert.equal(detail.problem.status, 'closed');
+  assert.equal(detail.problem.related_problem_id, first.body.id);
+  assert.equal(detail.problem.impact, 'critical');
+  assert.equal(detail.feedbacks.length, 2);
+  assert.equal(detail.feedbacks[0].client_name, 'Organização atualizada');
+  assert.deepEqual(detail.attempts.map((attempt) => attempt.effective), [0, 1]);
+  assert.ok(detail.events.some((event) => event.description.includes('impact:')));
+  assert.equal((await request(clientPath)).body.interactions[0].contact_name, 'Ana Silva');
+});
+
+test('migração preserva problema e ação anteriores à análise estruturada', (context) => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { DatabaseSync } = require('node:sqlite');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'cti-quality-old-'));
+  context.after(() => fs.rmSync(directory, { recursive: true, force: true }));
+  const filename = path.join(directory, 'old.sqlite');
+  const old = new DatabaseSync(filename);
+  old.exec(`CREATE TABLE quality_problems(id INTEGER PRIMARY KEY, title TEXT NOT NULL, category TEXT NOT NULL,
+    analysis TEXT NOT NULL, status TEXT NOT NULL, manager_id INTEGER NOT NULL, created_at TEXT NOT NULL,
+    closed_at TEXT, service_instance_id INTEGER);
+    CREATE TABLE quality_actions(id INTEGER PRIMARY KEY, problem_id INTEGER NOT NULL, description TEXT NOT NULL,
+    owner TEXT NOT NULL, due_date TEXT NOT NULL, status TEXT NOT NULL, evidence TEXT, completed_at TEXT,
+    verification_note TEXT, verified_at TEXT, created_at TEXT NOT NULL);
+    INSERT INTO quality_problems VALUES (1, 'Caso legado', 'Rede', 'Análise antiga', 'in_progress', 1, '2026-10-01', NULL, NULL);
+    INSERT INTO quality_actions VALUES (1, 1, 'Revisar enlace', 'Equipe', '2026-11-01', 'ineffective',
+      'Evidência antiga', '2026-10-02', 'Falha persistiu', '2026-10-03', '2026-10-01');`);
+  old.close();
+  let db = openDatabase(filename);
+  assert.equal(db.prepare('SELECT impact FROM quality_problems').get().impact, 'medium');
+  assert.equal(db.prepare('SELECT cause FROM quality_problems').get().cause, '');
+  assert.equal(db.prepare('SELECT evidence, effective FROM quality_action_attempts').get().evidence, 'Evidência antiga');
+  db.close();
+  db = openDatabase(filename);
+  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM quality_action_attempts').get().total, 1);
   db.close();
 });

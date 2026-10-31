@@ -106,7 +106,13 @@ CREATE INDEX IF NOT EXISTS idx_reviews_feedback ON sentiment_reviews(feedback_id
 CREATE TABLE IF NOT EXISTS quality_problems (
   id INTEGER PRIMARY KEY, title TEXT NOT NULL, category TEXT NOT NULL, analysis TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'in_progress', 'closed')),
-  manager_id INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL, closed_at TEXT
+  manager_id INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL, closed_at TEXT,
+  service_instance_id INTEGER REFERENCES service_instances(id),
+  impact TEXT NOT NULL DEFAULT 'medium' CHECK (impact IN ('low', 'medium', 'high', 'critical')),
+  priority TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high')),
+  containment TEXT NOT NULL DEFAULT '', cause TEXT NOT NULL DEFAULT '',
+  recurrent INTEGER NOT NULL DEFAULT 0 CHECK (recurrent IN (0, 1)),
+  related_problem_id INTEGER REFERENCES quality_problems(id)
 );
 CREATE TABLE IF NOT EXISTS problem_feedbacks (
   problem_id INTEGER NOT NULL REFERENCES quality_problems(id),
@@ -119,6 +125,13 @@ CREATE TABLE IF NOT EXISTS quality_actions (
   evidence TEXT, completed_at TEXT, verification_note TEXT, verified_at TEXT,
   created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS quality_action_attempts (
+  id INTEGER PRIMARY KEY, action_id INTEGER NOT NULL REFERENCES quality_actions(id),
+  evidence TEXT NOT NULL, completed_at TEXT NOT NULL,
+  effective INTEGER CHECK (effective IN (0, 1)), verification_note TEXT,
+  verified_at TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_quality_attempts_action ON quality_action_attempts(action_id, id);
 CREATE TABLE IF NOT EXISTS quality_events (
   id INTEGER PRIMARY KEY, problem_id INTEGER NOT NULL REFERENCES quality_problems(id),
   manager_id INTEGER NOT NULL REFERENCES managers(id), description TEXT NOT NULL, created_at TEXT NOT NULL

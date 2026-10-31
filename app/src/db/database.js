@@ -48,6 +48,23 @@ function openDatabase(filename) {
   if (migrateProblems) {
     database.exec('ALTER TABLE quality_problems ADD COLUMN service_instance_id INTEGER REFERENCES service_instances(id)');
   }
+  const problemColumns = new Set(database.prepare('PRAGMA table_info(quality_problems)').all().map((column) => column.name));
+  for (const [name, definition] of Object.entries({
+    impact: "TEXT NOT NULL DEFAULT 'medium' CHECK (impact IN ('low', 'medium', 'high', 'critical'))",
+    priority: "TEXT NOT NULL DEFAULT 'normal' CHECK (priority IN ('low', 'normal', 'high'))",
+    containment: "TEXT NOT NULL DEFAULT ''",
+    cause: "TEXT NOT NULL DEFAULT ''",
+    recurrent: 'INTEGER NOT NULL DEFAULT 0 CHECK (recurrent IN (0, 1))',
+    related_problem_id: 'INTEGER REFERENCES quality_problems(id)'
+  })) {
+    if (!problemColumns.has(name)) database.exec(`ALTER TABLE quality_problems ADD COLUMN ${name} ${definition}`);
+  }
+  database.exec(`INSERT INTO quality_action_attempts(action_id, evidence, completed_at, effective, verification_note, verified_at)
+    SELECT id, evidence, completed_at,
+      CASE status WHEN 'effective' THEN 1 WHEN 'ineffective' THEN 0 ELSE NULL END,
+      verification_note, verified_at FROM quality_actions a
+    WHERE evidence IS NOT NULL AND completed_at IS NOT NULL
+      AND NOT EXISTS (SELECT 1 FROM quality_action_attempts WHERE action_id = a.id)`);
   database.exec(`INSERT INTO service_instances(client_id, product_id, name, legacy, created_at, updated_at)
     SELECT cp.client_id, cp.product_id, p.name, 1, c.created_at, c.created_at
     FROM client_products cp JOIN products p ON p.id = cp.product_id JOIN clients c ON c.id = cp.client_id
