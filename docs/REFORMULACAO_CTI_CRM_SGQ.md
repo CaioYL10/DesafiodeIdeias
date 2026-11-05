@@ -8,6 +8,14 @@ Evoluir gradualmente o projeto existente para uma plataforma de **CRM de relacio
 
 Um sistema externo coleta feedbacks e analisa problemas técnicos. A plataforma CTI importa esses registros, cadastra automaticamente clientes novos quando houver identificação suficiente, agrupa o histórico e analisa padrões de atendimento e relacionamento. As análises são hipóteses rastreáveis, revisadas por pessoas antes de virarem conclusões ou ações oficiais.
 
+## Escopo atual: aplicação local com simulação
+
+Implemente uma versão local demonstrável. Todos os feedbacks e dados atribuídos à aplicação externa serão fictícios e carregados localmente, passando pelo mesmo fluxo que cria clientes, vincula históricos e alimenta o SGQ. As referências a “importação” ou “dados externos” neste documento descrevem essa origem simulada no escopo atual.
+
+Não implemente a integração real agora nem uma etapa de contratos, remodelagem de domínio ou migrações. Reutilize a stack e a estrutura de dados existentes, adaptando apenas o necessário em cada funcionalidade. Prepare o futuro com um ponto simples de leitura substituível, evitando arquitetura adicional sem necessidade. Registre o formato demonstrativo utilizado, sem tratá-lo como contrato oficial da outra aplicação.
+
+E-mails e automações também devem funcionar em modo simulado e claramente identificado. O aceite exige a jornada local completa; conectividade com outra aplicação fica para trabalho futuro.
+
 ## Decisões de produto consolidadas
 
 1. **Sistema externo:** coleta e armazena feedbacks e analisa padrões técnicos, como concentração por serviço, local, instalação ou tipo de problema. A CTI consome os registros e resultados disponíveis, sem duplicar a análise técnica.
@@ -21,7 +29,7 @@ Um sistema externo coleta feedbacks e analisa problemas técnicos. A plataforma 
 9. **CRM:** apoiar visão do cliente, histórico, satisfação, retenção, necessidades, serviços e oportunidades pertinentes.
 10. **Automações:** prever e-mail e lembretes de manutenção/acompanhamento quando adequados. Respeitar consentimento e preferências, registrar execução e falhas, evitar duplicidade e permitir configuração humana.
 11. **Preservação:** manter stack, convenções e componentes que continuem pertinentes ao novo escopo. Remover funcionalidades obsoletas conforme a decisão abaixo. Evitar dependências novas sem necessidade demonstrada.
-12. **Retirada do escopo antigo:** remover a coleta direta de feedbacks pela CTI, formulários públicos ou internos de envio/cadastro manual de feedback, campanhas de coleta e análise de sentimento executada pela plataforma. Retirar telas, rotas, endpoints, serviços, tarefas, indicadores, configurações, dependências exclusivas e documentação desses fluxos, após mapear suas referências. A importação autenticada do sistema externo permanece: ela é necessária ao novo produto.
+12. **Retirada do escopo antigo:** remover a coleta direta de feedbacks pela CTI, formulários públicos ou internos de envio/cadastro manual de feedback, campanhas de coleta e análise de sentimento executada pela plataforma. Retirar telas, rotas, endpoints, serviços, tarefas, indicadores, configurações, dependências exclusivas e documentação desses fluxos, após mapear suas referências. A entrada simulada de dados externos permanece e deve poder ser substituída por uma integração real no futuro.
 13. **Tela de feedbacks:** servir exclusivamente à consulta de todos os feedbacks importados, respeitando permissões. Exibir os dados fornecidos pela origem, com paginação, busca/filtros e consulta de detalhes quando necessários. Não oferecer criação manual, envio, edição do conteúdo externo nem análise de sentimento local. Se a origem fornecer sentimento ou classificação, apresentá-los apenas como dados externos, identificando a origem, sem gerar ou recalcular localmente. As hipóteses relacionais próprias e sua revisão ficam no SGQ, vinculadas aos feedbacks como evidências.
 
 ## Remoção obrigatória do legado fora do escopo
@@ -35,10 +43,10 @@ Esta decisão prevalece sobre orientações genéricas de preservar funcionalida
 - Não faça git pull, git push, publicação ou ação externa sem autorização. No início do trabalho em repositório Git, confirme se é necessário git pull, conforme as instruções locais.
 - Faça mudanças pequenas e revisáveis. Relate arquivos alterados, decisões, verificações e limitações; não declare sucesso sem evidência.
 - Faça checkpoint revisável ao final de cada etapa aprovada. Não crie commit sem perguntar a mensagem; antes, mostre git status --short e git diff --stat. Não faça push.
-- Defina contratos de dados antes da integração. Migrações devem ser seguras, preferencialmente aditivas e reversíveis, preservar os dados atuais e documentar recuperação.
+- Use a estrutura local existente e faça apenas adaptações indispensáveis ao funcionamento. Não crie uma fase de contratos, remodelagem de domínio ou migrações. Preserve dados locais existentes.
 - Escreva ou atualize testes proporcionais às regras alteradas. Rode testes específicos primeiro e amplie quando o impacto for transversal. Registre comandos e resultados reais.
 - Proteja dados pessoais com minimização, autorização, trilha de auditoria, retenção apropriada e tratamento seguro de segredos. Não exponha dados pessoais em logs, fixtures ou exemplos.
-- Não invente detalhes ausentes da API externa. Registre lacunas e avance com contratos ou abstrações desacopladas quando possível.
+- Não implemente API externa, autenticação de integração, credenciais, infraestrutura ou contrato definitivo. Concentre a leitura de dados simulados em uma função ou serviço simples, substituível no futuro sem reescrever CRM, telas e SGQ.
 - Não implemente etapas futuras antecipadamente; registre dependências e justifique qualquer ajuste de escopo.
 
 ## Protocolo de execução pelo Codex
@@ -50,13 +58,13 @@ Este arquivo é a especificação executável do trabalho. As etapas abaixo cont
 - A inspeção inicial faz parte da etapa 1; não há uma fase independente de aprovação de auditoria.
 - Reutilize um registro de acompanhamento existente ou crie docs/reformulation-progress.md. Registre por etapa: estado (pendente, em andamento, concluída ou bloqueada), decisões, arquivos importantes, verificações e resultados, limitações e próximos passos.
 - Ao retomar, leia este arquivo e o acompanhamento e confira o código. Continue do ponto registrado, aproveitando verificações anteriores quando ainda válidas.
-- Só marque uma etapa concluída quando seus critérios de aceite forem atendidos. Contrato ou credencial externa ausente deve ser registrado como dependência; fixtures não equivalem a homologação real.
+- Só marque uma etapa concluída quando seus critérios de aceite forem atendidos. A simulação local é o resultado esperado e suficiente para o aceite atual; API, credenciais e homologação externa não são pré-requisitos.
 - Ao finalizar, atualize o acompanhamento e relate resultados. Um checkpoint pode ser um estado local revisável; faça commit somente após perguntar a mensagem. A ausência de commit não impede outra etapa já solicitada.
 - Não invente detalhes externos. Avance nas partes independentes e pergunte apenas quando uma decisão realmente bloquear a execução segura.
 
 ## Etapas de implementação
 
-Execute as etapas de 1 a 8 em ordem. Todas as regras e decisões anteriores se aplicam a cada etapa.
+Execute as etapas de 1 a 7 em ordem. Todas as regras e decisões anteriores se aplicam a cada etapa.
 
 ## Etapa 1 — Contexto do produto e documentação
 
@@ -66,33 +74,19 @@ Inspecione de forma direcionada a stack, arquitetura, modelos, fluxos, integraç
 
 Documente propósito e limites do produto; responsabilidades do sistema externo e da CTI; importação e cadastro automático; identidade, duplicidade e revisão de ambiguidades; histórico do cliente; análise como hipótese; revisão humana; ocorrência, investigação, ação e eficácia; funções CRM; automações; segurança e LGPD. Diferencie problemas puramente técnicos, relacionais e mistos. Em casos mistos, o SGQ CTI trata somente a dimensão relacional.
 
-Use os arquivos e padrões existentes. Não invente API, campos, tecnologias ou regras legais. Liste lacunas que dependem de decisão ou documentação externa. Ao terminar, informe arquivos alterados e verificações de consistência. Não faça commit.
+Use os arquivos e padrões existentes. Defina dados fictícios coerentes para a demonstração local, identificados como simulados; não os apresente como formato oficial da futura aplicação externa. Ao terminar, informe arquivos alterados e verificações de consistência. Não faça commit.
 
 **Aceite:** responsabilidades técnicas e relacionais estão corretamente separadas em toda a documentação.
 
-## Etapa 2 — Domínio, contratos e migrações
-
-**Resultado:** dados e compatibilidade definidos antes da integração.
-
-A partir do código inspecionado e da documentação alinhada na etapa 1, prepare contratos e modelo de domínio para CRM + SGQ relacional conforme os padrões existentes.
-
-Inspecione os modelos e proponha mudanças mínimas para representar quando necessário: cliente e identidade externa; feedback importado e vínculo com cliente; eventos de histórico; hipótese relacional com evidências, período e estado de revisão; ocorrência SGQ; investigação/causa; plano de ação, responsável, prazo, estado e verificação de eficácia; serviços e lembretes se já fizerem parte do domínio. Reutilize entidades existentes quando seguro.
-
-Defina contrato de importação versionável e idempotente. Preserve identificador da origem, instante de ocorrência/recebimento, conteúdo e classificação técnica de origem quando disponível, sem tratá-la como análise CTI. Separe campos externos de conclusões internas. Planeje correspondência, ambiguidades, registros incompletos, reprocessamento e deduplicação. Campos não confirmados pela origem devem ficar explicitamente pendentes/opcionais.
-
-Apresente plano aditivo de migração, compatibilidade, reversão/recuperação e validações. Implemente conforme os padrões identificados no repositório e documente compatibilidade e recuperação dos dados históricos. Não apague dados. Inclua testes proporcionais e reporte arquivos, decisões, riscos e resultados reais. Não faça commit.
-
-**Aceite:** origem e decisões internas são distinguíveis; repetição não duplica registros; migração preserva os dados atuais.
-
-## Etapa 3 — Importação, cadastro automático e remoção dos fluxos antigos
+## Etapa 2 — Importação, cadastro automático e remoção dos fluxos antigos
 
 **Resultado:** fluxo principal de entrada pelo feedback, idempotente e seguro diante de identidade incerta.
 
-Implemente, conforme contratos definidos na etapa 2 e padrões do repositório, a importação dos feedbacks externos e o cadastro automático de clientes como fluxo principal.
+Implemente, usando uma fonte local simulada e os padrões do repositório, a importação dos feedbacks externos e o cadastro automático de clientes como fluxo principal.
 
 Valide o formato; registre origem e identificador externo; processe repetições sem duplicar; crie perfil mínimo quando não houver correspondência confiável e houver dados suficientes; vincule ao cliente existente somente com identidade segura; não una pessoas/empresas apenas por semelhança de nome; encaminhe ambiguidades para revisão; permita completar/corrigir perfil depois. Mantenha cadastro manual secundário. Trate falhas parciais e reprocessamento sem perda. A integração não deve sobrescrever conclusões humanas nem dados internos sem regra explícita.
 
-Respeite autorização, validação no servidor, segurança de credenciais e tratamento de erros. Não registre conteúdo sensível desnecessário. Não conecte a serviço real nem invente URL ou credenciais. Se o contrato externo estiver pendente, use a abstração aprovada e fixtures sintéticas seguras.
+Use dados fictícios locais com identificadores estáveis, datas, cliente, serviço e conteúdo suficientes para demonstrar as jornadas. Reutilize a persistência e os mecanismos existentes; não crie servidor ou banco novo para simular a origem. Centralize o fornecimento desses dados em um ponto substituível por uma fonte real no futuro. A carga pode ocorrer por seed, inicialização ou ferramenta de desenvolvimento, sem recriar um formulário de coleta na tela de feedbacks. Demonstre novos clientes, cliente recorrente, evento repetido, identidade ambígua e casos técnicos, relacionais e mistos. Não dependa de rede ou credenciais.
 
 Remova coleta direta, envio e cadastro manual de feedback e análise de sentimento local: telas, rotas, endpoints, serviços, tarefas, indicadores, configurações, documentação e dependências exclusivas. Preserve ingestão externa, dados históricos e componentes compartilhados. Atualize testes afetados e verifique que os antigos pontos de entrada não permitem essas operações.
 
@@ -100,11 +94,11 @@ Inclua testes de cliente novo, existente, evento repetido, identidade ambígua, 
 
 **Aceite ponta a ponta:** feedback elegível cria cliente e histórico uma única vez; correspondência ambígua não mescla; cadastro manual continua disponível.
 
-## Etapa 4 — CRM, histórico e consulta dos feedbacks externos
+## Etapa 3 — CRM, histórico e consulta dos feedbacks externos
 
 **Resultado:** visão do cliente centrada no relacionamento, rastreável e acessível.
 
-Evolua telas e fluxos CRM existentes, preservando identidade visual e componentes úteis, para apresentar clientes e seu histórico unificado. Use dados reais do domínio e padrões de navegação/acessibilidade existentes.
+Evolua telas e fluxos CRM existentes, preservando identidade visual e componentes úteis, para apresentar clientes e seu histórico unificado. Use os dados simulados carregados no fluxo local e padrões de navegação/acessibilidade existentes.
 
 Mostre identificação e origem, feedbacks, contatos/interações, serviços pertinentes, estado do relacionamento e indicadores com fórmula documentada. Inclua pesquisa/listagem, filtros úteis e navegação entre perfil, feedback e ocorrência. Sinalize dados incompletos e correspondências aguardando revisão. Permita edição controlada e registre alterações importantes conforme os padrões identificados no repositório. Não apresente hipótese não revisada como fato.
 
@@ -114,7 +108,7 @@ Implemente estados de carregamento, vazio, erro e falta de permissão. Proteja d
 
 **Aceite:** pessoa autorizada localiza o cliente criado por feedback e percorre o histórico sem confundir dados importados com conclusões internas.
 
-## Etapa 5 — Padrões relacionais e revisão humana
+## Etapa 4 — Padrões relacionais e revisão humana
 
 **Resultado:** análise própria CTI baseada em evidências, sem conclusão definitiva automática.
 
@@ -128,7 +122,7 @@ Inclua testes de limite de escopo, evidências, autorização/revisão, rejeiç�
 
 **Aceite:** hipótese não revisada fica pendente; conclusões têm evidências e decisão humana rastreáveis; problema técnico isolado não vira ocorrência relacional.
 
-## Etapa 6 — Ocorrências, investigação e planos de ação
+## Etapa 5 — Ocorrências, investigação e planos de ação
 
 **Resultado:** ciclo de melhoria contínua para ocorrências relacionais.
 
@@ -136,23 +130,23 @@ Implemente/adapte o SGQ para gerir ocorrências confirmadas de relacionamento, i
 
 Permita abertura por pessoa autorizada a partir de hipótese confirmada; descrição e evidências; classificação relacional; investigação de causa sem apresentá-la como certeza automática; responsável, prioridade e prazo quando aplicáveis; ações com estados e histórico; acompanhamento; avaliação de eficácia com critério registrado; encerramento ou reabertura justificados. Vincule cliente, feedbacks e decisão originadora. Mantenha trilha de alterações e não apague silenciosamente evidências.
 
-Não inclua tratamento técnico em ocorrência CTI e não transforme toda reclamação em não conformidade. Aplique autorização por papel e valide transições no servidor. Teste ciclo, permissões, estados inválidos, rastreabilidade e eficácia. Migrações devem preservar dados. Reporte verificações; não faça commit.
+Não inclua tratamento técnico em ocorrência CTI e não transforme toda reclamação em não conformidade. Aplique autorização por papel e valide transições no servidor. Teste ciclo, permissões, estados inválidos, rastreabilidade e eficácia. Preserve os dados locais existentes. Reporte verificações; não faça commit.
 
 **Aceite:** ocorrência relacional percorre investigação, ação e eficácia com autoria e histórico; dados técnicos ficam fora da responsabilidade CTI.
 
-## Etapa 7 — Retenção, serviços e automações
+## Etapa 6 — Retenção, serviços e automações
 
 **Resultado:** acompanhamento seguro e configurável.
 
-Evolua CRM para apoiar retenção, acompanhamento, serviços e automações de comunicação/manutenção, reutilizando integrações existentes. Antes de adicionar provedor/dependência ou enviar algo real, identifique a configuração; não envie mensagens externas nesta etapa sem autorização explícita.
+Evolua CRM para apoiar retenção, acompanhamento, serviços e automações locais simuladas de comunicação/manutenção. Use um relógio/data de referência ou mecanismo local simples que permita demonstrar vencimentos e execução sem serviços externos. Não envie e-mails reais nem configure provedores.
 
 Implemente apenas recursos sustentados pelo domínio: serviços e datas relevantes se disponíveis; lembretes; tarefas de acompanhamento; preferências/consentimentos; templates revisáveis; histórico de mensagens planejadas/enviadas/falhas; prevenção de duplicidade; cancelamento e retentativa controlada. Separe lembrete de manutenção de diagnóstico técnico. Dê controle de frequência, destinatários e ativação, respeitando autorização e minimização.
 
-Sem provedor/dados necessários, entregue abstração segura e documente configuração pendente, sem simular envio real. Teste agendamento/fuso conforme padrão, consentimento, idempotência, falha e autorização. Execute verificações focadas; reporte resultados; não faça commit.
+Simule o envio localmente, exibindo claramente prévia e estado de simulação, com registros de sucesso/falha simulados e prevenção de duplicidade. Não apresente mensagem simulada como entregue a destinatário real. Mantenha o mecanismo simples e substituível no futuro. Teste agendamento/fuso conforme padrão, consentimento, idempotência, falha e autorização. Execute verificações focadas; reporte resultados; não faça commit.
 
 **Aceite:** automações são configuráveis e rastreáveis, respeitam preferências e não enviam duplicatas nem mensagens sem autorização válida.
 
-## Etapa 8 — Segurança, LGPD, regressão e fechamento
+## Etapa 7 — Segurança, LGPD, regressão e fechamento
 
 **Resultado:** revisão integrada e evidências de aceite ponta a ponta.
 
@@ -160,11 +154,11 @@ Revise a reformulação CTI CRM + SGQ com foco em segurança, privacidade, coer�
 
 Procure referências e acessos residuais aos fluxos removidos, inclusive navegação, tarefas, indicadores e documentação. Confirme que a tela de feedbacks apenas consulta registros externos e que a importação e o SGQ permanecem funcionais.
 
-Verifique permissões/isolamento; validação e proteção da integração; segredos fora do código; logs sem exposição indevida; minimização, finalidade, retenção e correção de dados pessoais; trilha de auditoria; migrações/compatibilidade; idempotência/duplicidade; revisão humana; fronteira entre análise técnica externa e relacional CTI; acessibilidade; documentação e testes.
+Verifique permissões/isolamento; validação da entrada simulada; ausência de credenciais e chamadas externas necessárias; logs sem exposição indevida; minimização, finalidade, retenção e correção de dados pessoais; trilha de auditoria; preservação dos dados locais; idempotência/duplicidade; revisão humana; fronteira entre análise técnica externa e relacional CTI; acessibilidade; documentação e testes.
 
-Execute a jornada disponível: importar feedback; criar cliente automaticamente; repetir evento sem duplicar; agrupar histórico; gerar/visualizar hipótese com evidências; confirmar/rejeitar; abrir ocorrência quando apropriado; registrar investigação/ação; avaliar eficácia; verificar automação sem envio externo não autorizado. Se houver dependência de API, credencial, decisão ou ambiente ausente, indique-a precisamente e valide o restante com fixtures seguras.
+Execute a jornada disponível: importar feedback; criar cliente automaticamente; repetir evento sem duplicar; agrupar histórico; gerar/visualizar hipótese com evidências; confirmar/rejeitar; abrir ocorrência quando apropriado; registrar investigação/ação; avaliar eficácia; verificar automação sem envio externo não autorizado. Execute toda a jornada com os dados simulados, sem API externa, credenciais ou serviços remotos. Reinicie/recarregue a aplicação conforme o mecanismo local adotado e verifique a repetição segura da carga.
 
-Rode testes/verificações relevantes existentes. Não alegue cobertura não executada. Corrija falhas introduzidas e rode novamente os testes afetados. Entregue relatório final com funcionalidades, arquitetura preservada/adaptada, arquivos/migrações importantes, comandos/resultados, critérios atendidos/não atendidos, riscos/dependências e instruções de configuração/execução. Não faça commit nem push. Antes de commit futuro, mostre git status --short e git diff --stat e pergunte a mensagem.
+Rode testes/verificações relevantes existentes. Não alegue cobertura não executada. Corrija falhas introduzidas e rode novamente os testes afetados. Entregue relatório final com funcionalidades, arquitetura preservada/adaptada, arquivos importantes, comandos/resultados, critérios atendidos/não atendidos, riscos/dependências e instruções de configuração/execução. Não faça commit nem push. Antes de commit futuro, mostre git status --short e git diff --stat e pergunte a mensagem.
 
 ## Critérios globais de aceite
 
@@ -181,11 +175,12 @@ Rode testes/verificações relevantes existentes. Não alegue cobertura não exe
 - [ ] Caso misto separa parcela técnica da relacional.
 - [ ] Ocorrências, investigação, ações e eficácia são rastreáveis e autorizadas.
 - [ ] Retenção, serviços e automações respeitam preferências, idempotência e registro de execução.
-- [ ] Migrações preservam dados, com validação e recuperação documentadas.
+- [ ] A demonstração funciona localmente com dados fictícios; a carga repetida não duplica registros e os dados locais existentes foram preservados.
 - [ ] Testes proporcionais, segurança, LGPD, documentação e jornada ponta a ponta foram verificados com resultados reais.
-- [ ] Dependências e decisões pendentes são explicitadas, sem invenção ou falsa conclusão.
+- [ ] Fonte de feedbacks e envio de e-mail simulados estão isolados em pontos simples de substituição; a integração real futura não é requisito de conclusão.
 
 ## Lacunas que podem exigir decisão
 
-Pergunte somente quando a decisão bloquear implementação segura: formato/autenticação da integração; campos mínimos da origem; política de mesclagem/retenção; papéis que confirmam hipótese e encerram ocorrência; provedor e consentimento de e-mail; fórmula de indicadores; prazos e prioridades. Continue tarefas independentes enquanto registra a lacuna e implementa abstrações desacopladas.
+Pergunte somente sobre decisões que bloqueiem o comportamento local e não possam ser resolvidas pelas convenções existentes. Não bloqueie a execução por formato de API, autenticação externa, credenciais ou provedor de e-mail: esses elementos pertencem a uma integração futura. Documente apenas onde a fonte simulada e o envio simulado poderão ser substituídos.
+
 
