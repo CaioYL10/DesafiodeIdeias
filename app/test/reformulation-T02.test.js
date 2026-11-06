@@ -58,8 +58,6 @@ test('revisão exige gestor e justificativa, registra decisão e não altera ví
     const pending = service.listPending()[0];
     assert.throws(() => service.review(pending.id, { managerId: 2, action: 'link', clientId: first.clientId, justification: 'Conferido' }));
     assert.throws(() => service.review(pending.id, { managerId: 1, action: 'link', clientId: first.clientId, justification: ' ' }));
-    assert.throws(() => service.review(pending.id, { managerId: 1, action: 'create', justification: 'Conferido' }));
-    assert.equal(count(db, 'clients'), 1);
     assert.equal(service.review(pending.id, { managerId: 1, action: 'link', clientId: first.clientId, justification: 'Conferido' }).status, 'linked');
     assert.equal(db.prepare('SELECT reviewed_by FROM identity_pending').get().reviewed_by, 1);
     assert.equal(service.ingestOne(items[3]).status, 'duplicate');
@@ -90,4 +88,40 @@ test('CNPJ único vincula cadastro manual; candidatos múltiplos aguardam revis�
     assert.equal(result.status, 'pending'); assert.equal(count(db, 'clients'), 2);
     assert.equal(service.ingestBatch([{ ...item, externalEventId: 'data-invalida', occurredAt: '2026-02-30T12:00:00Z' }])[0].status, 'error');
   } finally { db.close(); }
+});
+
+test('decisão individual preserva vínculo global conflitante e sobrevive ao reinício', (t) => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'cti-t02-review-'));
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  const filename = path.join(dir, 'review.sqlite');
+  let db = openDatabase(filename);
+  db.prepare("INSERT INTO managers VALUES (1, 'gestor@exemplo.test', 'sal', 'hash', '2026-01-01')").run();
+  let service = createIngestionService(db);
+  const items = getDemoFeedbacks();
+  const a = service.ingestOne(items[0]);
+  const b = service.ingestOne(items[5]);
+  const conflict = service.ingestOne(items[3]);
+  assert.equal(conflict.status, 'pending');
+  const pending = service.listPending()[0];
+  assert.deepEqual(service.review(pending.id, { managerId: 1, action: 'link', clientId: b.clientId, justification: 'Identidade conferida para este relato' }), { status: 'linked', clientId: b.clientId });
+  assert.equal(service.ingestOne(items[3]).status, 'duplicate');
+  assert.equal(db.prepare('SELECT client_id FROM external_client_ids WHERE source_system = ? AND external_client_id = ?').get('demo-external', 'cli-100').client_id, a.clientId);
+  assert.equal(db.prepare('SELECT client_id FROM feedback_overview WHERE id = ?').get(a.feedbackId).client_id, a.clientId);
+  const later = service.ingestOne({ ...items[3], externalEventId: 'evt-conflito-posterior' });
+  assert.equal(later.status, 'pending');
+  const next = service.listPending()[0];
+  const created = service.review(next.id, { managerId: 1, action: 'create', justification: 'Novo cliente verificado' });
+  assert.equal(created.status, 'created');
+  assert.notEqual(created.clientId, a.clientId); assert.notEqual(created.clientId, b.clientId);
+  db.close();
+  db = openDatabase(filename); service = createIngestionService(db);
+  const decision = db.prepare('SELECT * FROM identity_pending WHERE id = ?').get(pending.id);
+  assert.equal(decision.resolved_client_id, b.clientId); assert.equal(decision.reviewed_by, 1);
+  assert.ok(decision.reviewed_at); assert.equal(decision.justification, 'Identidade conferida para este relato');
+  assert.equal(db.prepare('SELECT client_id FROM feedback_overview WHERE id = ?').get(conflict.feedbackId).client_id, b.clientId);
+  assert.equal(db.prepare('SELECT client_id FROM feedback_overview WHERE id = ?').get(later.feedbackId).client_id, created.clientId);
+  assert.equal(service.ingestOne(items[3]).status, 'duplicate');
+  assert.equal(service.ingestOne({ ...items[3], externalEventId: 'evt-conflito-apos-reinicio' }).status, 'pending');
+  assert.equal(db.prepare('SELECT client_id FROM external_client_ids WHERE source_system = ? AND external_client_id = ?').get('demo-external', 'cli-100').client_id, a.clientId);
+  db.close();
 });

@@ -91,7 +91,8 @@ function createIngestionService(db) {
         }
         // Não altera um vínculo anterior nem cadastra CNPJ conflitante implicitamente.
         if (resolved) {
-          bind(pending.source_system, pending.external_client_id, resolved);
+          const current = pending.external_client_id && db.prepare('SELECT client_id FROM external_client_ids WHERE source_system = ? AND external_client_id = ?').get(pending.source_system, pending.external_client_id);
+          if (!current || current.client_id === resolved) bind(pending.source_system, pending.external_client_id, resolved);
           db.prepare('UPDATE imported_feedbacks SET client_id = ? WHERE feedback_id = ? AND client_id IS NULL').run(resolved, pending.feedback_id);
         }
         const status = { link: 'linked', create: 'created', reject: 'rejected' }[action];
