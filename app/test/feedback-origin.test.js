@@ -26,37 +26,14 @@ const payload = { service: 'internet', comment: 'Relato fictício de oscilação
 const post = (base, url, body, cookie) => fetch(base + url, { method: 'POST',
   headers: { 'content-type': 'application/json', ...(cookie ? { cookie } : {}) }, body: JSON.stringify(body) });
 
-test('formulário público registra autor sem expor clientes e aceita reclamação sem nota', async (context) => {
-  const { db, base } = await setup(context);
-  const page = await fetch(base + '/feedback').then((res) => res.text());
-  assert.match(page, /name="reportedOrganization"/);
-  assert.doesNotMatch(page, /api\/manager\/crm\/clients/);
-  const response = await post(base, '/api/feedback', { ...payload, kind: 'complaint' });
-  assert.equal(response.status, 201);
-  const saved = db.prepare('SELECT * FROM feedback_overview').get();
-  assert.equal(saved.rating, null);
-  assert.equal(saved.kind, 'complaint');
-  assert.equal(saved.source_channel, 'form');
-  assert.equal(saved.reported_contact, 'Ana Exemplo');
-  assert.equal(saved.client_id, null);
-  assert.ok(saved.received_at);
-  assert.equal((await post(base, '/api/feedback', { ...payload, kind: 'feedback' })).status, 400);
-});
-
-test('registro interno exige sessão, detecta protocolo por canal e preserva relato após falha da análise', async (context) => {
-  const { db, base, cookie } = await setup(context, { classify: async () => { throw new Error('Indisponível'); } });
-  const body = { ...payload, kind: 'suggestion', sourceChannel: 'email', sourceProtocol: 'CTI-123', demoData: true };
-  assert.equal((await post(base, '/api/feedback/internal', body)).status, 401);
-  const first = await post(base, '/api/feedback/internal', body, cookie);
-  assert.equal(first.status, 201);
-  assert.equal((await first.json()).sentimentStatus, 'failed');
-  assert.equal(db.prepare('SELECT comment FROM feedbacks').get().comment, payload.comment);
-  const duplicate = await post(base, '/api/feedback/internal', body, cookie);
-  assert.equal(duplicate.status, 409);
-  assert.equal((await duplicate.json()).duplicateId, 1);
-  assert.equal((await post(base, '/api/feedback/internal', { ...body, allowDuplicate: true, demoData: false }, cookie)).status, 201);
-  assert.equal((await post(base, '/api/feedback/internal', { ...body, sourceChannel: 'phone', demoData: false }, cookie)).status, 201);
-  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM feedbacks').get().total, 3);
+test('coleta pública e registro interno não existem, mesmo com sessão', async (context) => {
+  const { db, base, cookie } = await setup(context);
+  for (const path of ['/api/feedback', '/api/feedback/internal']) {
+    for (const session of [undefined, cookie]) {
+      assert.equal((await post(base, path, { ...payload, kind: 'complaint' }, session)).status, 404);
+    }
+  }
+  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM feedbacks').get().total, 0);
 });
 
 test('triagem associa e corrige organização, contato e serviço contratado sem alterar autor informado', async (context) => {
@@ -69,8 +46,7 @@ test('triagem associa e corrige organização, contato e serviço contratado sem
   db.prepare("INSERT INTO products(id, name, type, created_at) VALUES (1, 'Internet', 'service', ?)").run(now);
   db.prepare('INSERT INTO client_products VALUES (1, 1)').run();
   db.prepare("INSERT INTO service_instances(id, client_id, product_id, name, created_at, updated_at) VALUES (1, 1, 1, 'Unidade A', ?, ?)").run(now, now);
-  const created = await post(base, '/api/feedback', { ...payload, kind: 'complaint' });
-  const id = (await created.json()).id;
+  const id = db.prepare("INSERT INTO feedbacks(service, comment, created_at, reported_contact) VALUES ('internet', ?, ?, ?)").run(payload.comment, now, payload.reportedContact).lastInsertRowid;
   const put = (body) => fetch(base + '/api/manager/crm/feedback/' + id, { method: 'PUT', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(body) });
   assert.equal((await put({ clientId: 1, contactId: 2, productId: 1, serviceInstanceId: 1, kind: 'complaint' })).status, 400);
   assert.equal((await put({ clientId: 1, contactId: 1, productId: 1, serviceInstanceId: 1, kind: 'complaint' })).status, 200);

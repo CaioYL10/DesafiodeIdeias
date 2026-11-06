@@ -1,6 +1,6 @@
 const express = require('express');
 const { requireManager } = require('../middleware/require-manager');
-const { ALLOWED_HANDLING_STATUSES, ALLOWED_SENTIMENTS } = require('../db/feedback-repository');
+const { ALLOWED_HANDLING_STATUSES } = require('../db/feedback-repository');
 
 const services = new Set(['internet', 'cloud', 'ciberseguranca', 'suporte', 'outro']);
 
@@ -14,7 +14,6 @@ function queryFilters(query) {
   const filters = [];
   const values = [];
   if (query.service && services.has(query.service)) { filters.push('service = ?'); values.push(query.service); }
-  if (query.sentiment && ALLOWED_SENTIMENTS.has(query.sentiment)) { filters.push('final_sentiment = ?'); values.push(query.sentiment); }
   if (query.status && ALLOWED_HANDLING_STATUSES.has(query.status)) { filters.push('handling_status = ?'); values.push(query.status); }
   if (isIsoDate(query.from)) { filters.push('created_at >= ?'); values.push(query.from + 'T00:00:00.000Z'); }
   if (isIsoDate(query.to)) { filters.push('created_at < ?'); values.push(new Date(Date.parse(query.to + 'T00:00:00.000Z') + 86400000).toISOString()); }
@@ -32,16 +31,17 @@ function csvCell(value) {
   return '"' + text.replace(/"/g, '""') + '"';
 }
 
-function createManagerRouter(database, sentimentService) {
+function createManagerRouter(database) {
   const router = express.Router();
   router.use(requireManager(database));
+  router.use((request, response, next) => {
+    if (Object.hasOwn(request.query, 'sentiment')) return response.status(400).json({ error: 'Filtro de sentimento local removido.' });
+    return next();
+  });
 
   router.get('/summary', (request, response) => {
     const total = database.prepare('SELECT COUNT(*) AS total FROM feedbacks').get().total;
     const average = database.prepare('SELECT AVG(rating) AS average FROM feedbacks').get().average;
-    const sentimentRows = database.prepare("SELECT final_sentiment AS sentiment, COUNT(*) AS count FROM feedback_overview WHERE final_sentiment IS NOT NULL GROUP BY final_sentiment").all();
-    const sentimentCounts = { positive: 0, neutral: 0, negative: 0 };
-    for (const row of sentimentRows) sentimentCounts[row.sentiment] = row.count;
     const rangeEnd = new Date();
     rangeEnd.setUTCHours(0, 0, 0, 0);
     rangeEnd.setUTCDate(rangeEnd.getUTCDate() + 1);
@@ -49,7 +49,7 @@ function createManagerRouter(database, sentimentService) {
     const trend = database.prepare(`SELECT substr(created_at, 1, 10) AS date, ROUND(AVG(rating), 2) AS averageRating,
       COUNT(*) AS total FROM feedbacks WHERE rating IS NOT NULL AND created_at >= ? AND created_at < ? GROUP BY date ORDER BY date`)
       .all(rangeStart, rangeEnd.toISOString());
-    return response.json({ total, averageRating: average === null ? null : Number(average.toFixed(2)), sentimentCounts, trend });
+    return response.json({ total, averageRating: average === null ? null : Number(average.toFixed(2)), trend });
   });
 
   router.get('/feedback', (request, response) => {
@@ -70,30 +70,13 @@ function createManagerRouter(database, sentimentService) {
     return response.json({ updated: true });
   });
 
-  router.post('/feedback/:id/reanalyze', async (request, response) => {
-    const feedback = database.prepare('SELECT * FROM feedbacks WHERE id = ?').get(request.params.id);
-    if (!feedback) return response.status(404).json({ error: 'Feedback não encontrado.' });
-    if (!feedback.demo_data) return response.status(403).json({ error: 'A IA só analisa dados demonstrativos.' });
-    if (!['pending', 'failed'].includes(feedback.sentiment_status)) return response.status(409).json({ error: 'Este feedback já foi analisado.' });
-    if (!sentimentService || typeof sentimentService.classify !== 'function' || sentimentService.isConfigured === false) return response.status(503).json({ error: 'Configure OPENAI_API_KEY para habilitar a análise.' });
-    try {
-      const result = await sentimentService.classify(feedback.comment);
-      if (!ALLOWED_SENTIMENTS.has(result?.sentiment)) throw new Error('Resposta inválida');
-      database.prepare("UPDATE feedbacks SET sentiment = ?, sentiment_status = 'completed' WHERE id = ?").run(result.sentiment, feedback.id);
-      return response.json({ sentimentStatus: 'completed', sentiment: result.sentiment });
-    } catch {
-      database.prepare("UPDATE feedbacks SET sentiment = NULL, sentiment_status = 'failed' WHERE id = ?").run(feedback.id);
-      return response.status(502).json({ error: 'Não foi possível analisar agora.' });
-    }
-  });
-
   router.get('/export.csv', (request, response) => {
     const { where, values } = queryFilters(request.query);
-    const rows = database.prepare(`SELECT id, service, rating, comment, created_at, sentiment, sentiment_status, handling_status, reviewed_sentiment, final_sentiment
+    const rows = database.prepare(`SELECT id, service, rating, comment, created_at, handling_status, source_system, external_event_id, external_classification
       FROM feedback_overview ${where} ORDER BY created_at DESC, id DESC`).all(...values);
-    const header = ['ID', 'Serviço', 'Nota', 'Comentário', 'Criado em', 'Sugestão da IA', 'Status da análise', 'Tratativa', 'Revisão humana', 'Sentimento adotado'];
+    const header = ['ID', 'Serviço', 'Nota', 'Comentário', 'Criado em', 'Tratativa', 'Sistema de origem', 'Evento externo', 'Classificação externa (origem)'];
     const csv = '\uFEFF' + [header, ...rows.map((row) => [row.id, row.service, row.rating, row.comment, row.created_at,
-      row.sentiment, row.sentiment_status, row.handling_status, row.reviewed_sentiment, row.final_sentiment])].map((line) => line.map(csvCell).join(',')).join('\r\n');
+      row.handling_status, row.source_system, row.external_event_id, row.external_classification])].map((line) => line.map(csvCell).join(',')).join('\r\n');
     response.setHeader('content-type', 'text/csv; charset=utf-8');
     response.setHeader('content-disposition', 'attachment; filename="feedbacks-cti.csv"');
     return response.send(csv);

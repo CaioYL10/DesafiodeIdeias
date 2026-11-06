@@ -22,14 +22,14 @@ async function setup(context) {
   return { db, request, base, cookie };
 }
 
-test('fluxo CRM e qualidade preserva sugestão, exige evidência e verificação humana', async (context) => {
+test('fluxo CRM e qualidade preserva histórico, exige evidência e verificação humana', async (context) => {
   const { request, db } = await setup(context);
   const client = await request('/api/manager/crm/clients', 'POST', { name: 'Cliente sintético', contact: 'Equipe de suporte', productIds: [1] });
   assert.equal(client.status, 201);
   assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: client.body.id, productId: 1, kind: 'complaint' })).status, 200);
-  assert.equal((await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'neutral', note: 'Revisão do contexto' })).status, 201);
+  assert.equal((await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'neutral', note: 'Revisão do contexto' })).status, 404);
   assert.equal(db.prepare('SELECT sentiment FROM feedbacks WHERE id = 1').get().sentiment, 'negative');
-  assert.equal((await request('/api/manager/summary')).body.sentimentCounts.neutral, 1);
+  assert.equal(Object.hasOwn((await request('/api/manager/summary')).body, 'sentimentCounts'), false);
   const history = await request('/api/manager/crm/clients/' + client.body.id);
   assert.equal(history.body.feedbacks.length, 1);
   const problem = await request('/api/manager/quality', 'POST', { title: 'Oscilação recorrente', category: 'Conectividade', analysis: 'Investigar o enlace', feedbackIds: [1] });
@@ -60,7 +60,7 @@ test('rotas de gestão bloqueiam anônimos e validam referências e datas', asyn
   assert.equal((await request('/api/manager/crm/clients', 'POST', { name: 'Cliente', productIds: [999] })).status, 400);
   assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: 999, productId: 1, kind: 'complaint' })).status, 400);
   assert.equal((await request('/api/manager/crm/feedback/999/reviews', 'POST', { sentiment: 'positive' })).status, 404);
-  assert.equal((await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'unknown' })).status, 400);
+  assert.equal((await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'unknown' })).status, 404);
   assert.equal((await request('/api/manager/quality', 'POST', { title: 'Problema', category: 'Rede', analysis: 'Análise', feedbackIds: [999] })).status, 400);
   const problem = await request('/api/manager/quality', 'POST', { title: 'Problema', category: 'Rede', analysis: 'Análise', feedbackIds: [1] });
   assert.equal((await request('/api/manager/quality/' + problem.body.id + '/actions', 'POST', { description: 'Teste', owner: 'Equipe', dueDate: '2026-02-30' })).status, 400);
@@ -85,20 +85,19 @@ test('ação ineficaz impede encerramento e mantém evidências das tentativas n
   assert.deepEqual(detail.attempts.map((attempt) => attempt.effective), [0, 1]);
 });
 
-test('filtro e exportação usam revisão humana sem esconder a sugestão original', async (context) => {
-  const { request, base, cookie } = await setup(context);
-  await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'positive', note: 'Correção sintética' });
-  const list = (await request('/api/manager/feedback?sentiment=positive')).body;
-  assert.equal(list.total, 1);
-  assert.equal(list.items[0].sentiment, 'negative');
-  assert.equal(list.items[0].final_sentiment, 'positive');
-  assert.equal((await request('/api/manager/feedback?sentiment=negative')).body.total, 0);
-  assert.equal((await request('/api/manager/feedback?to=2026-99-99')).status, 200);
-  const csv = await fetch(base + '/api/manager/export.csv?sentiment=positive', { headers: { cookie } }).then((response) => response.text());
-  assert.match(csv, /Sugestão da IA/);
-  assert.match(csv, /Revisão humana/);
-  assert.match(csv, /"negative"/);
-  assert.match(csv, /"positive"/);
+test('consulta preserva histórico e exportação não adota sentimento local', async (context) => {
+  const { request, base, cookie, db } = await setup(context);
+  db.prepare("INSERT INTO sentiment_reviews(feedback_id, sentiment, note, manager_id, created_at) VALUES (1, 'positive', 'Revisão histórica', 1, '2026-10-31')").run();
+  assert.equal((await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'neutral' })).status, 404);
+  const detail = (await request('/api/manager/crm/feedback/1')).body;
+  assert.equal(detail.feedback.sentiment, 'negative');
+  assert.equal(detail.reviews[0].sentiment, 'positive');
+  assert.equal((await request('/api/manager/feedback?sentiment=positive')).status, 400);
+  assert.equal((await request('/api/manager/feedback')).body.total, 1);
+  const csv = await fetch(base + '/api/manager/export.csv', { headers: { cookie } }).then(r => r.text());
+  assert.match(csv, /Classificação externa/);
+  assert.doesNotMatch(csv, /Sugestão da IA|Revisão humana|Sentimento adotado|"negative"|"positive"/);
+  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM sentiment_reviews').get().total, 1);
 });
 
 test('banco existente mantém feedback legado ao reabrir', async (context) => {
@@ -223,10 +222,11 @@ test('cenário integrado mantém CRM, relatos e tentativas de qualidade vinculad
   const service = await request(clientPath + '/services', 'POST', { productId: 1, name: 'Unidade A', location: 'Santo André', active: true });
   assert.equal(interaction.status, 201);
   assert.equal(service.status, 201);
-  const complaint = await request('/api/feedback/internal', 'POST', { sourceChannel: 'email', sourceProtocol: 'SYN-1', reportedOrganization: 'Organização sintética', reportedContact: 'Ana', service: 'internet', kind: 'complaint', comment: 'Oscilação sintética' });
-  const unlinked = await request('/api/feedback/internal', 'POST', { sourceChannel: 'phone', reportedOrganization: 'Organização sintética', reportedContact: 'Ana', service: 'internet', kind: 'complaint', comment: 'Relato sem instância identificada' });
-  assert.equal(complaint.status, 201);
-  assert.equal(unlinked.status, 201);
+  const { createIngestionService } = require('../src/services/feedback-ingestion');
+  const ingest = createIngestionService(db);
+  const item = { sourceSystem: 'demo-external', externalClientId: 'scenario-client', occurredAt: '2026-11-01T12:00:00.000Z', service: 'internet', kind: 'complaint', dimension: 'mixed', client: { name: 'Organização sintética' }, comment: 'Oscilação sintética' };
+  const complaint = { body: { id: ingest.ingestOne({ ...item, externalEventId: 'scenario-1' }).feedbackId } };
+  const unlinked = { body: { id: ingest.ingestOne({ ...item, externalEventId: 'scenario-2', comment: 'Relato sem instância identificada' }).feedbackId } };
   assert.equal((await request(`/api/manager/crm/feedback/${complaint.body.id}`, 'PUT', { clientId: client.body.id, contactId: contact.body.id, productId: 1, serviceInstanceId: service.body.id, kind: 'complaint' })).status, 200);
   assert.equal((await request(`/api/manager/crm/feedback/${unlinked.body.id}`, 'PUT', { clientId: client.body.id, contactId: contact.body.id, productId: 1, serviceInstanceId: null, kind: 'complaint' })).status, 200);
   assert.equal((await request(`/api/manager/crm/feedback/${unlinked.body.id}`)).body.feedback.service_instance_id, null);
