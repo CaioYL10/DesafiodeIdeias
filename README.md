@@ -1,5 +1,7 @@
 # Desafio de Ideias — GR1 (SENAI)
 
+> **Reformulação em execução:** o escopo ativo está em [`docs/REFORMULACAO_CTI_CRM_SGQ.md`](docs/REFORMULACAO_CTI_CRM_SGQ.md); o progresso verificável está em [`docs/reformulation-progress.md`](docs/reformulation-progress.md). Os fluxos de coleta direta, triagem de entrada e sentimento local descritos abaixo são comportamento da versão anterior e serão retirados nas tarefas T02–T04. Não os use como orientação de produto para a nova implementação.
+
 Repositório de trabalho do grupo GR1 no projeto "Desafio de Ideias" do SENAI (turma 2IEDS | 2026).
 
 **Empresa atual:** [CTI](https://www.cti.com.br/) — provedora B2B de internet corporativa, cloud e cibersegurança. Em 22/10/2026, Caio definiu como **hipótese de solução para o GR1** um CRM focado no relacionamento com clientes, integrado a uma gestão leve da qualidade. O fluxo proposto centraliza feedbacks, permite triagem humana de problemas e acompanha ações de melhoria; uma IA sugere sentimento positivo, neutro ou negativo, com possibilidade de revisão humana. A proposta ainda precisa ser validada com a CTI; chatbot, CRM comercial amplo e SGQ completo ficam fora. A especificação está em [`config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`](config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md). **Análise de mercado concluída em 22/10/2026**, com relatório DOCX e PDF em [`docs/entregas/cti/analise_mercado/`](docs/entregas/cti/analise_mercado). Por solicitação do professor, a equipe também recebeu a orientação de avançar para um **MVP funcional**.
@@ -22,7 +24,7 @@ A demonstração fica em `http://127.0.0.1:3100/workspace`, com acesso `gestor@d
 
 Para uso local persistente, dentro de `app/`, configure `.env` a partir de `.env.example`, defina `MANAGER_EMAIL` e `MANAGER_PASSWORD` (mínimo de 12 caracteres), execute `npm.cmd run manager:create` e `npm.cmd start`. O banco padrão fica em `data/feedback.sqlite`; faça cópia desse arquivo com o servidor parado antes de transferi-lo para outra máquina. Credenciais da demonstração não são criadas no banco persistente.
 
-### Fluxo implementado em 23/10
+### Fluxo implementado em 23/10 (histórico anterior à reformulação)
 
 1. Cadastre serviços no catálogo e clientes com seus serviços vinculados.
 2. Receba o relato pelo formulário público com organização e contato informados ou registre e-mail, telefone e atendimento interno na **Triagem**. Depois vincule organização, contato e serviço contratado existentes.
@@ -49,7 +51,7 @@ Na área **Clientes**, cada organização pode cadastrar várias instâncias do 
 
 Esta é a **Etapa 2** do plano de 31/10.
 
-### Origem e autor dos relatos (31/10)
+### Origem e autor dos relatos (31/10, histórico anterior à reformulação)
 
 O formulário público pede nome da organização e do contato, com e-mail opcional, sem listar clientes cadastrados. A equipe pode registrar relatos de e-mail, telefone ou atendimento interno na **Triagem**, com protocolo externo opcional. O relato guarda canal, data de recebimento, autor e organização informados; esses dados permanecem separados dos cadastros vinculados pela equipe. Na triagem, é possível associar ou corrigir organização, contato e instância do serviço. A avaliação exige nota de 1 a 5; reclamação e sugestão aceitam ausência de nota. Um protocolo repetido no mesmo canal gera aviso e pode ser registrado após confirmação humana. O comentário original, a sugestão de sentimento e as revisões humanas são preservados separadamente. A análise de sentimento só é solicitada para texto marcado como demonstrativo; falhas não impedem o registro. Bancos antigos são migrados ao abrir, preservando os relatos. Estas são premissas provisórias do MVP, não requisitos validados pela CTI.
 

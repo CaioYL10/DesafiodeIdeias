@@ -1,5 +1,9 @@
 # Contexto do projeto — Desafio de Ideias (SENAI, GR1)
 
+## Escopo ativo da reformulação
+
+O plano vigente é [`docs/REFORMULACAO_CTI_CRM_SGQ.md`](docs/REFORMULACAO_CTI_CRM_SGQ.md). A origem fictícia externa fornece feedbacks e análise técnica; a CTI importa esses registros e trata somente relacionamento, com hipótese rastreável, revisão humana e SGQ relacional. Coleta direta e análise local de sentimento devem ser retiradas. As descrições de IA e triagem de coleta abaixo documentam a proposta anterior de 22/10, ainda não validada pela CTI, e não instruem a implementação atual. Consulte [`docs/reformulation/interfaces.md`](docs/reformulation/interfaces.md) e [`docs/reformulation-progress.md`](docs/reformulation-progress.md).
+
 Leia este arquivo antes de ajudar o Caio com qualquer coisa neste repositório. Ele existe para que uma sessão do Claude em **qualquer PC** retome o contexto sem precisar perguntar tudo de novo.
 
 ## O projeto

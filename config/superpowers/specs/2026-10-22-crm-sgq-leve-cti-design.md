@@ -1,5 +1,7 @@
 # Sistema integrado de relacionamento com clientes e gestão da qualidade — CTI
 
+> **Registro histórico da proposta de 22/10/2026, ainda não validada pela CTI.** Para execução local, prevalece [`docs/REFORMULACAO_CTI_CRM_SGQ.md`](../../../docs/REFORMULACAO_CTI_CRM_SGQ.md): feedbacks vêm de fonte fictícia externa; a CTI cuida do relacionamento e não coleta feedback nem executa análise de sentimento local. As seções de IA e canais de coleta abaixo permanecem como histórico da evolução da proposta.
+
 **Data:** 22/10/2026
 
 **Status:** desenho aprovado por Caio em 22/10/2026; proposta do grupo ainda não validada pela CTI.

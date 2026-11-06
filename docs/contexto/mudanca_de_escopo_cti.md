@@ -1,5 +1,7 @@
 # Evolução de escopo — Avanade → CTI → CRM + SGQ leve (outubro/2026)
 
+> Este documento registra a evolução escolar até outubro. A execução local atual segue [`docs/REFORMULACAO_CTI_CRM_SGQ.md`](../REFORMULACAO_CTI_CRM_SGQ.md): origem fictícia externa dos feedbacks, análise técnica externa e SGQ CTI restrito ao relacionamento. Menções abaixo à IA de sentimento e à coleta direta são históricas; a proposta do grupo ainda não foi validada pela CTI.
+
 Registro da refatoração do projeto após a reunião com a equipe da empresa. Fontes: [`../fontes/Plano_de_Ensino_GR1_v2.docx`](../fontes/Plano_de_Ensino_GR1_v2.docx) (seções "Contextualização" e "Desafio"), site <https://www.cti.com.br/> (consultado em 08/10/2026) e o que o Caio relatou da reunião.
 
 ## A empresa: CTI

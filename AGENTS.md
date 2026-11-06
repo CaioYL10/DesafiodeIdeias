@@ -12,7 +12,11 @@ Trabalho escolar do Caio no SENAI (Técnico em Desenvolvimento de Sistemas, turm
 - **Empresa/demanda (versão original, histórico):** Avanade do Brasil Ltda. — Projeto Integrador 2025/02 1.34 08: "Desenvolvimento de Jogo-Aplicativo Gamificado com RA e ChatBot para Reviews de Produtos e Serviços". Detalhes completos da demanda (benefícios esperados, justificativa) estão no roteiro de entrevista, seção "2. GR1".
 - **Docente responsável (roteiro geral da turma):** Paulo Cesar de Camargo. Coordenação do curso: Marcos Alves. Coordenação pedagógica: Antônio Marcos. **Orientadores do relatório do GR1:** Prof. Paulo e Prof. Raul.
 
-## Instruções vigentes para continuidade`r`n`r`nSiga `docs/REFORMULACAO_CTI_CRM_SGQ.md` como plano atual para a reformulação funcional. O documento substitui instruções técnicas e etapas antigas incompatíveis, sem apagar registros escolares históricos. Não implemente funcionalidades quando o pedido for apenas editar o planejamento. A reformulação continua proposta do grupo e não deve ser descrita como validada pela CTI sem evidência.`r`n`r`n## Convenção de pastas neste PC
+## Instruções vigentes para continuidade
+
+Siga [`docs/REFORMULACAO_CTI_CRM_SGQ.md`](docs/REFORMULACAO_CTI_CRM_SGQ.md) como fonte de verdade da reformulação funcional. O sistema externo fictício coleta feedbacks e trata a dimensão técnica; a CTI importa, acompanha o relacionamento e conduz hipóteses, revisão humana e SGQ relacional. A aplicação CTI não coleta feedback diretamente nem classifica sentimento localmente. Os trechos abaixo sobre a proposta de 22/10 e IA registram o histórico escolar, não o escopo de implementação atual. A proposta continua sem validação da CTI. Consulte os acordos de implementação em [`docs/reformulation/interfaces.md`](docs/reformulation/interfaces.md) e o estado real em [`docs/reformulation-progress.md`](docs/reformulation-progress.md). Não implemente funcionalidades quando o pedido for apenas editar o planejamento.
+
+## Convenção de pastas neste PC
 
 Neste computador (perfil `Dev_2o_Ano`), todo projeto novo do Caio vai em `Documents\projeto\<NomeDoProjeto>` — este repositório é `Documents\projeto\DesafioDeIdeias`. Se estiver rodando em outra máquina, ignore esse detalhe local.
 
