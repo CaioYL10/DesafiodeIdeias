@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="64.532" height="36.792" viewBox="0 0 64.532 36.792" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="Rio Grande do Norte">
+<use xlink:href="#stroke0_0_49" fill="#D4E8F3"/>
+<mask id="stroke1_0_49" fill="white">
+<use xlink:href="#stroke0_0_49"/>
+</mask>
+<path d="M25.477 0.146L55.261 4.161L64.532 27.959H46.501L39.055 24.455L33.215 36.792L31.171 32.266L19.564 31.901L25.112 20.075L14.819 22.703L8.249 28.543L0 25.404L8.103 17.155L16.79 0L25.477 0.146Z" stroke-width="3" stroke="white" mask="url(#stroke1_0_49)"/>
+</g>
+<defs>
+<path id="stroke0_0_49" d="M25.477 0.146L55.261 4.161L64.532 27.959H46.501L39.055 24.455L33.215 36.792L31.171 32.266L19.564 31.901L25.112 20.075L14.819 22.703L8.249 28.543L0 25.404L8.103 17.155L16.79 0L25.477 0.146Z" fill-rule="evenodd" clip-rule="evenodd"/>
+</defs>
+</svg>

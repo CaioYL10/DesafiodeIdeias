@@ -1,0 +1,36 @@
+.repair-page .card-heading { align-items: center; }
+.repair-page .card-heading h1 { font-size: 23px; }
+.repair-page .card-heading p { max-width: 680px; line-height: 1.5; }
+.repair-page .card-heading > span { color: #84939c; font-size: 12px; white-space: nowrap; }
+.repair-criteria { margin: 24px 0 0; padding: 13px 16px; border: 1px solid #d8eaf4; border-radius: 9px; background: #f1f8fc; color: #60727d; font-size: 12px; line-height: 1.6; }
+.repair-criteria strong { color: #0878b4; }
+.repair-row { gap: 24px; align-items: center; }
+.repair-row > div { flex: 1; min-width: 0; }
+.repair-row h3 { color: #4c5055; }
+.repair-row p { max-width: 850px; line-height: 1.55; }
+.repair-row small { display: block; margin-top: 7px; }
+.action-status { margin-top: 10px; }
+.repair-modal { width: min(780px, 100%); }
+.repair-evidence { padding: 16px 18px; border: 1px solid #dce9f0; border-radius: 9px; background: #f8fbfd; }
+.repair-evidence strong { color: #4c5055; font-size: 14px; }
+.repair-evidence p { margin: 8px 0 0; color: #687985; font-size: 13px; line-height: 1.6; }
+.repair-feedbacks, .action-history { margin: 0; padding: 0; list-style: none; }
+.repair-feedbacks { display: grid; gap: 8px; max-height: 230px; overflow: auto; padding-right: 6px; }
+.repair-feedbacks li { display: flex; gap: 12px; padding: 10px 12px; border: 1px solid #e5edf2; border-radius: 8px; color: #566169; font-size: 12px; line-height: 1.5; }
+.repair-feedbacks span { flex: 0 0 auto; color: #8a979e; }
+.proposal-editor { margin:20px 0; padding:18px; border:1px solid #dce9f0; border-radius:10px; background:#fbfdfe; }
+.proposal-editor label { margin-bottom:12px; }
+.proposal-editor textarea { min-height:110px; resize:vertical; }
+.proposal-editor .button { min-height:36px; }
+.proposal-editor p { margin:10px 0 0; color:#788991; font-size:12px; line-height:1.5; }
+.action-history { display: grid; gap: 10px; margin-bottom: 22px; }
+.action-history li { padding: 12px 14px; border-left: 3px solid #0878b4; background: #f5f9fc; border-radius: 0 8px 8px 0; }
+.action-history strong { color: #4c5055; font-size: 12px; }
+.action-history span { margin-left: 12px; color: #8a979e; font-size: 11px; }
+.action-history p { margin: 6px 0 0; color: #60717b; font-size: 12px; line-height: 1.5; }
+@media(max-width:620px) {
+  .repair-page .card-heading { align-items: flex-start; }
+  .repair-row { align-items: flex-start; flex-direction: column; gap: 10px; }
+  .repair-row button { margin-left: 0; }
+  .repair-feedbacks li { flex-direction: column; gap: 3px; }
+}

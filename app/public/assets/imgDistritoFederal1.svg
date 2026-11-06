@@ -1,0 +1,9 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="142.8" height="81" viewBox="0 0 142.8 81" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Distrito Federal">
+<path d="M142.8 78.6L0 81L12 0H126.6L142.8 78.6Z" fill-rule="evenodd" clip-rule="evenodd" fill="#9AC9E2"/>
+<mask id="stroke0_0_24" fill="white">
+<path d="M142.8 78.6L0 81L12 0H126.6L142.8 78.6Z" fill-rule="evenodd" clip-rule="evenodd"/>
+</mask>
+<path d="M142.8 78.6L0 81L12 0H126.6L142.8 78.6Z" stroke-width="3" stroke="white" mask="url(#stroke0_0_24)"/>
+</g>
+</svg>

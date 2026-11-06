@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="131.619" height="71.467" viewBox="0 0 131.619 71.467" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="Acre">
+<use xlink:href="#stroke0_0_44" fill="#E8F0F5"/>
+<mask id="stroke1_0_44" fill="white">
+<use xlink:href="#stroke0_0_44"/>
+</mask>
+<path d="M6.789 1.606L23.798 9.198L64.751 18.396L131.619 50.516L97.382 71.467L81.614 68.255L60.225 69.569L62.488 41.391L49.64 51.1L32.339 51.684L29.2 42.632L13.797 41.099L18.761 33.58L0 7.957L0.438 4.161L5.11 3.504L3.285 0L6.789 1.606Z" stroke-width="3" stroke="white" mask="url(#stroke1_0_44)"/>
+</g>
+<defs>
+<path id="stroke0_0_44" d="M6.789 1.606L23.798 9.198L64.751 18.396L131.619 50.516L97.382 71.467L81.614 68.255L60.225 69.569L62.488 41.391L49.64 51.1L32.339 51.684L29.2 42.632L13.797 41.099L18.761 33.58L0 7.957L0.438 4.161L5.11 3.504L3.285 0L6.789 1.606Z" fill-rule="evenodd" clip-rule="evenodd"/>
+</defs>
+</svg>

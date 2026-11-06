@@ -1,18 +1,12 @@
 {
-  "name": "desafio-de-ideias-feedback-mvp",
-  "version": "1.0.0",
+  "name": "avaliaplay-cti-prototipo",
+  "version": "2.0.0",
   "private": true,
-  "description": "MVP local para registrar e analisar feedbacks demonstrativos de serviços da CTI",
-  "engines": { "node": ">=22.13.0" },
+  "description": "Protótipo local AvaliaPlay CTI baseado no Figma",
   "scripts": {
-    "demo": "node scripts/start-demo.js",
-    "start": "node --env-file-if-exists=.env src/server.js",
-    "dev": "node --env-file-if-exists=.env --watch src/server.js",
-    "manager:create": "node --env-file-if-exists=.env scripts/create-manager.js",
-    "test": "node --test"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test test/*.test.js"
   },
-  "dependencies": {
-    "docx": "^9.7.2",
-    "express": "^5.3.0"
-  }
+  "engines": { "node": ">=22.13.0" }
 }

@@ -1,0 +1,26 @@
+.dashboard-page-heading{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:36px;margin-bottom:20px}
+.dashboard-page-heading h1{font-size:25px;line-height:41px;letter-spacing:-.04em;margin:0;font-weight:650}
+.dashboard-switch{display:flex;align-items:center;gap:16px}
+.dashboard-switch .button{height:40px;min-height:40px;min-width:96px;padding:0 14px;border-radius:6px;box-shadow:none}
+.metric-icon img{display:block;width:14px;height:14px;object-fit:contain}
+.metric-grid .metric:last-child .metric-icon img[src$="dashboardRecurrence.svg"]{width:24px;height:24px}
+.ranking-card{min-height:176px}
+.ranking-list{list-style:none;margin:13px 0 0;padding:0;display:grid;gap:9px}
+.ranking-list li{display:flex;align-items:center;gap:7px;min-width:0;color:#52616a;font-size:11px}
+.ranking-position{width:17px;height:17px;flex:0 0 auto;display:grid;place-items:center;border-radius:50%;background:#eaf5fe;color:#0878b4;font-size:10px;font-weight:700}
+.ranking-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ranking-list b{flex:0 0 auto;color:#87949b;font-size:10px;font-weight:500}
+.relations-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
+.dashboard-trend{display:block;width:100%;height:122px;object-fit:fill}
+.reminders{padding:19px;min-height:240px}
+.reminder-list{display:grid;gap:8px;margin-top:16px}
+.reminder{display:flex;align-items:center;gap:12px;min-height:44px;padding:6px 11px;border:1px solid #e0ebf2;border-radius:10px;min-width:0}
+.reminder-icon{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;background:#eaf5fe}
+.reminder-icon.green{background:#edf7f3}.reminder-icon.gold{background:#fff7e9}
+.reminder-icon img{width:16px;height:16px;object-fit:contain}
+.reminder>div{min-width:0;flex:1}.reminder strong{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reminder p{font-size:11px;color:#777e88;margin:2px 0 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.reminder-status{font-size:12px;color:#52616a;background:#edf2f5;padding:5px 8px;border-radius:4px;white-space:nowrap}
+@media(max-width:1100px){.relations-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:760px){.dashboard-page-heading{padding-top:12px;align-items:flex-start;flex-direction:column}.dashboard-switch{gap:10px}.dashboard-switch .button{min-width:96px}.reminder{gap:8px}.reminder strong{font-size:12px}}
+@media(max-width:480px){.reminder-status{font-size:10px}.reminder p{font-size:10px}.ranking-card{grid-column:span 2}}

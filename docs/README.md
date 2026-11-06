@@ -1,6 +1,6 @@
 # Materiais escolares — GR1
 
-- `contexto/`: empresa, decisões de escopo e divisão de tarefas.
+- `contexto/`: empresa, decisões de escopo, divisão de tarefas e [backlog futuro do produto](contexto/backlog_futuro_produto.md).
 - `cronograma/`: calendário do trabalho.
 - `fontes/`: documentos originais do SENAI, preservados como referência.
 - `entregas/`: materiais produzidos, separados entre CTI e histórico Avanade.

@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="74.606" height="89.571" viewBox="0 0 74.606 89.571" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="Cear&#195;&#161;">
+<use xlink:href="#stroke0_0_33" fill="#9AC9E2"/>
+<mask id="stroke1_0_33" fill="white">
+<use xlink:href="#stroke0_0_33"/>
+</mask>
+<path d="M25.112 0L52.779 15.549L74.606 35.697L67.671 37.376L58.254 55.626L50.881 61.539L47.523 74.314L51.684 79.716L43.946 89.571L31.463 80.008L15.622 81.468L18.834 70.956L12.337 68.255L8.906 41.902L3.139 36.354L5.913 23.871L0 9.49L1.825 1.533L25.112 0Z" stroke-width="3" stroke="white" mask="url(#stroke1_0_33)"/>
+</g>
+<defs>
+<path id="stroke0_0_33" d="M25.112 0L52.779 15.549L74.606 35.697L67.671 37.376L58.254 55.626L50.881 61.539L47.523 74.314L51.684 79.716L43.946 89.571L31.463 80.008L15.622 81.468L18.834 70.956L12.337 68.255L8.906 41.902L3.139 36.354L5.913 23.871L0 9.49L1.825 1.533L25.112 0Z" fill-rule="evenodd" clip-rule="evenodd"/>
+</defs>
+</svg>

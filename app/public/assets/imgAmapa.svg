@@ -1,0 +1,12 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="89.133" height="101.251" viewBox="0 0 89.133 101.251" fill="none" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<g id="Amap&#195;&#161;">
+<use xlink:href="#stroke0_0_47" fill="#E8F0F5"/>
+<mask id="stroke1_0_47" fill="white">
+<use xlink:href="#stroke0_0_47"/>
+</mask>
+<path d="M66.065 7.446L74.679 40.88L79.205 39.785L82.928 46.866L88.622 48.691L89.133 57.816L85.556 66.576L79.862 67.963L75.263 75.847L65.481 81.249L56.721 98.258L50.151 101.251L43.8 97.893L42.048 89.644L34.748 81.614L25.915 56.94L10.147 47.961L2.336 47.377L0 35.697L7.884 39.639L19.856 36.573L34.529 40.369L41.537 34.091L59.495 0L66.065 7.446Z" stroke-width="3" stroke="white" mask="url(#stroke1_0_47)"/>
+</g>
+<defs>
+<path id="stroke0_0_47" d="M66.065 7.446L74.679 40.88L79.205 39.785L82.928 46.866L88.622 48.691L89.133 57.816L85.556 66.576L79.862 67.963L75.263 75.847L65.481 81.249L56.721 98.258L50.151 101.251L43.8 97.893L42.048 89.644L34.748 81.614L25.915 56.94L10.147 47.961L2.336 47.377L0 35.697L7.884 39.639L19.856 36.573L34.529 40.369L41.537 34.091L59.495 0L66.065 7.446Z" fill-rule="evenodd" clip-rule="evenodd"/>
+</defs>
+</svg>
