@@ -29,7 +29,7 @@ function createRelationshipAnalysis(db) {
       LEFT JOIN feedback_context c ON c.feedback_id = i.feedback_id
       WHERE i.client_id = ? AND (c.client_id IS NULL OR c.client_id = i.client_id)
         AND i.dimension IN ('relationship','mixed') ORDER BY i.feedback_id`).all(clientId);
-    const interactions = db.prepare('SELECT id, occurred_at, summary FROM client_interactions WHERE client_id = ? ORDER BY id').all(clientId).filter(row => Number.isFinite(Date.parse(row.occurred_at)));
+    const interactions = db.prepare('SELECT id, occurred_at, summary FROM client_interactions WHERE client_id = ? AND type <> ? ORDER BY id').all(clientId, 'audit_crm').filter(row => Number.isFinite(Date.parse(row.occurred_at)));
     return atomic(db, () => {
       const ids = [];
       for (const [key, pattern, description] of rules) {

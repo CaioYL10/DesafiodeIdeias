@@ -73,3 +73,16 @@ test('rotas exigem sessão, validam entrada e expõem decisões ao reiniciar', a
     assert.equal(createRelationshipAnalysis(db).analyze(first.clientId)[0].id,id);
   } finally { if (server.listening) await new Promise(resolve => server.close(resolve)); db.close(); }
 });
+test('eventos audit_crm nao alteram evidencia nem fingerprint', () => {
+  const db = openDatabase(':memory:');
+  try {
+    const { first } = setup(db); const service = createRelationshipAnalysis(db);
+    const before = service.analyze(first.clientId);
+    db.prepare("INSERT INTO client_interactions(client_id, type, occurred_at, summary, created_at, updated_at) VALUES (?, 'audit_crm', '2026-10-02T12:00:00.000Z', 'Falta de retorno', '2026-10-02', '2026-10-02')").run(first.clientId);
+    const after = service.analyze(first.clientId);
+    assert.deepEqual(after, before);
+    assert.equal(after[0].interactions.length, 1);
+    assert.equal(after[0].fingerprint, before[0].fingerprint);
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM relationship_hypotheses').get().n, 1);
+  } finally { db.close(); }
+});
