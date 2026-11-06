@@ -169,3 +169,64 @@ CREATE TABLE IF NOT EXISTS identity_pending (
   reviewed_by INTEGER REFERENCES managers(id), reviewed_at TEXT, justification TEXT,
   resolved_client_id INTEGER REFERENCES clients(id)
 );
+
+CREATE TABLE IF NOT EXISTS relationship_hypotheses (
+  id INTEGER PRIMARY KEY, client_id INTEGER NOT NULL REFERENCES clients(id),
+  fingerprint TEXT NOT NULL UNIQUE, criterion TEXT NOT NULL, description TEXT NOT NULL,
+  limitations TEXT NOT NULL, period_start TEXT NOT NULL, period_end TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','confirmed','rejected','adjusted')),
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS relationship_evidence (
+  hypothesis_id INTEGER NOT NULL REFERENCES relationship_hypotheses(id),
+  feedback_id INTEGER NOT NULL REFERENCES imported_feedbacks(feedback_id),
+  technical_reference TEXT, PRIMARY KEY(hypothesis_id, feedback_id)
+);
+CREATE TABLE IF NOT EXISTS relationship_decisions (
+  id INTEGER PRIMARY KEY, hypothesis_id INTEGER NOT NULL REFERENCES relationship_hypotheses(id),
+  previous_status TEXT NOT NULL, status TEXT NOT NULL, previous_description TEXT NOT NULL,
+  description TEXT NOT NULL, justification TEXT NOT NULL,
+  manager_id INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS relationship_decision_no_update BEFORE UPDATE ON relationship_decisions
+BEGIN SELECT RAISE(ABORT, 'Histórico de decisão imutável'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_decision_no_delete BEFORE DELETE ON relationship_decisions
+BEGIN SELECT RAISE(ABORT, 'Histórico de decisão imutável'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_evidence_no_update BEFORE UPDATE ON relationship_evidence
+BEGIN SELECT RAISE(ABORT, 'Evidência imutável'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_evidence_no_delete BEFORE DELETE ON relationship_evidence
+BEGIN SELECT RAISE(ABORT, 'Evidência imutável'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_import_client_guard BEFORE UPDATE OF client_id ON imported_feedbacks
+WHEN EXISTS (SELECT 1 FROM relationship_evidence e JOIN relationship_hypotheses h ON h.id = e.hypothesis_id
+ WHERE e.feedback_id = OLD.feedback_id AND NEW.client_id IS NOT h.client_id)
+BEGIN SELECT RAISE(ABORT, 'Feedback vinculado a hipótese'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_context_insert_guard BEFORE INSERT ON feedback_context
+WHEN NEW.client_id IS NOT NULL AND EXISTS (SELECT 1 FROM relationship_evidence e JOIN relationship_hypotheses h ON h.id = e.hypothesis_id
+ WHERE e.feedback_id = NEW.feedback_id AND NEW.client_id IS NOT h.client_id)
+BEGIN SELECT RAISE(ABORT, 'Feedback vinculado a hipótese'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_context_update_guard BEFORE UPDATE OF client_id ON feedback_context
+WHEN NEW.client_id IS NOT NULL AND EXISTS (SELECT 1 FROM relationship_evidence e JOIN relationship_hypotheses h ON h.id = e.hypothesis_id
+ WHERE e.feedback_id = NEW.feedback_id AND NEW.client_id IS NOT h.client_id)
+BEGIN SELECT RAISE(ABORT, 'Feedback vinculado a hipótese'); END;
+CREATE TABLE IF NOT EXISTS relationship_interaction_evidence (
+  hypothesis_id INTEGER NOT NULL REFERENCES relationship_hypotheses(id),
+  interaction_id INTEGER NOT NULL REFERENCES client_interactions(id), occurred_at TEXT NOT NULL,
+  summary_snapshot TEXT NOT NULL, PRIMARY KEY(hypothesis_id, interaction_id)
+);
+CREATE TRIGGER IF NOT EXISTS relationship_interaction_evidence_no_update BEFORE UPDATE ON relationship_interaction_evidence
+BEGIN SELECT RAISE(ABORT, 'Evidência imutável'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_interaction_evidence_no_delete BEFORE DELETE ON relationship_interaction_evidence
+BEGIN SELECT RAISE(ABORT, 'Evidência imutável'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_hypothesis_client_guard BEFORE UPDATE OF client_id ON relationship_hypotheses
+WHEN NEW.client_id IS NOT OLD.client_id
+BEGIN SELECT RAISE(ABORT, 'Cliente da hipótese imutável'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_evidence_client_guard BEFORE INSERT ON relationship_evidence
+WHEN NOT EXISTS (SELECT 1 FROM relationship_hypotheses h JOIN imported_feedbacks i ON i.feedback_id = NEW.feedback_id
+ LEFT JOIN feedback_context c ON c.feedback_id = i.feedback_id
+ WHERE h.id = NEW.hypothesis_id AND i.client_id = h.client_id AND (c.client_id IS NULL OR c.client_id = h.client_id)
+ AND i.dimension IN ('relationship', 'mixed'))
+BEGIN SELECT RAISE(ABORT, 'Evidência incompatível com cliente ou dimensão'); END;
+CREATE TRIGGER IF NOT EXISTS relationship_context_feedback_guard BEFORE UPDATE OF feedback_id ON feedback_context
+WHEN NEW.client_id IS NOT NULL AND EXISTS (SELECT 1 FROM relationship_evidence e JOIN relationship_hypotheses h ON h.id = e.hypothesis_id
+ WHERE e.feedback_id = NEW.feedback_id AND NEW.client_id IS NOT h.client_id)
+BEGIN SELECT RAISE(ABORT, 'Feedback vinculado a hipótese'); END;
