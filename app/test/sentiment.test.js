@@ -1,22 +1,19 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { createSentimentService } = require('../src/services/sentiment');
+const fs = require('node:fs');
+const path = require('node:path');
 
-test('usa formato estruturado e valida o rótulo de sentimento', async () => {
-  let request;
-  const service = createSentimentService({ apiKey: 'demo-key', model: 'modelo-demo', fetchImpl: async (url, options) => {
-    request = { url, options };
-    return { ok: true, json: async () => ({ output: [{ content: [{ type: 'output_text', text: '{"sentiment":"positive"}' }] }] }) };
-  } });
-  assert.deepEqual(await service.classify('Comentário fictício.'), { sentiment: 'positive' });
-  assert.equal(request.url, 'https://api.openai.com/v1/responses');
-  const body = JSON.parse(request.options.body);
-  assert.equal(body.store, false);
-  assert.equal(body.text.format.type, 'json_schema');
-  assert.equal(body.text.format.schema.properties.sentiment.enum.length, 3);
+test('serviço local de sentimento e rota de coleta foram retirados', () => {
+  for (const file of ['services/sentiment.js', 'routes/feedback-routes.js']) {
+    assert.equal(fs.existsSync(path.join(__dirname, '../src', file)), false);
+  }
+  const { createFeedbackRepository } = require('../src/db/feedback-repository');
+  assert.equal(typeof createFeedbackRepository({}).setSentiment, 'undefined');
 });
 
-test('recusa a chamada sem chave de API', async () => {
-  const service = createSentimentService({ apiKey: '', fetchImpl: async () => { throw new Error('não deve chamar rede'); } });
-  await assert.rejects(service.classify('comentário fictício'), /OPENAI_API_KEY/);
+test('runtime e configuração de exemplo não dependem de OPENAI', () => {
+  for (const file of ['src/app.js', 'src/server.js', 'routes/manager-routes.js', '.env.example']) {
+    const location = file.startsWith('routes/') ? '../src/' + file : '../' + file;
+    assert.doesNotMatch(fs.readFileSync(path.join(__dirname, location), 'utf8'), /OPENAI_|createSentimentService|sentimentService|\.classify\(/);
+  }
 });

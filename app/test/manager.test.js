@@ -29,7 +29,7 @@ test('gestor filtra feedbacks, acompanha métricas e atualiza status', async (co
   const summary = await fetch(baseUrl + '/api/manager/summary', { headers }).then((r) => r.json());
   assert.equal(summary.total, 2);
   assert.equal(summary.averageRating, 3.5);
-  assert.equal(summary.sentimentCounts.positive, 1);
+  assert.equal(Object.hasOwn(summary, 'sentimentCounts'), false);
   const list = await fetch(baseUrl + '/api/manager/feedback?service=internet', { headers }).then((r) => r.json());
   assert.equal(list.total, 1);
   assert.equal(list.items[0].service, 'internet');
@@ -58,14 +58,14 @@ test('busca textual filtra comentário sem interpolar SQL', async (context) => {
   assert.equal(result.items[0].service, 'cloud');
 });
 
-test('bloqueia reanálise por IA de feedback que não foi marcado como demonstração', async (context) => {
+test('reanálise foi removida inclusive para feedback histórico não demonstrativo', async (context) => {
   const { database, baseUrl, cookie } = await setup(context);
   database.prepare(`INSERT INTO feedbacks (service, rating, comment, created_at, sentiment_status, handling_status)
     VALUES ('suporte', 3, 'Texto sem demonstração', ?, 'pending', 'new')`).run(new Date().toISOString());
   const response = await fetch(baseUrl + '/api/manager/feedback/3/reanalyze', {
     method: 'POST', headers: { cookie }
   });
-  assert.equal(response.status, 403);
+  assert.equal(response.status, 404);
 });
 
 

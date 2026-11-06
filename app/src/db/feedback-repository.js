@@ -15,10 +15,6 @@ function createFeedbackRepository(database) {
       `).run(service, rating, comment, demoData ? 1 : 0, now, now, sentiment, sentimentStatus,
         sourceChannel, sourceProtocol, reportedOrganization, reportedContact, reportedEmail, kind);
       return database.prepare('SELECT * FROM feedbacks WHERE id = ?').get(result.lastInsertRowid);
-    },
-    setSentiment(id, sentiment, status) {
-      database.prepare('UPDATE feedbacks SET sentiment = ?, sentiment_status = ? WHERE id = ?')
-        .run(sentiment, status, id);
     }
   };
 }

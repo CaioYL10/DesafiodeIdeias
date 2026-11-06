@@ -33,14 +33,6 @@ function createCrmRouter(db) {
       .run(req.params.id, clientId, contactId, productId, kind, req.manager.id, new Date().toISOString(), serviceInstanceId);
     return res.json({ updated: true });
   });
-  router.post('/feedback/:id/reviews', (req, res) => {
-    if (!db.prepare('SELECT id FROM feedbacks WHERE id = ?').get(req.params.id)) return res.status(404).json({ error: 'Feedback não encontrado.' });
-    const { sentiment, note = '' } = req.body || {};
-    if (!['positive', 'neutral', 'negative'].includes(sentiment) || typeof note !== 'string' || note.length > 1000) return res.status(400).json({ error: 'Selecione um sentimento válido e observação de até 1.000 caracteres.' });
-    const result = db.prepare('INSERT INTO sentiment_reviews(feedback_id, sentiment, note, manager_id, created_at) VALUES (?, ?, ?, ?, ?)')
-      .run(req.params.id, sentiment, note.trim(), req.manager.id, new Date().toISOString());
-    return res.status(201).json({ id: result.lastInsertRowid });
-  });
   return router;
 }
 module.exports = { createCrmRouter };
