@@ -5,11 +5,12 @@ const { createApp } = require('../src/app');
 const { createSession, sessionCookie } = require('../src/security/sessions');
 const { startServer } = require('../test-support/server');
 
-test('visitante acessa visão geral e formulário; gestão e API de produtos exigem sessão', async (context) => {
+test('visitante acessa visão geral; coleta retirada; gestão e API de produtos exigem sessão', async (context) => {
   const database = openDatabase(':memory:'); context.after(() => database.close());
   const url = await startServer(createApp({ database }), context);
   assert.match(await fetch(url + '/').then(r => r.text()), /id="home-title"/);
-  assert.match(await fetch(url + '/feedback').then(r => r.text()), /id="feedback-form"/);
+  assert.equal((await fetch(url + '/feedback')).status, 404);
+  assert.equal((await fetch(url + '/feedback.html')).status, 404);
   for (const path of ['/dashboard', '/dashboard.html', '/products', '/products.html', '/workspace', '/workspace.html']) {
     const response = await fetch(url + path, { redirect: 'manual' }); assert.equal(response.status, 302, path);
   }

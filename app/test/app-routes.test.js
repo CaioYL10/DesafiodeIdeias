@@ -4,7 +4,7 @@ const { openDatabase } = require('../src/db/database');
 const { createApp } = require('../src/app');
 const { startServer } = require('../test-support/server');
 
-test('serve formulário e login, mas exige sessão para o painel', async (context) => {
+test('serve visão geral e login, mas exige sessão para o painel', async (context) => {
   const database = openDatabase(':memory:');
   context.after(() => database.close());
   const baseUrl = await startServer(createApp({ database }), context);
