@@ -1,0 +1,76 @@
+﻿const test = require('node:test');
+const assert = require('node:assert/strict');
+const { openDatabase } = require('../src/db/database');
+const { createIngestionService } = require('../src/services/feedback-ingestion');
+const { getDemoFeedbacks } = require('../src/services/demo-feedback-source');
+const { createRelationshipAnalysis } = require('../src/services/relationship-analysis');
+const { createSession } = require('../src/security/sessions');
+const { createApp } = require('../src/app');
+const { startServer } = require('../test-support/server');
+
+test('ciclo relacional exige decisão, vínculos coerentes e registra tentativas e reabertura', async t => {
+  const db = openDatabase(':memory:'); t.after(() => db.close());
+  db.exec("INSERT INTO managers VALUES (1, 'gestor@example.test', 's', 'h', '2026-01-01')");
+  const items = getDemoFeedbacks(); const ing = createIngestionService(db);
+  const first = ing.ingestOne(items[0]); const mixed = ing.ingestOne(items[1]); const technical = ing.ingestOne(items[4]);
+  const service = createRelationshipAnalysis(db); const h = service.analyze(first.clientId)[0];
+  const base = await startServer(createApp({ database: db }), t);
+  const cookie = `cti_manager_session=${createSession(db, 1).token}`;
+  async function call(path, method = 'GET', body, auth = true) {
+    const res = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(auth ? {cookie} : {}) }, ...(body === undefined ? {} : {body: JSON.stringify(body)}) });
+    return { status: res.status, body: await res.json() };
+  }
+  const payload = { title:'Retorno ao cliente', category:'Comunicação', analysis:'Investigar acompanhamento', hypothesisId:h.id, clientId:first.clientId, feedbackIds:[first.feedbackId,mixed.feedbackId] };
+  assert.equal((await call('/api/manager/quality','POST',payload,false)).status,401);
+  assert.equal((await call('/api/manager/quality','POST',payload)).status,409);
+  assert.equal(db.prepare('SELECT COUNT(*) AS n FROM quality_problems').get().n,0);
+  service.review(h.id, {status:'confirmed',justification:'Evidências verificadas'}, 1);
+  assert.equal((await call('/api/manager/quality','POST',{...payload,clientId:999})).status,409);
+  assert.equal((await call('/api/manager/quality','POST',{...payload,feedbackIds:[technical.feedbackId]})).status,409);
+  assert.equal((await call('/api/manager/quality','POST',{...payload,feedbackIds:[first.feedbackId]})).status,409);
+  const created = await call('/api/manager/quality','POST',payload); assert.equal(created.status,201);
+  const path = `/api/manager/quality/${created.body.id}`;
+  let detail = (await call(path)).body;
+  assert.equal(detail.problem.hypothesis_id,h.id); assert.equal(detail.problem.client_id,first.clientId);
+  assert.equal(detail.problem.decision_id,service.get(h.id).decisions[0].id);
+  assert.equal(detail.feedbacks.length,2); assert.equal(detail.feedbacks.find(x => x.id === mixed.feedbackId).technical_reference,items[1].technicalReference);
+  assert.equal(detail.problem.cause,'');
+  assert.ok((await call(`/api/manager/crm/clients/${first.clientId}`)).body.occurrences.some(x => x.id === created.body.id));
+  assert.equal((await call(path+'/reopen','POST',{justification:'teste'})).status,409);
+  const action = await call(path+'/actions','POST',{description:'Acompanhar retorno',owner:'Gestora',dueDate:'2026-11-10'}); assert.equal(action.status,201);
+  const ap = `/api/manager/quality/actions/${action.body.id}`;
+  assert.equal((await call(ap+'/verify','POST',{effective:true,note:'ok',criterion:'critério'})).status,409);
+  assert.equal((await call(ap+'/complete','POST',{evidence:'Primeira tentativa'})).status,200);
+  assert.equal((await call(ap+'/verify','POST',{effective:false,note:'Sem retorno'})).status,400);
+  assert.equal((await call(ap+'/verify','POST',{effective:false,note:'Sem retorno',criterion:'Retorno em dois dias'})).status,200);
+  assert.equal((await call(path+'/close','POST',{justification:'Concluído'})).status,409);
+  assert.equal((await call(ap+'/complete','POST',{evidence:'Segunda tentativa'})).status,200);
+  assert.equal((await call(ap+'/verify','POST',{effective:true,note:'Retorno confirmado',criterion:'Retorno em dois dias'})).status,200);
+  assert.equal((await call(path+'/analysis','PUT',{impact:'high',priority:'high',containment:'Acompanhamento',cause:'Ausência de rotina de contato',recurrent:false,relatedProblemId:null})).status,200);
+  assert.equal((await call(path+'/close','POST',{})).status,400);
+  assert.equal((await call(path+'/close','POST',{justification:'Acompanhamento validado'})).status,200);
+  assert.equal((await call(path+'/service','PUT',{serviceInstanceId:null})).status,409);
+  assert.equal((await call(path+'/reopen','POST',{})).status,400);
+  assert.equal((await call(path+'/reopen','POST',{justification:'Novo indício observado'})).status,200);
+  detail = (await call(path)).body;
+  assert.equal(detail.problem.status,'in_progress'); assert.deepEqual(detail.attempts.map(x => x.effective),[0,1]);
+  assert.equal(detail.attempts[0].criterion,'Retorno em dois dias');
+  assert.ok(detail.events.some(e => e.description.includes('Novo indício observado') && e.manager_id === 1 && e.created_at));
+});
+
+test('reinício preserva vínculos, critério e dados anteriores', t => {
+  const fs = require('node:fs'); const os = require('node:os'); const path = require('node:path');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(),'cti-t06-')); t.after(() => fs.rmSync(dir,{recursive:true,force:true}));
+  const filename = path.join(dir,'db.sqlite'); let db = openDatabase(filename);
+  db.exec("INSERT INTO managers VALUES (1, 'demo@example.test', 's', 'h', '2026-01-01')");
+  const ing = createIngestionService(db); const first = ing.ingestOne(getDemoFeedbacks()[0]);
+  const service = createRelationshipAnalysis(db); const h = service.analyze(first.clientId)[0]; service.review(h.id,{status:'confirmed',justification:'Conferido'},1);
+  const decision = service.get(h.id).decisions[0].id;
+  db.prepare("INSERT INTO quality_problems(title,category,analysis,manager_id,created_at,hypothesis_id,decision_id,client_id) VALUES ('Título','Relacionamento','Investigação',1,'2026',?,?,?)").run(h.id,decision,first.clientId);
+  db.prepare("INSERT INTO quality_actions(problem_id,description,owner,due_date,created_at) VALUES (1,'Contato','Gestora','2026-11-10','2026')").run();
+  db.prepare("INSERT INTO quality_action_attempts(action_id,evidence,completed_at,criterion) VALUES (1,'Evidência','2026','Critério')").run();
+  db.close(); db = openDatabase(filename);
+  assert.deepEqual({...db.prepare('SELECT hypothesis_id,decision_id,client_id FROM quality_problems').get()}, {hypothesis_id:h.id,decision_id:decision,client_id:first.clientId});
+  assert.equal(db.prepare('SELECT criterion FROM quality_action_attempts').get().criterion,'Critério');
+  db.close();
+});

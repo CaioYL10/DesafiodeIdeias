@@ -25,26 +25,41 @@ function createQualityRouter(db) {
     return res.json({ items });
   });
   router.post('/', (req, res) => {
-    const { title, category, analysis, feedbackIds } = req.body || {};
+    const { title, category, analysis, hypothesisId, clientId, feedbackIds } = req.body || {};
     const structured = {
       impact: req.body?.impact ?? 'medium', priority: req.body?.priority ?? 'normal',
-      containment: req.body?.containment ?? 'A definir na triagem', cause: req.body?.cause ?? '',
+      containment: req.body?.containment ?? 'A definir na triagem', cause: '',
       recurrent: req.body?.recurrent ?? false, relatedProblemId: req.body?.relatedProblemId ?? null
     };
-    if (!text(title, 160) || !text(category, 80) || !text(analysis, 2000) || !ids(feedbackIds) || !feedbackIds.length ||
-      feedbackIds.some((id) => !db.prepare('SELECT id FROM feedbacks WHERE id = ?').get(id)) ||
-      !validAnalysis(structured, db)) return res.status(400).json({ error: 'Informe análise, impacto, prioridade, contenção, recorrência e relatos válidos.' });
+    if (!text(title, 160) || !text(category, 80) || !text(analysis, 2000) ||
+      !Number.isSafeInteger(hypothesisId) || hypothesisId <= 0 || !Number.isSafeInteger(clientId) || clientId <= 0 ||
+      !ids(feedbackIds) || !feedbackIds.length || !validAnalysis(structured, db) ||
+      (req.body.cause !== undefined && req.body.cause !== '')) return res.status(400).json({ error: 'Informe hipótese, cliente, evidências e descrição relacional válidos.' });
+    const hypothesis = db.prepare('SELECT * FROM relationship_hypotheses WHERE id = ?').get(hypothesisId);
+    if (!hypothesis) return res.status(404).json({ error: 'Hipótese não encontrada.' });
+    const decision = db.prepare("SELECT * FROM relationship_decisions WHERE hypothesis_id = ? AND status = 'confirmed' ORDER BY id DESC LIMIT 1").get(hypothesisId);
+    const evidence = db.prepare(`SELECT e.feedback_id, i.client_id, i.dimension, c.client_id AS context_client,
+      ip.status AS identity_status FROM relationship_evidence e JOIN imported_feedbacks i ON i.feedback_id = e.feedback_id
+      LEFT JOIN feedback_context c ON c.feedback_id = i.feedback_id
+      LEFT JOIN identity_pending ip ON ip.feedback_id = i.feedback_id WHERE e.hypothesis_id = ? ORDER BY e.feedback_id`).all(hypothesisId);
+    if (hypothesis.status !== 'confirmed' || !decision || hypothesis.client_id !== clientId || !evidence.length ||
+      evidence.some(e => e.client_id !== clientId || (e.context_client !== null && e.context_client !== clientId) ||
+        !['relationship', 'mixed'].includes(e.dimension) || e.identity_status === 'pending') ||
+      evidence.length !== feedbackIds.length || evidence.some(e => !feedbackIds.includes(e.feedback_id)))
+      return res.status(409).json({ error: 'Hipótese, decisão, cliente ou evidências incompatíveis.' });
+    if (structured.relatedProblemId && !db.prepare('SELECT id FROM quality_problems WHERE id = ? AND client_id = ?').get(structured.relatedProblemId, clientId))
+      return res.status(409).json({ error: 'Ocorrência relacionada pertence a outro cliente ou é histórica.' });
     const id = atomic(db, () => {
       const instances = db.prepare(`SELECT DISTINCT service_instance_id FROM feedback_overview
         WHERE id IN (${feedbackIds.map(() => '?').join(',')})`).all(...feedbackIds);
       const instanceId = instances.length === 1 ? instances[0].service_instance_id : null;
       const result = db.prepare(`INSERT INTO quality_problems(title, category, analysis, manager_id, created_at,
-        service_instance_id, impact, priority, containment, cause, recurrent, related_problem_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(title.trim(), category.trim(), analysis.trim(), req.manager.id,
+        service_instance_id, impact, priority, containment, cause, recurrent, related_problem_id, hypothesis_id, decision_id, client_id)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(title.trim(), category.trim(), analysis.trim(), req.manager.id,
           new Date().toISOString(), instanceId, structured.impact, structured.priority, structured.containment.trim(),
-          structured.cause.trim(), Number(structured.recurrent), structured.relatedProblemId);
+          '', Number(structured.recurrent), structured.relatedProblemId, hypothesisId, decision.id, clientId);
       for (const feedbackId of feedbackIds) db.prepare('INSERT INTO problem_feedbacks VALUES (?, ?)').run(result.lastInsertRowid, feedbackId);
-      event(result.lastInsertRowid, req.manager.id, `Problema aberto após triagem humana. Impacto: ${structured.impact}; prioridade: ${structured.priority}; contenção: ${structured.containment.trim()}; causa: ${structured.cause.trim() || 'pendente'}; recorrência: ${structured.recurrent ? 'sim' : 'não'}${structured.relatedProblemId ? ` (#${structured.relatedProblemId})` : ''}.`);
+      event(result.lastInsertRowid, req.manager.id, `Ocorrência relacional aberta por decisão humana #${decision.id} da hipótese #${hypothesisId}.`);
       return result.lastInsertRowid;
     });
     return res.status(201).json({ id });
@@ -66,6 +81,7 @@ function createQualityRouter(db) {
     if (!problem) return res.status(404).json({ error: 'Problema não encontrado.' });
     if (problem.status === 'closed') return res.status(409).json({ error: 'O problema já está encerrado.' });
     const data = req.body || {};
+    if (data.relatedProblemId && problem.client_id && !db.prepare('SELECT id FROM quality_problems WHERE id = ? AND client_id = ?').get(data.relatedProblemId, problem.client_id)) return res.status(409).json({ error: 'Ocorrência relacionada incompatível.' });
     if (!validAnalysis(data, db, problem.id)) return res.status(400).json({ error: 'Impacto, prioridade, contenção, causa ou recorrência inválidos.' });
     const changes = [
       ['impact', data.impact], ['priority', data.priority], ['containment', data.containment.trim()],
@@ -79,14 +95,18 @@ function createQualityRouter(db) {
     return res.json({ updated: true });
   });
   router.put('/:id/service', (req, res) => {
-    if (!db.prepare('SELECT id FROM quality_problems WHERE id = ?').get(req.params.id)) return res.status(404).json({ error: 'Problema não encontrado.' });
+    const problem = db.prepare('SELECT * FROM quality_problems WHERE id = ?').get(req.params.id);
+    if (!problem) return res.status(404).json({ error: 'Problema não encontrado.' });
+    if (problem.status === 'closed') return res.status(409).json({ error: 'O problema já está encerrado.' });
     const { serviceInstanceId = null } = req.body || {};
     if (serviceInstanceId !== null && (!Number.isSafeInteger(serviceInstanceId) ||
       !db.prepare(`SELECT 1 FROM service_instances s JOIN problem_feedbacks pf ON pf.problem_id = ?
-        JOIN feedback_context c ON c.feedback_id = pf.feedback_id WHERE s.id = ? AND s.client_id = c.client_id
+        JOIN feedback_overview f ON f.id = pf.feedback_id WHERE s.id = ? AND s.client_id = f.client_id
         LIMIT 1`).get(req.params.id, serviceInstanceId))) return res.status(400).json({ error: 'Serviço contratado não pertence aos relatos do problema.' });
-    db.prepare('UPDATE quality_problems SET service_instance_id = ? WHERE id = ?').run(serviceInstanceId, req.params.id);
-    event(req.params.id, req.manager.id, serviceInstanceId === null ? 'Contexto do serviço removido.' : `Serviço contratado #${serviceInstanceId} associado ao problema.`);
+    atomic(db, () => {
+      db.prepare('UPDATE quality_problems SET service_instance_id = ? WHERE id = ?').run(serviceInstanceId, req.params.id);
+      event(req.params.id, req.manager.id, serviceInstanceId === null ? 'Contexto do serviço removido.' : `Serviço contratado #${serviceInstanceId} associado ao problema.`);
+    });
     return res.json({ updated: true });
   });
   router.post('/:id/actions', (req, res) => {
@@ -106,6 +126,7 @@ function createQualityRouter(db) {
   router.post('/actions/:id/complete', (req, res) => {
     const action = db.prepare('SELECT * FROM quality_actions WHERE id = ?').get(req.params.id);
     if (!action) return res.status(404).json({ error: 'Ação não encontrada.' });
+    if (db.prepare('SELECT status FROM quality_problems WHERE id = ?').get(action.problem_id).status === 'closed') return res.status(409).json({ error: 'O problema já está encerrado.' });
     if (!['pending', 'ineffective'].includes(action.status)) return res.status(409).json({ error: 'Esta ação não está pendente de execução.' });
     const { evidence } = req.body || {};
     if (!text(evidence, 2000)) return res.status(400).json({ error: 'Registre uma evidência de conclusão de até 2.000 caracteres.' });
@@ -120,26 +141,40 @@ function createQualityRouter(db) {
   router.post('/actions/:id/verify', (req, res) => {
     const action = db.prepare('SELECT * FROM quality_actions WHERE id = ?').get(req.params.id);
     if (!action) return res.status(404).json({ error: 'Ação não encontrada.' });
+    if (db.prepare('SELECT status FROM quality_problems WHERE id = ?').get(action.problem_id).status === 'closed') return res.status(409).json({ error: 'O problema já está encerrado.' });
     if (action.status !== 'completed') return res.status(409).json({ error: 'Conclua a ação com evidência antes de verificar a eficácia.' });
-    const { effective, note } = req.body || {};
-    if (typeof effective !== 'boolean' || !text(note, 2000)) return res.status(400).json({ error: 'Informe o resultado e a justificativa da verificação.' });
+    const { effective, note, criterion } = req.body || {};
+    if (typeof effective !== 'boolean' || !text(note, 2000) || !text(criterion, 1000)) return res.status(400).json({ error: 'Informe o resultado e a justificativa da verificação.' });
     atomic(db, () => {
       const now = new Date().toISOString();
       db.prepare('UPDATE quality_actions SET status = ?, verification_note = ?, verified_at = ? WHERE id = ?').run(effective ? 'effective' : 'ineffective', note.trim(), now, action.id);
-      db.prepare(`UPDATE quality_action_attempts SET effective = ?, verification_note = ?, verified_at = ?
-        WHERE id = (SELECT MAX(id) FROM quality_action_attempts WHERE action_id = ?)`).run(Number(effective), note.trim(), now, action.id);
-      event(action.problem_id, req.manager.id, `Ação #${action.id} verificada: ${effective ? 'eficaz' : 'ineficaz; requer nova execução'}. ${note.trim()}`);
+      db.prepare(`UPDATE quality_action_attempts SET effective = ?, verification_note = ?, verified_at = ?, criterion = ?
+        WHERE id = (SELECT MAX(id) FROM quality_action_attempts WHERE action_id = ?)`).run(Number(effective), note.trim(), now, criterion.trim(), action.id);
+      event(action.problem_id, req.manager.id, `Ação #${action.id} verificada: ${effective ? 'eficaz' : 'ineficaz; requer nova execução'}. Critério: ${criterion.trim()}. Justificativa: ${note.trim()}`);
     });
     return res.json({ updated: true });
   });
   router.post('/:id/close', (req, res) => {
     const problem = db.prepare('SELECT * FROM quality_problems WHERE id = ?').get(req.params.id);
     if (!problem) return res.status(404).json({ error: 'Problema não encontrado.' });
+    const { justification } = req.body || {};
+    if (!text(justification, 2000)) return res.status(400).json({ error: 'Informe justificativa de encerramento.' });
     const actions = db.prepare('SELECT status FROM quality_actions WHERE problem_id = ?').all(problem.id);
     if (problem.status === 'closed' || !problem.cause.trim() || !actions.length || actions.some((action) => action.status !== 'effective')) return res.status(409).json({ error: 'O encerramento exige causa identificada, ao menos uma ação e todas com eficácia verificada.' });
     atomic(db, () => {
       db.prepare("UPDATE quality_problems SET status = 'closed', closed_at = ? WHERE id = ?").run(new Date().toISOString(), problem.id);
-      event(problem.id, req.manager.id, 'Problema encerrado após verificação de eficácia de todas as ações.');
+      event(problem.id, req.manager.id, `Problema encerrado após verificação de eficácia: ${justification.trim()}`);
+    });
+    return res.json({ updated: true });
+  });
+  router.post('/:id/reopen', (req, res) => {
+    const problem = db.prepare('SELECT * FROM quality_problems WHERE id = ?').get(req.params.id);
+    if (!problem) return res.status(404).json({ error: 'Problema não encontrado.' });
+    if (problem.status !== 'closed') return res.status(409).json({ error: 'Somente problemas encerrados podem ser reabertos.' });
+    if (!text(req.body?.justification, 2000)) return res.status(400).json({ error: 'Informe justificativa de reabertura.' });
+    atomic(db, () => {
+      db.prepare("UPDATE quality_problems SET status = 'in_progress', closed_at = NULL WHERE id = ?").run(problem.id);
+      event(problem.id, req.manager.id, `Problema reaberto: ${req.body.justification.trim()}`);
     });
     return res.json({ updated: true });
   });

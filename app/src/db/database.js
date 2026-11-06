@@ -55,9 +55,15 @@ function openDatabase(filename) {
     containment: "TEXT NOT NULL DEFAULT ''",
     cause: "TEXT NOT NULL DEFAULT ''",
     recurrent: 'INTEGER NOT NULL DEFAULT 0 CHECK (recurrent IN (0, 1))',
-    related_problem_id: 'INTEGER REFERENCES quality_problems(id)'
+    related_problem_id: 'INTEGER REFERENCES quality_problems(id)',
+    hypothesis_id: 'INTEGER REFERENCES relationship_hypotheses(id)',
+    decision_id: 'INTEGER REFERENCES relationship_decisions(id)',
+    client_id: 'INTEGER REFERENCES clients(id)'
   })) {
     if (!problemColumns.has(name)) database.exec(`ALTER TABLE quality_problems ADD COLUMN ${name} ${definition}`);
+  }
+  if (!database.prepare('PRAGMA table_info(quality_action_attempts)').all().some((column) => column.name === 'criterion')) {
+    database.exec('ALTER TABLE quality_action_attempts ADD COLUMN criterion TEXT');
   }
   database.exec(`INSERT INTO quality_action_attempts(action_id, evidence, completed_at, effective, verification_note, verified_at)
     SELECT id, evidence, completed_at,
