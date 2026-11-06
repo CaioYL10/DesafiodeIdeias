@@ -84,13 +84,16 @@ function openDatabase(filename) {
         JOIN feedback_context c ON c.feedback_id = pf.feedback_id WHERE pf.problem_id = quality_problems.id) = 1;
     DROP VIEW feedback_overview;
     CREATE VIEW feedback_overview AS
-    SELECT f.*, c.client_id, c.contact_id, c.product_id, c.service_instance_id, COALESCE(c.kind, f.source_kind) AS kind,
+    SELECT f.*, COALESCE(c.client_id, i.client_id) AS client_id, c.contact_id, c.product_id, c.service_instance_id, COALESCE(c.kind, f.source_kind) AS kind,
+      i.source_system, i.external_event_id, i.external_client_id, i.occurred_at, i.dimension, i.external_classification, i.technical_reference, i.reported_cnpj, i.reported_phone, ip.status AS identity_status,
       cl.name AS client_name, cc.name AS contact_name, p.name AS product_name, s.name AS service_instance_name,
       r.sentiment AS reviewed_sentiment, r.created_at AS reviewed_at,
       COALESCE(r.sentiment, f.sentiment) AS final_sentiment
     FROM feedbacks f
     LEFT JOIN feedback_context c ON c.feedback_id = f.id
-    LEFT JOIN clients cl ON cl.id = c.client_id
+    LEFT JOIN imported_feedbacks i ON i.feedback_id = f.id
+    LEFT JOIN identity_pending ip ON ip.feedback_id = f.id
+    LEFT JOIN clients cl ON cl.id = COALESCE(c.client_id, i.client_id)
     LEFT JOIN client_contacts cc ON cc.id = c.contact_id
     LEFT JOIN products p ON p.id = c.product_id
     LEFT JOIN service_instances s ON s.id = c.service_instance_id

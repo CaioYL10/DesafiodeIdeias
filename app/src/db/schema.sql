@@ -146,3 +146,26 @@ LEFT JOIN feedback_context c ON c.feedback_id = f.id
 LEFT JOIN clients cl ON cl.id = c.client_id
 LEFT JOIN products p ON p.id = c.product_id
 LEFT JOIN sentiment_reviews r ON r.id = (SELECT MAX(id) FROM sentiment_reviews WHERE feedback_id = f.id);
+
+CREATE TABLE IF NOT EXISTS external_client_ids (
+  source_system TEXT NOT NULL, external_client_id TEXT NOT NULL,
+  client_id INTEGER NOT NULL REFERENCES clients(id), PRIMARY KEY(source_system, external_client_id)
+);
+CREATE TABLE IF NOT EXISTS client_cnpjs (
+  cnpj TEXT NOT NULL, client_id INTEGER NOT NULL REFERENCES clients(id), PRIMARY KEY(cnpj, client_id)
+);
+CREATE TABLE IF NOT EXISTS imported_feedbacks (
+  feedback_id INTEGER PRIMARY KEY REFERENCES feedbacks(id), source_system TEXT NOT NULL,
+  external_event_id TEXT NOT NULL, external_client_id TEXT, occurred_at TEXT NOT NULL,
+  dimension TEXT NOT NULL CHECK(dimension IN ('technical','relationship','mixed')),
+  external_classification TEXT, technical_reference TEXT, reported_cnpj TEXT, reported_phone TEXT,
+  client_id INTEGER REFERENCES clients(id),
+  UNIQUE(source_system, external_event_id)
+);
+CREATE TABLE IF NOT EXISTS identity_pending (
+  id INTEGER PRIMARY KEY, feedback_id INTEGER NOT NULL UNIQUE REFERENCES feedbacks(id),
+  source_system TEXT NOT NULL, external_client_id TEXT, client_name TEXT NOT NULL, cnpj TEXT,
+  reason TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','linked','created','rejected')),
+  reviewed_by INTEGER REFERENCES managers(id), reviewed_at TEXT, justification TEXT,
+  resolved_client_id INTEGER REFERENCES clients(id)
+);
