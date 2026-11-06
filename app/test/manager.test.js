@@ -24,7 +24,7 @@ async function setup(context) {
 }
 
 test('gestor filtra feedbacks, acompanha métricas e atualiza status', async (context) => {
-  const { baseUrl, cookie } = await setup(context);
+  const { baseUrl, cookie, database } = await setup(context);
   const headers = { cookie };
   const summary = await fetch(baseUrl + '/api/manager/summary', { headers }).then((r) => r.json());
   assert.equal(summary.total, 2);
@@ -33,10 +33,22 @@ test('gestor filtra feedbacks, acompanha métricas e atualiza status', async (co
   const list = await fetch(baseUrl + '/api/manager/feedback?service=internet', { headers }).then((r) => r.json());
   assert.equal(list.total, 1);
   assert.equal(list.items[0].service, 'internet');
-  const update = await fetch(baseUrl + '/api/manager/feedback/1/status', {
+  const endpoint = baseUrl + '/api/manager/feedback/1/status';
+  const payload = { method: 'PATCH', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ status: 'in_review' }) };
+  assert.equal((await fetch(endpoint, { ...payload, headers: { 'content-type': 'application/json' } })).status, 401);
+  assert.equal((await fetch(endpoint, payload)).status, 409);
+  database.prepare("INSERT INTO clients(name, created_at) VALUES ('Cliente fictício', '2026-11-05')").run();
+  database.prepare("INSERT INTO feedback_context(feedback_id, client_id, kind, manager_id, updated_at) VALUES (1, 1, 'feedback', 1, '2026-11-05')").run();
+  assert.equal((await fetch(endpoint, { ...payload, body: JSON.stringify({ status: 'in_review', managerId: 9 }) })).status, 400);
+  const update = await fetch(endpoint, {
     method: 'PATCH', headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify({ status: 'in_review' })
   });
   assert.equal(update.status, 200);
+  assert.deepEqual(await fetch(endpoint, payload).then(r => r.json()), { updated: false });
+  const events = database.prepare("SELECT * FROM client_interactions WHERE type = 'audit_crm'").all();
+  assert.equal(events.length, 1);
+  assert.ok(events[0].occurred_at);
+  assert.deepEqual(JSON.parse(events[0].summary), { managerId: 1, action: 'feedback-handling-status', feedbackId: 1, before: 'new', after: 'in_review' });
 });
 
 test('CSV respeita filtro e neutraliza texto que possa virar fórmula', async (context) => {

@@ -36,7 +36,7 @@ test('coleta pública e registro interno não existem, mesmo com sessão', async
   assert.equal(db.prepare('SELECT COUNT(*) AS total FROM feedbacks').get().total, 0);
 });
 
-test('triagem associa e corrige organização, contato e serviço contratado sem alterar autor informado', async (context) => {
+test('vínculo legado exige decisão auditável e preserva autor, tipo, contato e serviço', async (context) => {
   const { db, base, cookie } = await setup(context);
   const now = new Date().toISOString();
   db.prepare("INSERT INTO clients(id, name, created_at) VALUES (1, 'Empresa cadastrada', ?)").run(now);
@@ -47,15 +47,29 @@ test('triagem associa e corrige organização, contato e serviço contratado sem
   db.prepare('INSERT INTO client_products VALUES (1, 1)').run();
   db.prepare("INSERT INTO service_instances(id, client_id, product_id, name, created_at, updated_at) VALUES (1, 1, 1, 'Unidade A', ?, ?)").run(now, now);
   const id = db.prepare("INSERT INTO feedbacks(service, comment, created_at, reported_contact) VALUES ('internet', ?, ?, ?)").run(payload.comment, now, payload.reportedContact).lastInsertRowid;
-  const put = (body) => fetch(base + '/api/manager/crm/feedback/' + id, { method: 'PUT', headers: { cookie, 'content-type': 'application/json' }, body: JSON.stringify(body) });
-  assert.equal((await put({ clientId: 1, contactId: 2, productId: 1, serviceInstanceId: 1, kind: 'complaint' })).status, 400);
-  assert.equal((await put({ clientId: 1, contactId: 1, productId: 1, serviceInstanceId: 1, kind: 'complaint' })).status, 200);
+  const put = (body, authenticated = true) => fetch(base + '/api/manager/crm/feedback/' + id, { method: 'PUT', headers: { ...(authenticated ? { cookie } : {}), 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  const data = { clientId: 1, contactId: 1, productId: 1, serviceInstanceId: 1, justification: 'Vínculo histórico conferido pela equipe.' };
+  assert.equal((await put(data, false)).status, 401);
+  assert.equal((await put({ ...data, justification: '' })).status, 400);
+  assert.equal((await put({ ...data, kind: 'complaint' })).status, 400);
+  assert.equal((await put({ ...data, contactId: 2 })).status, 400);
+  assert.equal((await put(data)).status, 200);
   const detail = await fetch(base + '/api/manager/crm/feedback/' + id, { headers: { cookie } }).then((r) => r.json());
   assert.equal(detail.feedback.contact_name, 'Contato cadastrado');
   assert.equal(detail.feedback.service_instance_name, 'Unidade A');
   assert.equal(detail.feedback.reported_contact, 'Ana Exemplo');
-  assert.equal((await put({ clientId: null, contactId: null, productId: null, serviceInstanceId: null, kind: 'complaint' })).status, 200);
+  assert.equal(detail.feedback.kind, 'feedback');
+  assert.equal((await put({ clientId: null, justification: 'Não há cliente escolhido.' })).status, 400);
+  assert.equal((await put({ clientId: 2, contactId: 1, justification: 'Contato incompatível.' })).status, 400);
+  assert.equal((await put({ clientId: 2, justification: 'Identificação histórica corrigida por pessoa autorizada.' })).status, 200);
   assert.equal(db.prepare('SELECT reported_contact FROM feedbacks WHERE id = ?').get(id).reported_contact, 'Ana Exemplo');
+  const events = db.prepare("SELECT * FROM client_interactions WHERE type = 'audit_crm'").all();
+  assert.equal(events.length, 3);
+  const event = JSON.parse(events[1].summary);
+  assert.equal(event.managerId, 1);
+  assert.equal(event.feedbackId, Number(id));
+  assert.equal(event.before.client_id, 1);
+  assert.equal(event.after.client_id, 2);
 });
 
 test('migração de feedback antigo permite nota nula e preserva vínculos', (context) => {
