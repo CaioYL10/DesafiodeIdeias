@@ -7,7 +7,7 @@
 | Tarefa | Estado real | Dono / modelo | Dependências integradas | Branch, worktree, SHA | Verificações / próxima ação |
 | --- | --- | --- | --- | --- | --- |
 | T01 | Integrada | C / modelo da sessão, inalterado | Nenhuma | Integração; commit `20d26daedce26867343b00a822b67d60ccfcec57` | `git diff --cached --check` sem erros; inventário e acordos registrados |
-| T02 | Pendente | A / a selecionar | T01 | A criar pelo Orca | Iniciar após SHA T01 |
+| T02 | Executando | A / `gpt-6.1-terra`, `high` (recibo confirmado) | T01, HEAD `ee7fc2855ee1e592404619b1e05d8ffd978bf22b` | `CaioYL10/cti-t02`, `C:/Users/Ygor/orca/workspaces/DesafiodeIdeias/cti-t02`, base `ee7fc28` | Task `task_fcf2c8966bb1`, dispatch `ctx_f195babff099`; aguardando entrega e revisão |
 | T03 | Pendente | A / a selecionar | T02 | A criar | Remoção servidor |
 | T04 e T05 | Pendentes | A e B | T03 | A criar | Onda paralela, paths distintos |
 | T06 | Pendente | A | T04 e T05 | A criar | Ciclo SGQ |
@@ -20,5 +20,7 @@
 **Ambiente Orca/Codex:** Orca 1.4.250, runtime local pronto, `worker-start` suporta `--model`/`--effort` (exige `--model`). Catálogo Codex local confirmado por `codex debug models`: `gpt-6.1-sol`, `gpt-6-astra`, `gpt-6.1-terra`, `gpt-6-sol`, `gpt-6-luna` e modelos 5.6; níveis `low` a `ultra` para os modelos 6 listados, exceto Luna sem `ultra`. Configuração global `gpt-6-sol/high`; não alterada. Seleção por tarefa e recibo de lançamento serão registrados no despacho. Setup de worktrees: `--setup skip` até auditoria; nenhum hook de setup foi encontrado no repositório pelos padrões de nome; não compartilhar `data/`, `.env` ou banco.
 
 **Riscos atuais:** o bootstrap recria `feedback_overview` e conserva referências a sentimento; T02/T03 precisam testar compatibilidade. O único papel existente é gestor. Datas de manutenção e destinatários não existem no domínio atual e devem ser sustentados antes da automação, sem inventar envio real. A proposta do produto não foi validada pela CTI.
+
+**Despacho T02:** `orca orchestration worker-start` iniciou worker Codex em worktree filha isolada, `--setup skip`. Recibo: terminal `term_a8fc595d-f7b9-420c-8ae2-2387e2344532`, modelo e esforço acima, estado `ready`. Conferência posterior com `git worktree list`, `git -C ... branch --show-current`, `rev-parse HEAD` e `status --short`: branch `CaioYL10/cti-t02`, SHA igual à integração e árvore limpa antes da edição. Caminhos reservados: schema/bootstrap/repositório, novos serviços locais de ingestão, script demo/carga, teste e relatório T02. T03 permanece bloqueada até revisão e merge da T02.
 
 **Baseline após T01 (`20d26da`):** Node `v24.0.2`. Primeira execução de `npm.cmd test` falhou (8 arquivos) somente por `MODULE_NOT_FOUND: express`, pois esta worktree não tinha `node_modules`. `npm.cmd ci` instalou as dependências do lockfile localmente (86 pacotes, 0 vulnerabilidades reportadas). Nova execução de `npm.cmd test`: **32/32 testes passaram** em 5,75 s. Esses testes ainda afirmam fluxos legados de coleta e sentimento; T03 deve substituí-los por cobertura negativa, sem apagá-los para obter verde. Nenhum banco do usuário foi usado.
