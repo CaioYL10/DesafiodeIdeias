@@ -7,9 +7,10 @@ const { createProductRouter } = require('./routes/product-routes');
 const { createCrmRouter } = require('./routes/crm-routes');
 const { createQualityRouter } = require('./routes/quality-routes');
 const { createRelationshipRouter } = require('./routes/relationship-routes');
+const { createRetentionRouter } = require('./routes/retention-routes');
 const { findManagerByToken, readCookie, SESSION_COOKIE } = require('./security/sessions');
 
-function createApp({ database }) {
+function createApp({ database, clock }) {
   const app = express();
   const publicPath = path.join(__dirname, '..', 'public');
   app.disable('x-powered-by');
@@ -19,6 +20,7 @@ function createApp({ database }) {
   app.use('/api/manager/crm', createCrmRouter(database));
   app.use('/api/manager/quality', createQualityRouter(database));
   app.use('/api/manager/relationships', createRelationshipRouter(database));
+  app.use('/api/manager/retention', createRetentionRouter(database, { clock }));
   app.use('/api/manager', createManagerRouter(database));
   function protectedPage(urls, filename, nextPath) {
     app.get(urls, (request, response) => {
