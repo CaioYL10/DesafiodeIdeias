@@ -22,8 +22,36 @@ async function setup(context) {
   return { db, request, base, cookie };
 }
 
+// A origem e o contexto são fictícios; a revisão da hipótese ocorre pela API autenticada.
+async function confirmedHypothesis(db, request, clientId, options = {}) {
+  const { createIngestionService } = require('../src/services/feedback-ingestion');
+  const { getDemoFeedbacks } = require('../src/services/demo-feedback-source');
+  const source = getDemoFeedbacks(); const ingest = createIngestionService(db);
+  const externalClientId = 'cliente-' + clientId;
+  db.prepare('INSERT INTO external_client_ids VALUES (?, ?, ?)').run('demo-external', externalClientId, clientId);
+  const feedbacks = (options.mixed ? [source[0], source[1]] : [source[0]]).map((item, index) =>
+    ingest.ingestOne({ ...item, externalEventId: 'caso-' + clientId + '-' + index, externalClientId,
+      client: { name: 'Cliente sintético' } }).feedbackId);
+  if (options.serviceInstanceId) {
+    db.prepare("INSERT INTO feedback_context(feedback_id,client_id,product_id,service_instance_id,kind,manager_id,updated_at) VALUES (?, ?, 1, ?, 'complaint', 1, ?)")
+      .run(feedbacks[0], clientId, options.serviceInstanceId, new Date().toISOString());
+  }
+  const analyzed = await request('/api/manager/relationships/analyze', 'POST', { clientId });
+  assert.equal(analyzed.status, 200); const hypothesis = analyzed.body.items[0];
+  assert.ok(hypothesis); assert.deepEqual(hypothesis.evidence.map(e => e.feedback_id), feedbacks);
+  assert.equal((await request('/api/manager/relationships/' + hypothesis.id + '/review', 'POST',
+    { status: 'confirmed', justification: 'Evidências conferidas pelo gestor' })).status, 200);
+  return { hypothesisId: hypothesis.id, clientId, feedbackIds: feedbacks };
+}
+async function openRelationalProblem(request, links, overrides = {}) {
+  const result = await request('/api/manager/quality', 'POST', {
+    title: 'Demora de retorno', category: 'Comunicação', analysis: 'Investigar acompanhamento', ...links, ...overrides
+  });
+  assert.equal(result.status, 201); return '/api/manager/quality/' + result.body.id;
+}
+
 test('rotas de gestão bloqueiam anônimos e validam referências e datas', async (context) => {
-  const { request } = await setup(context);
+  const { request, db } = await setup(context);
   for (const path of ['/api/manager/crm/clients', '/api/manager/quality']) assert.equal((await request(path, 'GET', undefined, false)).status, 401);
   assert.equal((await request('/api/manager/crm/clients', 'POST', { name: ' ', productIds: [] })).status, 400);
   assert.equal((await request('/api/manager/crm/clients', 'POST', { name: 'Cliente', productIds: [999] })).status, 400);
@@ -32,6 +60,10 @@ test('rotas de gestão bloqueiam anônimos e validam referências e datas', asyn
   assert.equal((await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'unknown' })).status, 404);
   assert.equal((await request('/api/manager/quality', 'POST', { title: 'Problema', category: 'Rede', analysis: 'Análise', feedbackIds: [999] })).status, 400);
   assert.equal((await request('/api/manager/quality', 'POST', { title: 'Problema', category: 'Rede', analysis: 'Análise', feedbackIds: [1] })).status, 400);
+  const client = await request('/api/manager/crm/clients', 'POST', { name: 'Cliente para prazo', productIds: [1] });
+  const links = await confirmedHypothesis(db, request, client.body.id);
+  const path = await openRelationalProblem(request, links);
+  assert.equal((await request(path + '/actions', 'POST', { description: 'Teste', owner: 'Equipe', dueDate: '2026-02-30' })).status, 400);
 });
 
 test('consulta preserva histórico e exportação não adota sentimento local', async (context) => {
@@ -127,9 +159,16 @@ test('servicos contratados aceitam multiplas instancias e preservam contexto', a
   assert.equal((await request(path + '/services/' + first.body.id, 'PUT', { ...payload, name: 'Unidade A atualizada', active: false })).status, 200);
   assert.equal((await request('/api/manager/crm/feedback/1')).body.feedback.service_instance_name, 'Unidade A atualizada');
   assert.equal((await request('/api/manager/quality', 'POST', { title: 'Falha', category: 'Rede', analysis: 'Investigar', feedbackIds: [1] })).status, 400);
+  const links = await confirmedHypothesis(db, request, client.body.id, { serviceInstanceId: first.body.id });
+  const problemPath = await openRelationalProblem(request, links);
+  assert.equal((await request(problemPath)).body.problem.service_instance_id, first.body.id);
+  assert.equal((await request(problemPath + '/service', 'PUT', { serviceInstanceId: second.body.id })).status, 200);
+  assert.equal((await request(problemPath)).body.problem.service_instance_id, second.body.id);
+  assert.equal((await request(problemPath + '/service', 'PUT', { serviceInstanceId: 999 })).status, 400);
+  assert.equal((await request(problemPath)).body.problem.service_instance_id, second.body.id);
   assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: client.body.id, productId: 1, serviceInstanceId: null, justification: 'Vinculação humana verificada' })).status, 200);
   assert.equal((await request('/api/manager/crm/feedback/1')).body.feedback.service_instance_id, null);
-  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM feedbacks').get().count, 1);
+  assert.equal(db.prepare('SELECT COUNT(*) AS count FROM feedbacks').get().count, 2);
 });
 
 test('migracao associa vinculos antigos sem recriar instancia na reabertura', (context) => {
@@ -186,4 +225,102 @@ test('migração preserva problema e ação anteriores à análise estruturada',
   db = openDatabase(filename);
   assert.equal(db.prepare('SELECT COUNT(*) AS total FROM quality_action_attempts').get().total, 1);
   db.close();
+});
+
+test('fluxo CRM e qualidade preserva histórico, exige evidência e verificação humana', async (context) => {
+  const { request, db } = await setup(context);
+  const client = await request('/api/manager/crm/clients', 'POST', { name: 'Cliente sintético', contact: 'Equipe de suporte', productIds: [1] });
+  assert.equal(client.status, 201);
+  assert.equal((await request('/api/manager/crm/feedback/1', 'PUT', { clientId: client.body.id, productId: 1, justification: 'Vinculação humana verificada' })).status, 200);
+  assert.equal((await request('/api/manager/crm/feedback/1/reviews', 'POST', { sentiment: 'neutral', note: 'Revisão do contexto' })).status, 404);
+  assert.equal(db.prepare('SELECT sentiment FROM feedbacks WHERE id = 1').get().sentiment, 'negative');
+  assert.equal(Object.hasOwn((await request('/api/manager/summary')).body, 'sentimentCounts'), false);
+  const links = await confirmedHypothesis(db, request, client.body.id);
+  assert.equal((await request('/api/manager/crm/clients/' + client.body.id)).body.feedbacks.length, 2);
+  const path = await openRelationalProblem(request, links);
+  assert.equal((await request(path + '/close', 'POST', { justification: 'Tentativa antecipada' })).status, 409);
+  const action = await request(path + '/actions', 'POST', { description: 'Revisar rotina de retorno', owner: 'Relacionamento', dueDate: '2026-11-10' });
+  assert.equal(action.status, 201); const actionPath = '/api/manager/quality/actions/' + action.body.id;
+  assert.equal((await request(actionPath + '/verify', 'POST', { effective: true, criterion: 'Retorno em dois dias', note: 'Tentativa prematura' })).status, 409);
+  assert.equal((await request(actionPath + '/complete', 'POST', { evidence: '' })).status, 400);
+  assert.equal((await request(actionPath + '/complete', 'POST', { evidence: 'Registro de contato sintético' })).status, 200);
+  assert.equal((await request(path + '/close', 'POST', { justification: 'Tentativa antecipada' })).status, 409);
+  assert.equal((await request(actionPath + '/verify', 'POST', { effective: true, criterion: 'Retorno em dois dias', note: 'Retorno confirmado no período' })).status, 200);
+  assert.equal((await request(path + '/analysis', 'PUT', { impact: 'high', priority: 'high', containment: 'Acompanhamento temporário', cause: 'Ausência de rotina de retorno', recurrent: false, relatedProblemId: null })).status, 200);
+  assert.equal((await request(path + '/close', 'POST', { justification: 'Eficácia conferida pelo gestor' })).status, 200);
+  const detail = (await request(path)).body;
+  assert.equal(detail.problem.status, 'closed'); assert.equal(detail.problem.hypothesis_id, links.hypothesisId);
+  assert.ok(detail.events.length >= 5); assert.equal(detail.actions[0].verification_note, 'Retorno confirmado no período');
+  assert.equal(detail.attempts[0].criterion, 'Retorno em dois dias');
+  assert.equal((await request(path + '/actions', 'POST', { description: 'Nova', owner: 'Equipe', dueDate: '2026-11-11' })).status, 409);
+});
+
+test('ação ineficaz impede encerramento e mantém evidências das tentativas no histórico', async (context) => {
+  const { request, db } = await setup(context);
+  const client = await request('/api/manager/crm/clients', 'POST', { name: 'Cliente de recorrência', productIds: [1] });
+  const links = await confirmedHypothesis(db, request, client.body.id);
+  const path = await openRelationalProblem(request, links);
+  const action = await request(path + '/actions', 'POST', { description: 'Acompanhar retorno', owner: 'Relacionamento', dueDate: '2026-11-10' });
+  assert.equal(action.status, 201); const actionPath = '/api/manager/quality/actions/' + action.body.id;
+  assert.equal((await request(path + '/analysis', 'PUT', { impact: 'medium', priority: 'normal', containment: 'Acompanhamento manual', cause: 'Ausência de rotina', recurrent: false, relatedProblemId: null })).status, 200);
+  assert.equal((await request(actionPath + '/complete', 'POST', { evidence: 'Primeira tentativa' })).status, 200);
+  assert.equal((await request(actionPath + '/verify', 'POST', { effective: false, criterion: 'Retorno em dois dias', note: 'O atraso persistiu' })).status, 200);
+  assert.equal((await request(path + '/close', 'POST', { justification: 'Fechamento antecipado' })).status, 409);
+  assert.equal((await request(actionPath + '/complete', 'POST', { evidence: 'Segunda tentativa' })).status, 200);
+  assert.equal((await request(actionPath + '/verify', 'POST', { effective: true, criterion: 'Retorno em dois dias', note: 'Retorno confirmado' })).status, 200);
+  assert.equal((await request(path + '/close', 'POST', { justification: 'Critério atendido' })).status, 200);
+  const detail = (await request(path)).body;
+  assert.ok(detail.events.some(e => e.description.includes('Primeira tentativa')));
+  assert.ok(detail.events.some(e => e.description.includes('O atraso persistiu')));
+  assert.deepEqual(detail.attempts.map(attempt => attempt.effective), [0, 1]);
+  assert.deepEqual(detail.attempts.map(attempt => attempt.evidence), ['Primeira tentativa', 'Segunda tentativa']);
+  assert.deepEqual(detail.attempts.map(attempt => attempt.criterion), ['Retorno em dois dias', 'Retorno em dois dias']);
+});
+
+test('cenário integrado mantém CRM, serviços, relatos e tentativas de qualidade vinculados', async (context) => {
+  const { request, db } = await setup(context);
+  const client = await request('/api/manager/crm/clients', 'POST', { name: 'Organização sintética', accountOwner: 'Gestor', productIds: [1] });
+  const clientPath = `/api/manager/crm/clients/${client.body.id}`;
+  const contact = await request(clientPath + '/contacts', 'POST', { name: 'Ana', role: 'Operações' });
+  const interaction = await request(clientPath + '/interactions', 'POST', { type: 'Reunião', occurredAt: '2026-10-31T10:00:00', summary: 'Contexto do serviço', contactId: contact.body.id });
+  const service = await request(clientPath + '/services', 'POST', { productId: 1, name: 'Unidade A', location: 'Santo André', active: true });
+  assert.equal(interaction.status, 201); assert.equal(service.status, 201);
+  const links = await confirmedHypothesis(db, request, client.body.id, { mixed: true, serviceInstanceId: service.body.id });
+  assert.equal((await request(`/api/manager/crm/feedback/${links.feedbackIds[0]}`, 'PUT', { clientId: client.body.id, contactId: contact.body.id, productId: 1, serviceInstanceId: service.body.id, justification: 'Vinculação humana verificada' })).status, 409);
+  assert.equal((await request(`/api/manager/crm/feedback/${links.feedbackIds[1]}`)).body.feedback.service_instance_id, null);
+  assert.equal(db.prepare('SELECT COUNT(*) AS total FROM quality_problems').get().total, 0);
+  const { createIngestionService } = require('../src/services/feedback-ingestion');
+  const technical = createIngestionService(db).ingestOne({ ...require('../src/services/demo-feedback-source').getDemoFeedbacks()[4],
+    externalEventId: 'tecnico-integrado', externalClientId: 'cliente-' + client.body.id, client: { name: 'Organização sintética' } });
+  assert.equal((await request('/api/manager/quality', 'POST', { title: 'Técnico', category: 'Rede', analysis: 'Análise', clientId: client.body.id, hypothesisId: links.hypothesisId, feedbackIds: [technical.feedbackId] })).status, 409);
+  const firstPath = await openRelationalProblem(request, links);
+  const firstId = Number(firstPath.split('/').at(-1));
+  const path = await openRelationalProblem(request, links, { impact: 'high', priority: 'high', containment: 'Acompanhamento', recurrent: true, relatedProblemId: firstId });
+  assert.equal((await request(path)).body.problem.service_instance_id, null);
+  assert.equal((await request(path + '/service', 'PUT', { serviceInstanceId: service.body.id })).status, 200);
+  assert.equal((await request(path + '/service', 'PUT', { serviceInstanceId: 999 })).status, 400);
+  assert.equal((await request(path + '/analysis', 'PUT', { impact: 'invalid', priority: 'high', containment: 'Acompanhamento', cause: '', recurrent: false, relatedProblemId: null })).status, 400);
+  assert.equal((await request(path + '/analysis', 'PUT', { impact: 'critical', priority: 'high', containment: 'Acompanhamento direto', cause: 'Rotina de retorno ausente', recurrent: true, relatedProblemId: firstId })).status, 200);
+  const action = await request(path + '/actions', 'POST', { description: 'Realizar contato', owner: 'Equipe', dueDate: '2026-11-10' });
+  assert.equal(action.status, 201); const actionPath = `/api/manager/quality/actions/${action.body.id}`;
+  assert.equal((await request(actionPath + '/complete', 'POST', { evidence: 'Primeira execução' })).status, 200);
+  assert.equal((await request(actionPath + '/verify', 'POST', { effective: false, criterion: 'Retorno em dois dias', note: 'Atraso persistiu' })).status, 200);
+  assert.equal((await request(path + '/close', 'POST', { justification: 'Tentativa antecipada' })).status, 409);
+  assert.equal((await request(actionPath + '/complete', 'POST', { evidence: 'Segunda execução' })).status, 200);
+  assert.equal((await request(actionPath + '/verify', 'POST', { effective: true, criterion: 'Retorno em dois dias', note: 'Retorno confirmado' })).status, 200);
+  assert.equal((await request(path + '/close', 'POST', { justification: 'Acompanhamento validado' })).status, 200);
+  assert.equal((await request(clientPath, 'PUT', { name: 'Organização atualizada', accountOwner: 'Outra gestora' })).status, 200);
+  assert.equal((await request(clientPath + `/contacts/${contact.body.id}`, 'PUT', { name: 'Ana Silva' })).status, 200);
+  assert.equal((await request(clientPath + `/services/${service.body.id}`, 'PUT', { productId: 1, name: 'Unidade A atualizada', location: 'Santo André', active: false })).status, 200);
+  const detail = (await request(path)).body;
+  assert.equal(detail.problem.status, 'closed'); assert.equal(detail.problem.impact, 'critical');
+  assert.equal(detail.problem.service_instance_id, service.body.id); assert.equal(detail.problem.client_id, client.body.id);
+  assert.equal(detail.problem.hypothesis_id, links.hypothesisId); assert.equal(detail.problem.related_problem_id, firstId); assert.equal(detail.feedbacks.length, 2);
+  assert.equal(detail.feedbacks[0].client_name, 'Organização atualizada');
+  assert.equal(detail.feedbacks[1].technical_reference, 'ticket técnico fictício T-2');
+  assert.deepEqual(detail.attempts.map(attempt => attempt.effective), [0, 1]);
+  assert.ok(detail.events.some(event => event.description.includes('impact:')));
+  const history = (await request(clientPath)).body;
+  assert.equal(history.interactions[0].contact_name, 'Ana Silva');
+  assert.ok(history.occurrences.some(item => item.id === detail.problem.id));
 });
