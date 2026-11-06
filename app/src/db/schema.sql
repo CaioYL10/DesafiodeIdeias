@@ -230,3 +230,35 @@ CREATE TRIGGER IF NOT EXISTS relationship_context_feedback_guard BEFORE UPDATE O
 WHEN NEW.client_id IS NOT NULL AND EXISTS (SELECT 1 FROM relationship_evidence e JOIN relationship_hypotheses h ON h.id = e.hypothesis_id
  WHERE e.feedback_id = NEW.feedback_id AND NEW.client_id IS NOT h.client_id)
 BEGIN SELECT RAISE(ABORT, 'Feedback vinculado a hipótese'); END;
+
+CREATE TABLE IF NOT EXISTS retention_preferences (
+  client_id INTEGER PRIMARY KEY REFERENCES clients(id), purpose TEXT NOT NULL,
+  consent INTEGER NOT NULL CHECK(consent IN (0,1)), recipient TEXT NOT NULL,
+  frequency_days INTEGER NOT NULL CHECK(frequency_days BETWEEN 1 AND 365),
+  active INTEGER NOT NULL CHECK(active IN (0,1)), updated_by INTEGER NOT NULL REFERENCES managers(id), updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS retention_templates (
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL,
+  updated_by INTEGER NOT NULL REFERENCES managers(id), updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS retention_events (
+  id INTEGER PRIMARY KEY, client_id INTEGER NOT NULL REFERENCES clients(id),
+  service_instance_id INTEGER REFERENCES service_instances(id), kind TEXT NOT NULL CHECK(kind IN ('follow_up','maintenance')),
+  title TEXT NOT NULL, due_at TEXT NOT NULL, created_by INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS retention_jobs (
+  id INTEGER PRIMARY KEY, client_id INTEGER NOT NULL REFERENCES clients(id), event_id INTEGER NOT NULL REFERENCES retention_events(id),
+  template_id INTEGER NOT NULL REFERENCES retention_templates(id), rule TEXT NOT NULL, window TEXT NOT NULL,
+  purpose TEXT NOT NULL, recipient TEXT NOT NULL, subject TEXT NOT NULL, body TEXT NOT NULL,
+  status TEXT NOT NULL CHECK(status IN ('planned','simulated_success','simulated_failure','cancelled')),
+  created_by INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL, updated_at TEXT NOT NULL,
+  UNIQUE(client_id, rule, event_id, window)
+);
+CREATE TABLE IF NOT EXISTS retention_history (
+  id INTEGER PRIMARY KEY, client_id INTEGER NOT NULL REFERENCES clients(id), job_id INTEGER REFERENCES retention_jobs(id),
+  event_type TEXT NOT NULL, manager_id INTEGER NOT NULL REFERENCES managers(id), created_at TEXT NOT NULL
+);
+CREATE TRIGGER IF NOT EXISTS retention_history_no_update BEFORE UPDATE ON retention_history
+BEGIN SELECT RAISE(ABORT, 'Histórico imutável'); END;
+CREATE TRIGGER IF NOT EXISTS retention_history_no_delete BEFORE DELETE ON retention_history
+BEGIN SELECT RAISE(ABORT, 'Histórico imutável'); END;
