@@ -1,0 +1,23 @@
+{
+  "name": "video-presentation",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "capture": "node capture.cjs",
+    "audio": "node generate-audio.cjs",
+    "render": "remotion render src/index.ts CrmCti CRM-CTI-Apresentacao.mp4 --codec h264 --audio-codec aac"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@remotion/cli": "^4.0.543",
+    "playwright": "^1.65.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "remotion": "^4.0.543"
+  }
+}

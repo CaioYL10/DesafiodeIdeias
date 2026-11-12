@@ -136,7 +136,7 @@ test('migra clientes já salvos sem CEP e recupera as localizações demonstrati
 
   assert.match(page.root.innerHTML, /6 empresas em 6 estados/);
   assert.match(page.root.innerHTML, /Salvador/);
-  assert.equal(JSON.parse(page.context.localStorage.getItem('avaliaplay-data')).demoDataVersion, 5);
+  assert.equal(JSON.parse(page.context.localStorage.getItem('avaliaplay-data')).demoDataVersion, 6);
 });
 
 test('formulário de cliente permite editar CEP e município', () => {
@@ -167,7 +167,7 @@ test('modal de edição organiza dados da empresa, contato e localização por s
   assert.match(page.root.innerHTML, /<h3>Localização<\/h3>/);
 });
 
-test('modal de reunião reutiliza a seção e os campos estilizados do cadastro', () => {
+test('modal de reunião organiza convite e ata no mesmo formulário', () => {
   const page = createPage();
   page.listeners.click({
     target: {
@@ -175,10 +175,12 @@ test('modal de reunião reutiliza a seção e os campos estilizados do cadastro'
     }
   });
 
-  assert.match(page.root.innerHTML, /class="client-edit-section meeting-form-section"/);
-  assert.match(page.root.innerHTML, /<h3>Detalhes da reunião<\/h3>/);
+  assert.match(page.root.innerHTML, /class="modal-body meeting-form-section"/);
   assert.match(page.root.innerHTML, /class="meeting-form-fields"/);
   assert.match(page.root.innerHTML, /name="title"/);
   assert.match(page.root.innerHTML, /name="date"/);
-  assert.match(page.root.innerHTML, /name="notes"/);
+  assert.match(page.root.innerHTML, /name="invitees"/);
+  assert.match(page.root.innerHTML, /name="invitationText"/);
+  assert.match(page.root.innerHTML, /name="minutes"/);
+  assert.match(page.root.innerHTML, /name="attachment"/);
 });

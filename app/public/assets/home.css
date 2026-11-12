@@ -1,6 +1,7 @@
 .crm-home{min-height:calc(100vh - 90px);padding:0 max(24px,calc((100vw - 1180px)/2)) 48px;background:#f5f9fc}
+@media(min-width:1001px){.manager-header+.crm-home{display:flex;flex-direction:column;justify-content:center;min-height:100vh}}
 .crm-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,500px);gap:64px;align-items:start;padding:32px 0 30px}
-.crm-copy{padding-top:14px}
+.crm-copy{padding-top:0}
 .crm-copy h1{font-size:clamp(32px,3.6vw,42px);line-height:1.13;letter-spacing:-.035em;font-weight:650;max-width:540px;margin:0 0 20px;color:#4c5055}
 .crm-copy>p{font-size:15px;line-height:1.75;max-width:510px;color:#737b80;margin-bottom:24px}
 .crm-actions{display:flex;gap:12px;flex-wrap:wrap}
@@ -27,4 +28,18 @@
 @media(max-width:620px){.crm-home{padding:0 16px 35px}.crm-hero{padding-top:24px}.crm-copy h1{font-size:34px}.crm-panel{padding:20px}.crm-shortcuts{grid-template-columns:1fr}.crm-shortcuts a{min-height:0}}
 .crm-row-icon svg{width:19px;height:19px}
 .crm-hero .crm-copy>p{max-width:690px}
-.crm-hero{align-items:center}.crm-copy{align-self:center;padding-top:0}
+
+/* Acesso rápido em lista, com divisórias no lugar dos cards. */
+.crm-home .crm-hero{padding-bottom:20px}
+.crm-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:0}
+.crm-links a{display:flex;align-items:center;gap:16px;min-height:100px;min-width:0;padding:18px 24px 18px 0;color:var(--ink)}
+.crm-links a+a{border-left:1px solid var(--line);padding-left:24px}
+.crm-link-icon{display:grid;place-items:center;flex:0 0 28px;width:28px;color:#fff}
+.crm-link-icon svg{width:24px;height:24px}
+.theme-light .crm-link-icon{color:#0878b4}
+.crm-link-copy{display:block;min-width:0}
+.crm-links strong{display:block;font-size:16px;font-weight:650;line-height:1.3}
+.crm-links small{display:block;margin-top:6px;color:var(--body);font-size:12px;line-height:1.4}
+.crm-links a:hover strong{color:var(--blue)}
+.crm-links a:focus-visible{outline:3px solid #73bde6;outline-offset:3px}
+@media(max-width:900px){.crm-links{grid-template-columns:1fr}.crm-links a{min-height:78px;padding:14px 0}.crm-links a+a{border-left:0;border-top:1px solid var(--line);padding-left:0}}

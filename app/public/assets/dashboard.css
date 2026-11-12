@@ -2,14 +2,51 @@
 .dashboard-page-heading h1{font-size:25px;line-height:41px;letter-spacing:-.04em;margin:0;font-weight:650}
 .dashboard-switch{display:flex;align-items:center;gap:16px}
 .dashboard-switch .button{height:40px;min-height:40px;min-width:96px;padding:0 14px;border-radius:6px;box-shadow:none}
+.metric-grid .dashboard-card{box-sizing:border-box;height:150px;min-height:150px;max-height:150px;padding:16px}
+.metric-grid .dashboard-card .metric-label{justify-content:flex-start;align-items:flex-start;min-height:30px;line-height:1.3}
+.metric-grid .dashboard-card>strong{margin:7px 0 5px}
 .metric-icon img{display:block;width:14px;height:14px;object-fit:contain}
 .metric-grid .metric:last-child .metric-icon img[src$="dashboardRecurrence.svg"]{width:24px;height:24px}
-.ranking-card{min-height:176px}
-.ranking-list{list-style:none;margin:13px 0 0;padding:0;display:grid;gap:9px}
-.ranking-list li{display:flex;align-items:center;gap:7px;min-width:0;color:#52616a;font-size:11px}
+.metric-grid .dashboard-card.ranking-card{height:150px;min-height:150px;max-height:150px}
+.ranking-list{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:9px}
+.ranking-list li{display:flex;align-items:center;gap:7px;min-width:0;padding:0;color:#52616a;font-size:11px}
 .ranking-position{width:17px;height:17px;flex:0 0 auto;display:grid;place-items:center;border-radius:50%;background:#eaf5fe;color:#0878b4;font-size:10px;font-weight:700}
 .ranking-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ranking-list b{flex:0 0 auto;color:#87949b;font-size:10px;font-weight:500}
+.comparison-chart{display:grid;gap:12px;margin-top:24px}
+.comparison-row{display:grid;grid-template-columns:minmax(110px,180px) minmax(80px,1fr) 100px;align-items:center;gap:14px;font-size:12px}
+.comparison-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+.comparison-track{height:13px;overflow:hidden;border-radius:4px;background:#263b59}
+.comparison-fill{display:block;height:100%;border-radius:4px;background:linear-gradient(90deg,#1776ba,#5bc9f1)}
+.comparison-row strong{text-align:right;white-space:nowrap;color:var(--ink);font-size:12px}
+.daily-chart{margin-top:22px}
+.daily-chart-bars{display:grid;grid-template-columns:repeat(14,minmax(0,1fr));gap:8px;align-items:end;height:190px;padding:0 4px 0;border-bottom:1px solid #6e8aab66}
+.daily-chart-day{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+.daily-chart-count{height:18px;color:var(--ink);font-size:10px;font-weight:700}
+.daily-chart-bar{display:block;width:min(100%,28px);min-height:0;border-radius:4px 4px 0 0;background:linear-gradient(180deg,#65d0f2,#1681c3)}
+.daily-chart-date{height:25px;padding-top:7px;color:var(--body);font-size:9px;white-space:nowrap}
+.sentiment-chart{margin-top:32px}
+.sentiment-stack{display:flex;height:26px;overflow:hidden;border-radius:7px;background:#263b59}
+.sentiment-stack .green{background:#36b991}.sentiment-stack .gold{background:#d9a746}.sentiment-stack .rose{background:#d8738d}
+.sentiment-legend{display:grid;gap:15px;margin-top:23px}
+.sentiment-legend>div{display:grid;grid-template-columns:1fr 32px 40px;align-items:center;gap:12px;font-size:12px;color:var(--ink)}
+.sentiment-label{display:flex;align-items:center;gap:9px}
+.sentiment-legend strong,.sentiment-legend small{text-align:right;font-size:12px}
+.sentiment-legend small{color:var(--body)}
+.revenue-history-chart{width:100%;max-width:1150px;margin:22px auto 0}
+.revenue-history-chart svg{display:block;width:100%;height:auto;overflow:visible}
+.revenue-grid-line{stroke:#7896b444;stroke-width:1}
+.revenue-axis-label{fill:var(--body);font:11px Inter,"Segoe UI",sans-serif}
+.revenue-legend{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.revenue-legend-item{display:grid;grid-template-columns:12px minmax(0,1fr) auto;align-items:center;gap:9px;min-width:0;padding:11px 13px;border:1px solid #385472;border-radius:10px;background:#142742;color:var(--ink);font-size:13px}
+.revenue-legend-item i{width:11px;height:11px;border-radius:50%}
+.revenue-legend-item span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.revenue-legend-item strong{white-space:nowrap;font-size:12px}
+body.theme-light .revenue-legend-item{background:#f3f8fd;border-color:#d9e6f1}
+@media(max-width:900px){.revenue-legend{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.revenue-legend{grid-template-columns:1fr}}
+body.theme-light .comparison-track,body.theme-light .sentiment-stack{background:#e4edf6}
+@media(max-width:620px){.comparison-row{grid-template-columns:minmax(0,1fr) 76px;gap:5px}.comparison-name{grid-column:1;grid-row:1}.comparison-row strong{grid-column:2;grid-row:1}.comparison-track{grid-column:1/-1;grid-row:2}.daily-chart-bars{gap:3px;height:205px}.daily-chart-date{font-size:8px;writing-mode:vertical-rl;height:38px;padding-top:6px}}
 .relations-metrics{grid-template-columns:repeat(4,minmax(0,1fr))}
 .dashboard-trend{display:block;width:100%;height:122px;object-fit:fill}
 .reminders{padding:19px;min-height:240px}

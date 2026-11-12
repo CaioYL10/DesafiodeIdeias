@@ -1,7 +1,6 @@
 const app = document.querySelector('#app');
-const DEMO_DATA_VERSION = 5;
-const MIN_NEGATIVE_FEEDBACKS = 10;
-const MIN_REPETITION_RATIO = 0.6;
+const DEMO_DATA_VERSION = 6;
+const MIN_RECURRING_FEEDBACKS = 3;
 const demoClient = { id: 0, name: 'Empresa de demonstração' };
 const demoRepairFeedbacks = [
   ['Prometeram retorno sobre nossa solicitação, mas ninguém respondeu.', 'Demora no retorno'],
@@ -60,7 +59,24 @@ const demoAccounts = [
   { monthlyRevenue: 14300, slaContract: 'Exemplo: resposta inicial a falhas de cloud em até 4 horas.', slaIncidents: [{ title: 'Lentidão na recuperação de ambiente', severity: 'P3', status: 'Em andamento', date: '10/11/2026' }] },
   { monthlyRevenue: 22100, slaContract: 'Exemplo: resposta inicial a incidentes de segurança P1 em até 1 hora.', slaIncidents: [] }
 ];
+const monthKey = offset => {
+  const date = new Date();
+  const month = new Date(date.getFullYear(), date.getMonth() + offset, 1);
+  return `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+};
+const demoRevenueHistory = [
+  [14500, 15200, 15800, 16700, 17500],
+  [10000, 10400, 10900, 11600, 12000],
+  [22000, 23000, 25000, 26300, 27900],
+  [6200, 6500, 6800, 7100, 7400],
+  [11500, 11900, 12600, 13000, 13800],
+  [18500, 19000, 20500, 21300, 21700]
+];
 initial.clients.forEach((client, index) => Object.assign(client, demoAccounts[index]));
+initial.clients.forEach((client, index) => {
+  client.revenueHistory = demoRevenueHistory[index].map((value, monthIndex) => ({ month: monthKey(monthIndex - 5), value }));
+  client.revenueHistory.push({ month: monthKey(0), value: client.monthlyRevenue });
+});
 initial.clients[0].tasks = [{ id: 1, title: 'Confirmar plano de estabilização do link', owner: 'Equipe de relacionamento', dueDate: '2026-11-16', status: 'Pendente', createdAt: '11/11/2026' }];
 initial.clients[1].tasks = [{ id: 1, title: 'Revisar alertas com o cliente', owner: 'Equipe técnica', dueDate: '2026-11-18', status: 'Em andamento', createdAt: '11/11/2026' }];
 initial.clients[0].opportunities = [{ id: 1, title: 'Ampliação do link dedicado', value: 8500, stage: 'Proposta', expectedDate: '2026-12-15', note: 'Exemplo fictício de expansão contratual.', createdAt: '11/11/2026' }];
@@ -105,6 +121,7 @@ function readData() {
       if (isOldDemoData && !client.address?.cep) client.address = copy(seed.address);
       if (!client.relationStrength) client.relationStrength = seed.relationStrength;
       if (client.monthlyRevenue === undefined) client.monthlyRevenue = seed.monthlyRevenue;
+      if (!Array.isArray(client.revenueHistory)) client.revenueHistory = copy(seed.revenueHistory);
       if (client.slaContract === undefined) client.slaContract = seed.slaContract;
       if (!Array.isArray(client.slaIncidents)) client.slaIncidents = copy(seed.slaIncidents);
       if (!Array.isArray(client.tasks)) client.tasks = copy(seed.tasks || []);
@@ -156,11 +173,10 @@ function header(current) {
   const managerItems = [['/', 'Visão geral'], ['/dashboard', 'Dashboard'], ['/feedbacks', 'Feedbacks'], ['/clientes', 'Clientes e qualidade']];
   const items = state.loggedIn ? managerItems : publicItems;
   const navIcons = ['home', 'dashboard', 'feedback', 'clients'];
-  const themeLabel = state.theme === 'dark' ? 'Ativar modo claro' : 'Ativar modo escuro';
-  const themeIcon = state.theme === 'dark' ? '<circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>' : '<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/>';
-  const themeButton = `<button class="theme-toggle" type="button" data-action="toggle-theme" aria-label="${themeLabel}" title="${themeLabel}" aria-pressed="${state.theme === 'light'}"><span class="theme-toggle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${themeIcon}</svg></span><span class="theme-toggle-label">${state.theme === 'dark' ? 'Modo claro' : 'Modo escuro'}</span><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-thumb"></span></span></button>`;
+  const themeIcon = '<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/>';
+  const themeButton = `<button class="theme-toggle" type="button" data-action="toggle-theme" aria-label="Modo escuro" title="Modo escuro" aria-pressed="${state.theme === 'dark'}"><span class="theme-toggle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${themeIcon}</svg></span><span class="theme-toggle-label">Modo escuro</span><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-thumb"></span></span></button>`;
   const brand = state.loggedIn ? `<span class="logo-mark" aria-hidden="true"><img src="${A}imgImage2.png" alt=""></span><img class="logo-full" src="${A}imgImage2.png" alt="CTI conectando empresas e pessoas">` : `<img src="${A}imgImage2.png" alt="CTI conectando empresas e pessoas">`;
-  return `<header class="site-header ${state.loggedIn ? 'manager-header' : 'public-header'}"><a class="logo" href="/" data-link aria-label="CTI, visão geral">${brand}</a>${state.loggedIn ? '<span class="nav-caption">ESPAÇO DE TRABALHO</span>' : ''}<nav aria-label="Navegação principal">${items.map(([url, label], index) => `<a href="${url}" data-link ${current === url ? 'aria-current="page"' : ''}>${state.loggedIn ? `<span class="nav-icon">${icon(navIcons[index])}</span><span class="nav-label">${label}</span>` : label}</a>`).join('')}</nav>${themeButton}${state.loggedIn ? `<button class="signout" type="button" data-action="logout" aria-label="Sair da gestão"><img src="${A}imgSignOut.svg" alt=""><span>Sair da gestão</span></button>` : ''}</header>`;
+  return `<header class="site-header ${state.loggedIn ? 'manager-header' : 'public-header'}"><a class="logo" href="/" data-link aria-label="CTI, visão geral">${brand}</a><nav aria-label="Navegação principal">${items.map(([url, label], index) => `<a href="${url}" data-link ${current === url ? 'aria-current="page"' : ''}>${state.loggedIn ? `<span class="nav-icon">${icon(navIcons[index])}</span><span class="nav-label">${label}</span>` : label}</a>`).join('')}</nav>${themeButton}${state.loggedIn ? `<button class="signout" type="button" data-action="logout" aria-label="Sair da gestão"><img src="${A}imgSignOut.svg" alt=""><span>Sair da gestão</span></button>` : ''}</header>`;
 }
 function shell(current, content, narrow = false) { return `${header(current)}<main class="page ${narrow ? 'page-narrow' : ''}">${content}</main>${state.toast ? `<div class="toast" role="status">${escapeHtml(state.toast)}</div>` : ''}${state.modal ? modal() : ''}`; }
 function title(text, subtitle = '', eyebrow = '') { return `<div class="page-heading">${eyebrow ? `<small>${eyebrow}</small>` : ''}<h1>${text}</h1>${subtitle ? `<p>${subtitle}</p>` : ''}</div>`; }
@@ -171,22 +187,25 @@ function publicOverview() {
 function overview() {
   const pending = repairCandidates().length;
   const open = state.data.actions.filter(action => action.status !== 'Concluída').length;
-  return `${header('/')}<main class="home crm-home"><section class="crm-hero"><div class="crm-copy"><h1>Conheça cada cliente. Cuide de cada relação.</h1><p>Acompanhe o relacionamento com cada empresa, consulte feedbacks e organize ações de melhoria em um só lugar.</p><div class="crm-actions"><a class="button primary" href="/dashboard" data-link>Abrir dashboard</a><a class="button soft" href="/clientes" data-link>Ver clientes</a></div></div><div class="crm-panel" aria-label="Carteira em foco"><div class="crm-panel-head"><div><span>Visão da equipe</span><h2>Resumo do relacionamento</h2></div></div><div class="crm-panel-row"><span class="crm-row-icon blue">${icon('company')}</span><div><strong>Clientes cadastrados</strong><small>Contexto da carteira</small></div><b>${state.data.clients.length}</b></div><div class="crm-panel-row"><span class="crm-row-icon gold">${icon('report')}</span><div><strong>Triagens de reparação</strong><small>Aguardam revisão da equipe</small></div><b>${pending}</b></div><div class="crm-panel-row"><span class="crm-row-icon green">${icon('action')}</span><div><strong>Ações em acompanhamento</strong><small>Propostas aceitas ainda não concluídas</small></div><b>${open}</b></div></div></section><nav class="crm-shortcuts" aria-label="Acesso rápido"><a href="/clientes" data-link><span class="shortcut-icon blue">${icon('company')}</span><span class="shortcut-copy"><strong>Clientes</strong><small>Consulte perfis e feedbacks</small></span><span class="shortcut-arrow" aria-hidden="true">→</span></a><a href="/triagem" data-link><span class="shortcut-icon gold">${icon('report')}</span><span class="shortcut-copy"><strong>Triagem de reparação</strong><small>Revise padrões de atendimento</small></span><span class="shortcut-arrow" aria-hidden="true">→</span></a><a href="/acoes" data-link><span class="shortcut-icon green">${icon('action')}</span><span class="shortcut-copy"><strong>Ações</strong><small>Acompanhe as propostas aceitas</small></span><span class="shortcut-arrow" aria-hidden="true">→</span></a></nav></main>`;
+  return `${header('/')}<main class="home crm-home"><section class="crm-hero"><div class="crm-copy"><h1>Conheça cada cliente. Cuide de cada relação.</h1><p>Acompanhe o relacionamento com cada empresa, consulte feedbacks e organize ações de melhoria em um só lugar.</p><div class="crm-actions"><a class="button primary" href="/dashboard" data-link>Abrir dashboard</a><a class="button soft" href="/clientes" data-link>Ver clientes</a></div></div><div class="crm-panel" aria-label="Carteira em foco"><div class="crm-panel-row"><span class="crm-row-icon blue">${icon('company')}</span><div><strong>Clientes cadastrados</strong><small>Contexto da carteira</small></div><b>${state.data.clients.length}</b></div><div class="crm-panel-row"><span class="crm-row-icon gold">${icon('report')}</span><div><strong>Triagens de reparação</strong><small>Aguardam revisão da equipe</small></div><b>${pending}</b></div><div class="crm-panel-row"><span class="crm-row-icon green">${icon('action')}</span><div><strong>Ações em acompanhamento</strong><small>Propostas aceitas ainda não concluídas</small></div><b>${open}</b></div></div></section><nav class="crm-links" aria-label="Acesso rápido"><a href="/clientes" data-link><span class="crm-link-icon" aria-hidden="true">${icon('company')}</span><span class="crm-link-copy"><strong>Clientes</strong><small>Consulte perfis e feedbacks</small></span></a><a href="/triagem" data-link><span class="crm-link-icon" aria-hidden="true">${icon('report')}</span><span class="crm-link-copy"><strong>Triagem de reparação</strong><small>Revise padrões de atendimento</small></span></a><a href="/acoes" data-link><span class="crm-link-icon" aria-hidden="true">${icon('action')}</span><span class="crm-link-copy"><strong>Ações</strong><small>Acompanhe as propostas aceitas</small></span></a></nav></main>`;
 }
 function login() {
   return shell('/login', `<div class="login-grid"><div class="login-copy"><p class="login-kicker">Acesso à equipe</p><h1>Gestão de relacionamento da CTI.</h1><p>Entre para acompanhar clientes, relatos e ações de qualidade em um só lugar.</p></div><section class="login-card"><small>ÁREA DO GESTOR</small><h2>Entrar na gestão</h2><form id="login-form"><label>E-mail<input name="email" type="email" autocomplete="username" placeholder="gestor@exemplo.com" required></label><label>Senha<input name="password" type="password" autocomplete="current-password" placeholder="Sua senha" required></label><button class="button primary wide">Entrar no painel</button><p class="field-note">Ambiente de demonstração local.</p></form></section></div>`, true);
 }
-function metric(label, value, note, tone = 'blue', icon = '') { return `<article class="metric card">${icon ? `<img class="metric-watermark" src="${A}${icon}" alt="" aria-hidden="true">` : ''}<div class="metric-label">${label}<span class="metric-icon ${tone}">${icon ? `<img src="${A}${icon}" alt="">` : '✦'}</span></div><strong>${escapeHtml(value)}</strong><span>${note}</span></article>`; }
+function dashboardCard(label, icon, className, content) {
+  const watermark = icon ? `<img class="metric-watermark" src="${A}${icon}" alt="" aria-hidden="true">` : '';
+  return `<article class="metric card dashboard-card ${className}">${watermark}<div class="metric-label">${label}</div>${content}</article>`;
+}
+function metricCard(label, value, note, icon = '') {
+  return dashboardCard(label, icon, 'dashboard-metric-card', `<strong>${escapeHtml(value)}</strong><span>${escapeHtml(note)}</span>`);
+}
 function dashboardHeading(text) {
   const feedbacksActive = state.dashboardView === 'feedbacks';
   return `<div class="dashboard-page-heading"><h1>${text}</h1><div class="dashboard-switch" role="group" aria-label="Visualização do dashboard">${button('Feedbacks', 'dashboard-feedbacks', feedbacksActive ? 'primary' : 'outline', `aria-pressed="${feedbacksActive}"`)}${button('Relações', 'dashboard-relations', state.dashboardView === 'relations' ? 'primary' : 'outline', `aria-pressed="${state.dashboardView === 'relations'}"`)}${button('Financeiro', 'dashboard-financial', state.dashboardView === 'financial' ? 'primary' : 'outline', `aria-pressed="${state.dashboardView === 'financial'}"`)}</div></div>`;
 }
-function relationMetric(label, value, note, tone, icon) {
-  return `<article class="metric card"><img class="metric-watermark" src="${A}${icon}" alt="" aria-hidden="true"><div class="metric-label">${label}<span class="metric-icon ${tone}"><img src="${A}${icon}" alt=""></span></div><strong>${value}</strong><span>${note}</span></article>`;
-}
-function rankingMetric(label, clients, tone, iconName, detail) {
+function rankingMetric(label, clients, iconName, detail) {
   const rows = clients.map((client, index) => `<li><span class="ranking-position">${index + 1}</span><span class="ranking-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>${detail ? `<b>${escapeHtml(detail(client))}</b>` : ''}</li>`).join('');
-  return `<article class="metric card ranking-card"><img class="metric-watermark" src="${A}${iconName}" alt="" aria-hidden="true"><div class="metric-label">${label}<span class="metric-icon ${tone}"><img src="${A}${iconName}" alt=""></span></div><ol class="ranking-list">${rows || '<li>Sem dados para este ranking</li>'}</ol></article>`;
+  return dashboardCard(label, iconName, 'ranking-card', `<ol class="ranking-list">${rows || '<li>Sem dados para este ranking</li>'}</ol>`);
 }
 function topRecurringClients() {
   const counts = new Map([...state.data.clients, demoClient].map(client => [client.name, 0]));
@@ -199,12 +218,73 @@ function topClosestClients() {
 function reminder(icon, tone, titleText, detail, status) {
   return `<div class="reminder"><span class="reminder-icon ${tone}"><img src="${A}${icon}" alt=""></span><div><strong>${titleText}</strong><p>${detail}</p></div><span class="reminder-status">${status}</span></div>`;
 }
+function comparisonChart(items, formatValue, maximum) {
+  if (!items.length) return '<p class="empty">Nenhum valor cadastrado para comparar.</p>';
+  const limit = maximum || Math.max(0, ...items.map(item => item.value));
+  return `<div class="comparison-chart" role="img" aria-label="${escapeHtml(items.map(item => `${item.label}: ${formatValue(item.value)}`).join('; '))}">${items.map(item => `<div class="comparison-row"><span class="comparison-name" title="${escapeHtml(item.label)}">${escapeHtml(item.label)}</span><span class="comparison-track"><span class="comparison-fill" style="width:${limit ? item.value / limit * 100 : 0}%"></span></span><strong>${escapeHtml(formatValue(item.value))}</strong></div>`).join('')}</div>`;
+}
+function dailyFeedbackChart(feedbacks) {
+  const today = new Date();
+  const end = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const counts = new Map();
+  feedbacks.forEach(feedback => {
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(feedback.date || '');
+    if (match) {
+      const key = `${match[3]}-${match[2]}-${match[1]}`;
+      counts.set(key, (counts.get(key) || 0) + 1);
+    }
+  });
+  const days = Array.from({ length: 14 }, (_, index) => {
+    const date = new Date(end);
+    date.setDate(end.getDate() - 13 + index);
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    return { label: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), count: counts.get(key) || 0 };
+  });
+  const maximum = Math.max(1, ...days.map(day => day.count));
+  if (days.every(day => day.count === 0)) return '<p class="empty">Nenhum feedback recebido nos últimos 14 dias.</p>';
+  const countLabel = count => `${count} ${count === 1 ? 'feedback' : 'feedbacks'}`;
+  return `<div class="daily-chart" role="img" aria-label="${escapeHtml(days.map(day => `${day.label}: ${countLabel(day.count)}`).join('; '))}"><div class="daily-chart-bars">${days.map(day => `<div class="daily-chart-day" title="${day.label}: ${countLabel(day.count)}"><span class="daily-chart-count">${day.count || ''}</span><span class="daily-chart-bar" style="height:${day.count ? Math.round(day.count / maximum * 140) : 0}px"></span><span class="daily-chart-date">${day.label}</span></div>`).join('')}</div></div>`;
+}
+function sentimentChart(counts) {
+  const total = counts.reduce((sum, item) => sum + item.value, 0);
+  return `<div class="sentiment-chart"><div class="sentiment-stack" role="img" aria-label="${escapeHtml(counts.map(item => `${item.label}: ${item.value} de ${total}`).join('; '))}">${counts.map(item => `<span class="${item.tone}" style="width:${total ? item.value / total * 100 : 0}%"></span>`).join('')}</div><div class="sentiment-legend">${counts.map(item => `<div><span class="sentiment-label"><i class="dot ${item.tone}"></i>${item.label}</span><strong>${item.value}</strong><small>${total ? Math.round(item.value / total * 100) : 0}%</small></div>`).join('')}</div></div>`;
+}
+function revenueHistoryChart(clients, money) {
+  const months = Array.from({ length: 6 }, (_, index) => monthKey(index - 5));
+  const colors = ['#1788cd', '#17b9a9', '#d99a28', '#d86789', '#746bd4'];
+  const series = clients.slice(0, 5).map((client, index) => ({
+    name: client.name,
+    color: colors[index],
+    values: months.map(month => {
+      const record = client.revenueHistory?.find(item => item.month === month);
+      return month === monthKey(0) ? Number(client.monthlyRevenue) : record ? Number(record.value) : null;
+    })
+  }));
+  const maximum = Math.max(5000, Math.ceil(Math.max(0, ...series.flatMap(item => item.values.filter(value => value !== null))) / 5000) * 5000);
+  const x = index => 70 + index * 140;
+  const y = value => 220 - value / maximum * 180;
+  const grid = [0, 1, 2, 3, 4].map(index => {
+    const value = maximum * index / 4;
+    return `<line x1="70" x2="770" y1="${y(value)}" y2="${y(value)}" class="revenue-grid-line"/><text x="62" y="${y(value) + 4}" text-anchor="end" class="revenue-axis-label">${value ? `R$ ${(value / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : 'R$ 0'}</text>`;
+  }).join('');
+  const lines = series.map(item => {
+    const points = item.values.map((value, index) => value === null ? null : `${x(index)},${y(value)}`).filter(Boolean);
+    return `<polyline points="${points.join(' ')}" fill="none" stroke="${item.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${item.values.map((value, index) => value === null ? '' : `<circle cx="${x(index)}" cy="${y(value)}" r="4" fill="${item.color}"><title>${escapeHtml(item.name)} · ${months[index]} · ${escapeHtml(money(value))}</title></circle>`).join('')}`;
+  }).join('');
+  const monthNames = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  const labels = months.map((month, index) => {
+    const [year, number] = month.split('-').map(Number);
+    return `<text x="${x(index)}" y="251" text-anchor="middle" class="revenue-axis-label">${monthNames[number - 1]}/${String(year).slice(-2)}</text>`;
+  }).join('');
+  const description = series.map(item => `${item.name}: ${item.values.map((value, index) => value === null ? '' : `${months[index]} ${money(value)}`).filter(Boolean).join(', ')}`).join('; ');
+  return `<div class="revenue-history-chart"><svg viewBox="0 0 800 270" role="img" aria-label="${escapeHtml(description)}">${grid}${lines}${labels}</svg><div class="revenue-legend">${series.map(item => `<div class="revenue-legend-item"><i style="background:${item.color}"></i><span>${escapeHtml(item.name)}</span><strong>${escapeHtml(money(item.values.at(-1) || 0))}</strong></div>`).join('')}</div></div>`;
+}
 function relationsDashboard() {
   const pendingRepairs = repairCandidates().length;
   const missingContacts = state.data.clients.filter(client => !client.email).length;
   return shell('/dashboard', `${dashboardHeading('Análise das relações')}
-    <div class="metric-grid relations-metrics">${relationMetric('Clientes cadastrados', state.data.clients.length, 'Total de clientes', 'blue', 'dashboardClients.svg')}${rankingMetric('Top 3 empresas mais próximas', topClosestClients(), 'gold', 'dashboardStar.svg')}${relationMetric('Novos vínculos', '—', 'Sem histórico cadastrado', 'green', 'dashboardGrowth.svg')}${relationMetric('Relações para revisão', pendingRepairs, 'Padrões de atendimento pendentes', 'rose', 'dashboardAlert.svg')}</div>
-    <div class="dashboard-grid"><section class="card chart-card"><div class="card-heading"><h2>Número de vínculos</h2><span class="tag">Últimos 14 dias</span></div><div class="chart"><img class="dashboard-trend" src="${A}dashboardTrend.svg" alt="Tendência ilustrativa do número de vínculos nos últimos 14 dias"><div class="chart-labels"><span>17 de out.</span><span>23 de out.</span><span>30 de out.</span></div></div></section><section class="card reminders"><div class="card-heading"><div><h2>Lembretes importantes</h2><p>Assuntos de urgência</p></div></div><div class="reminder-list">${reminder('dashboardMessage.svg', 'blue', 'Consultar feedbacks', `${state.data.feedbacks.length} relatos de demonstração`, 'Consultar')}${reminder('dashboardLightbulb.svg', 'green', 'Reparações para revisão', `${pendingRepairs} ${pendingRepairs === 1 ? 'análise' : 'análises'} aguardando a equipe`, 'Pendente')}${reminder('dashboardCalendar.svg', 'gold', 'Completar dados dos clientes', `${missingContacts} contatos não informados`, 'Pendente')}</div></section></div>`);
+    <div class="metric-grid relations-metrics">${metricCard('Clientes cadastrados', state.data.clients.length, 'Total de clientes', 'dashboardClients.svg')}${rankingMetric('Top 3 empresas mais próximas', topClosestClients(), 'dashboardStar.svg')}${metricCard('Novos vínculos', '—', 'Sem histórico cadastrado', 'dashboardGrowth.svg')}${metricCard('Relações para revisão', pendingRepairs, 'Padrões de atendimento pendentes', 'dashboardAlert.svg')}</div>
+    <div class="dashboard-grid"><section class="card chart-card"><div class="card-heading"><div><h2>Força dos relacionamentos</h2><p>Pontuação cadastrada por empresa, de 1 a 5</p></div><span class="tag">Situação atual</span></div>${comparisonChart([...state.data.clients].filter(client => Number(client.relationStrength) > 0).sort((a, b) => b.relationStrength - a.relationStrength).map(client => ({ label: client.name, value: Number(client.relationStrength) })), value => `${value}/5`, 5)}</section><section class="card reminders"><div class="card-heading"><div><h2>Lembretes importantes</h2><p>Assuntos de urgência</p></div></div><div class="reminder-list">${reminder('dashboardMessage.svg', 'blue', 'Consultar feedbacks', `${state.data.feedbacks.length} relatos de demonstração`, 'Consultar')}${reminder('dashboardLightbulb.svg', 'green', 'Reparações para revisão', `${pendingRepairs} ${pendingRepairs === 1 ? 'análise' : 'análises'} aguardando a equipe`, 'Pendente')}${reminder('dashboardCalendar.svg', 'gold', 'Completar dados dos clientes', `${missingContacts} contatos não informados`, 'Pendente')}</div></section></div>`);
 }
 function dashboard() {
   if (state.dashboardView === 'relations') return relationsDashboard();
@@ -212,15 +292,11 @@ function dashboard() {
     const clients = state.data.clients.filter(client => Number(client.monthlyRevenue) > 0).sort((a, b) => b.monthlyRevenue - a.monthlyRevenue);
     const total = clients.reduce((sum, client) => sum + Number(client.monthlyRevenue), 0);
     const money = value => Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    const compactMoney = value => Number(value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', notation: 'compact', maximumFractionDigits: 1 });
-    const chartClients = clients.slice(0, 8);
-    const chartMax = Math.max(0, ...chartClients.map(client => Number(client.monthlyRevenue)));
+    const chartClients = clients.slice(0, 5);
     const concentration = total ? Math.round(clients.slice(0, 3).reduce((sum, client) => sum + Number(client.monthlyRevenue), 0) / total * 100) : 0;
-    const missing = state.data.clients.length - clients.length;
     return shell('/dashboard', `${dashboardHeading('Receita por empresa')}
-      <div class="metric-grid financial-metrics">${metric('Receita mensal cadastrada', money(total), 'Soma dos valores informados', 'blue', 'dashboardGrowth.svg')}${metric('Projeção anual simples', money(total * 12), '12 meses no mesmo valor, sem reajustes', 'green', 'dashboardTrend.svg')}${metric('Média por empresa', money(clients.length ? total / clients.length : 0), `${clients.length} empresas com valor`, 'gold', 'dashboardClients.svg')}${metric('Concentração das 3 maiores', `${concentration}%`, 'Participação na receita cadastrada', 'rose', 'dashboardAlert.svg')}</div>
-      <section class="card financial-chart-card"><div class="card-heading"><div><h2>Receita mensal por empresa</h2><p>Comparação dos valores cadastrados para cada cliente</p></div><span class="tag">Mensal · R$</span></div>${chartClients.length ? `<div class="financial-chart" role="img" aria-label="Receita mensal por empresa: ${chartClients.map(client => `${escapeHtml(client.name)} ${money(client.monthlyRevenue)}`).join('; ')}"><div class="financial-chart-scale"><span>${compactMoney(chartMax)}</span><span>${compactMoney(chartMax / 2)}</span><span>R$ 0</span></div><div class="financial-chart-plot"><div class="financial-chart-grid" aria-hidden="true"></div><div class="financial-chart-bars">${chartClients.map((client, index) => `<div class="financial-chart-item"><span class="financial-chart-value">${compactMoney(client.monthlyRevenue)}</span><span class="financial-chart-bar ${index === 0 ? 'is-leading' : ''}" style="--bar-height:${Math.max(8, Math.round(Number(client.monthlyRevenue) / chartMax * 100))}%"></span><span class="financial-chart-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span></div>`).join('')}</div></div></div>` : '<p class="empty">Cadastre uma receita mensal para visualizar o gráfico.</p>'}</section>
-      <section class="card list-card financial-card"><div class="card-heading"><div><h2>Contribuição mensal cadastrada</h2><p>Valores fictícios de demonstração, informados manualmente. Não representam dados financeiros da CTI.</p></div></div><p class="financial-help">Para alterar um valor, clique em <strong>Editar valor</strong> na empresa. O campo fica em <strong>Dados da empresa → Receita mensal informada (R$)</strong>. Salve os dados para atualizar este painel.</p>${clients.map(client => `<div class="financial-row"><strong>${escapeHtml(client.name)}</strong><div class="financial-bar"><span class="bar"><i style="width:${Math.round(client.monthlyRevenue / total * 100)}%"></i></span><small>${Math.round(client.monthlyRevenue / total * 100)}% do total</small></div><span>${money(client.monthlyRevenue)}</span>${button('Editar valor', 'edit-client', 'outline', `data-id="${client.id}"`)}</div>`).join('') || '<p class="empty">Nenhum valor cadastrado. Abra o perfil de uma empresa para informar a receita mensal.</p>'}<p class="field-note">${missing ? `${missing} ${missing === 1 ? 'empresa sem valor cadastrado' : 'empresas sem valor cadastrado'}. ` : ''}A projeção não é uma previsão de faturamento; considera apenas os valores mensais registrados.</p></section>`);
+      <div class="metric-grid financial-metrics">${metricCard('Receita mensal cadastrada', money(total), 'Soma dos valores informados', 'dashboardGrowth.svg')}${metricCard('Projeção anual simples', money(total * 12), '12 meses no mesmo valor, sem reajustes', 'dashboardTrend.svg')}${metricCard('Média por empresa', money(clients.length ? total / clients.length : 0), `${clients.length} empresas com valor`, 'dashboardClients.svg')}${metricCard('Concentração das 3 maiores', `${concentration}%`, 'Participação na receita cadastrada', 'dashboardAlert.svg')}</div>
+      <section class="card financial-chart-card"><div class="card-heading"><div><h2>Histórico da receita mensal</h2><p>Cinco empresas com maior valor mensal cadastrado. Série fictícia de demonstração; não representa dados financeiros da CTI.</p></div><span class="tag">Últimos 6 meses · R$</span></div>${chartClients.length ? revenueHistoryChart(chartClients, money) : '<p class="empty">Cadastre uma receita mensal para visualizar o gráfico.</p>'}</section>`);
   }
   const data = state.data.feedbacks;
   const average = data.length ? (data.reduce((sum, f) => sum + Number(f.rating), 0) / data.length).toFixed(1).replace('.', ',') : '0';
@@ -228,8 +304,8 @@ function dashboard() {
   const negative = data.filter(f => f.sentiment === 'Negativo').length;
   const neutral = data.filter(f => f.sentiment === 'Neutro').length;
   return shell('/dashboard', `${dashboardHeading('Análise dos feedbacks')}
-    <div class="metric-grid">${metric('Feedbacks recebidos', data.length, 'Total registrado', 'blue', 'dashboardClients.svg')}${metric('Nota média', average, 'De 1 a 5 pontos', 'gold', 'dashboardStar.svg')}${metric('Sentimento positivo', positive, `${Math.round(positive / (data.length || 1) * 100)}% dos comentários analisados`, 'green', 'dashboardGrowth.svg')}${metric('Sentimento negativo', negative, 'Sentimento negativo', 'rose', 'dashboardAlert.svg')}${rankingMetric('Top 3 empresas mais recorrentes', topRecurringClients(), 'rose', 'dashboardRecurrence.svg', client => `${client.feedbackCount} ${client.feedbackCount === 1 ? 'relato' : 'relatos'}`)}</div>
-    <div class="dashboard-grid"><section class="card chart-card"><div class="card-heading"><div><h2>Movimento de feedbacks</h2><p>Nota média e volume por dia</p></div><span class="tag">Últimos 14 dias</span></div><div class="chart"><img class="dashboard-trend" src="${A}dashboardFeedbackTrend.svg" alt="Tendência ilustrativa dos feedbacks nos últimos 14 dias"><div class="chart-labels"><span>17 de out.</span><span>23 de out.</span><span>30 de out.</span></div></div></section><section class="card climate"><div class="card-heading"><div><h2>Clima dos comentários</h2><p>Distribuição de sentimento</p></div></div>${[['Positivo', positive, 'green'], ['Neutro', neutral, 'gold'], ['Negativo', negative, 'rose']].map(([label, value, color]) => `<div class="climate-label"><i class="dot ${color}"></i>${label}<b>${value}</b></div><div class="bar"><i class="${color}" style="width:${Math.round(value / (data.length || 1) * 100)}%"></i></div>`).join('')}</section></div>`);
+    <div class="metric-grid">${metricCard('Feedbacks recebidos', data.length, 'Total registrado', 'dashboardClients.svg')}${metricCard('Nota média', average, 'De 1 a 5 pontos', 'dashboardStar.svg')}${metricCard('Sentimento positivo', positive, `${Math.round(positive / (data.length || 1) * 100)}% dos comentários analisados`, 'dashboardGrowth.svg')}${metricCard('Sentimento negativo', negative, 'Sentimento negativo', 'dashboardAlert.svg')}${rankingMetric('Top 3 empresas mais recorrentes', topRecurringClients(), 'dashboardRecurrence.svg', client => `${client.feedbackCount} ${client.feedbackCount === 1 ? 'relato' : 'relatos'}`)}</div>
+    <div class="dashboard-grid"><section class="card chart-card"><div class="card-heading"><div><h2>Feedbacks por dia</h2><p>Quantidade recebida em cada dia</p></div><span class="tag">Últimos 14 dias</span></div>${dailyFeedbackChart(data)}</section><section class="card climate"><div class="card-heading"><div><h2>Clima dos comentários</h2><p>Participação de cada sentimento no total</p></div></div>${sentimentChart([{ label: 'Positivo', value: positive, tone: 'green' }, { label: 'Neutro', value: neutral, tone: 'gold' }, { label: 'Negativo', value: negative, tone: 'rose' }])}</section></div>`);
 }
 function filteredFeedbacks() {
   return state.data.feedbacks.filter(f => (!state.query || `${f.comment} ${f.service} ${f.client}`.toLocaleLowerCase('pt-BR').includes(state.query.toLocaleLowerCase('pt-BR'))) && (!state.service || f.service === state.service) && (!state.sentiment || f.sentiment === state.sentiment));
@@ -243,23 +319,29 @@ function feedbackTheme(feedback) {
   return feedback.theme || 'Motivo não identificado';
 }
 function repairCandidates() {
-  return [...state.data.clients, demoClient].flatMap(client => {
-    const feedbacks = state.data.feedbacks.filter(feedback => feedback.client === client.name && feedback.sentiment === 'Negativo' && feedback.area === 'Atendimento');
-    if (feedbacks.length < MIN_NEGATIVE_FEEDBACKS) return [];
-    const themes = new Map();
-    feedbacks.forEach(feedback => {
-      const theme = feedbackTheme(feedback);
-      themes.set(theme, (themes.get(theme) || 0) + 1);
-    });
-    const [theme, repetitions] = [...themes].sort((a, b) => b[1] - a[1])[0];
-    const key = `${client.id}:${feedbacks.map(feedback => feedback.id).sort((a, b) => a - b).join(',')}`;
-    if (state.data.repairReviews.some(review => review.key === key)) return [];
-    const recurring = theme !== 'Motivo não identificado' && repetitions >= Math.ceil(feedbacks.length * MIN_REPETITION_RATIO);
-    const proposal = recurring ? (theme === 'Demora no retorno'
-      ? 'Agendar uma conversa com a empresa, reconhecer as falhas de retorno, definir um ponto focal e combinar uma frequência de atualizações. Depois, confirmar com a empresa se a comunicação melhorou.'
-      : `Conversar com a empresa sobre ${theme.toLocaleLowerCase('pt-BR')}, alinhar expectativas e combinar um acompanhamento para reconstruir a confiança.`) : '';
-    return [{ client, feedbacks, theme, repetitions, recurring, proposal, key }];
+  const groups = new Map();
+  state.data.feedbacks.filter(feedback => feedback.sentiment === 'Negativo' && feedback.area === 'Atendimento').forEach(feedback => {
+    const theme = feedbackTheme(feedback).trim();
+    if (theme === 'Motivo não identificado') return;
+    const normalized = theme.toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    if (!groups.has(normalized)) groups.set(normalized, { theme, feedbacks: [] });
+    groups.get(normalized).feedbacks.push(feedback);
   });
+  return [...groups.values()].flatMap(({ theme, feedbacks }) => {
+    if (feedbacks.length < MIN_RECURRING_FEEDBACKS) return [];
+    const ids = feedbacks.map(feedback => feedback.id).sort((a, b) => a - b);
+    const key = `${theme}:${ids.join(',')}`;
+    if (state.data.repairReviews.some(review => {
+      if (review.key === key) return true;
+      const previousIds = new Set((review.key?.split(':')[1] || '').split(',').map(Number));
+      return previousIds.size > 0 && ids.every(id => previousIds.has(id));
+    })) return [];
+    const clients = [...new Set(feedbacks.map(feedback => feedback.client || 'Não vinculada'))];
+    const proposal = theme === 'Demora no retorno'
+      ? 'Revisar os prazos de retorno com a equipe, definir um responsável por cada atendimento e acompanhar se as respostas chegam no prazo combinado.'
+      : `Revisar os atendimentos sobre ${theme.toLocaleLowerCase('pt-BR')}, identificar a causa e registrar uma medida de correção com prazo e responsável.`;
+    return [{ theme, feedbacks, clients, repetitions: feedbacks.length, proposal, key }];
+  }).sort((a, b) => b.repetitions - a.repetitions);
 }
 function feedbacks() {
   const rows = filteredFeedbacks();
@@ -269,6 +351,20 @@ function tabs(current) { return `<nav class="tabs" aria-label="Etapas de gestão
 function feedbackCount(clientName) { return state.data.feedbacks.filter(feedback => feedback.client === clientName).length; }
 function feedbackSummary(clientName) { const count = feedbackCount(clientName); return `${count} ${count === 1 ? 'relato' : 'relatos'}`; }
 function clientContacts(client) { return Array.isArray(client.contacts) ? client.contacts : (client.contact ? [{ name: client.contact, email: client.email || '' }] : []); }
+function meetingInvitees(value) {
+  return [...new Set(String(value || '').split(/[,;\n]+/).map(email => email.trim().toLowerCase()).filter(Boolean))];
+}
+function readMeetingAttachment(file) {
+  if (!file) return Promise.resolve(null);
+  if (file.size > 2 * 1024 * 1024) return Promise.reject(new Error('O arquivo da ata deve ter até 2 MB.'));
+  if (!/\.(pdf|docx|txt)$/i.test(file.name)) return Promise.reject(new Error('Anexe a ata em PDF, DOCX ou TXT.'));
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name: file.name, dataUrl: reader.result });
+    reader.onerror = () => reject(new Error('Não foi possível ler o arquivo da ata.'));
+    reader.readAsDataURL(file);
+  });
+}
 function clientPriority(client) { const count = (client.slaIncidents || []).filter(item => item.status !== 'Resolvida').length; return count >= 2 ? 'Alta' : count === 1 ? 'Média' : 'Normal'; }
 function clientBrandClass(name) { return `brand-${({ Formtap: 'formtap', Tecnolab: 'tecnolab', Sicredi: 'sicredi', Acrilex: 'acrilex', 'Maple Bear': 'maplebear', '99': 'ninenine' })[name] || 'default'}`; }
 function clientBrandMark(name) { return ({ Formtap: 'formtap', Tecnolab: 'TECNOLAB', Sicredi: 'Sicredi', Acrilex: 'ACRILEX', 'Maple Bear': 'Maple Bear', '99': '99' })[name] || escapeHtml(name); }
@@ -307,7 +403,7 @@ function dateBR(value) {
 function clientTimeline(client) {
   const entries = [];
   const add = (date, type, title, detail = '') => { if (dateKey(date)) entries.push({ date, type, title, detail }); };
-  (client.meetings || []).forEach(item => add(item.date, 'Reunião', item.title, item.notes));
+  (client.meetings || []).forEach(item => add(item.date, 'Reunião', item.title, item.minutes || item.notes));
   state.data.feedbacks.filter(item => item.client === client.name).forEach(item => add(item.date, 'Feedback', item.comment, `${item.sentiment} · ${item.service}`));
   (client.slaIncidents || []).forEach(item => add(item.date, 'SLA', item.title, `${item.severity} · ${item.status}`));
   (client.invites || []).forEach(item => add(item.date, 'Convite', item.subject, `Rascunho para ${item.email}`));
@@ -315,7 +411,7 @@ function clientTimeline(client) {
   (client.opportunities || []).forEach(item => add(item.createdAt, 'Oportunidade', item.title, item.stage));
   (client.tasks || []).forEach(item => (item.history || []).forEach(entry => add(entry.date, 'Tarefa atualizada', item.title, entry.status)));
   (client.opportunities || []).forEach(item => (item.history || []).forEach(entry => add(entry.date, 'Oportunidade atualizada', item.title, entry.stage)));
-  state.data.actions.filter(item => item.clientId === client.id).forEach(item => (item.history || []).forEach(entry => add(entry.date, 'Ação', item.proposal, `${entry.status} · ${entry.note}`)));
+  state.data.actions.filter(item => item.clientId === client.id || item.clientNames?.includes(client.name)).forEach(item => (item.history || []).forEach(entry => add(entry.date, 'Ação', item.proposal, `${entry.status} · ${entry.note}`)));
   entries.sort((a, b) => dateKey(b.date).localeCompare(dateKey(a.date)));
   return `<section class="client-work-section"><h2>Linha do tempo</h2><p class="section-note">Reúne registros vinculados a esta empresa, em ordem do mais recente.</p><div class="client-timeline">${entries.map(item => `<article class="timeline-event"><span>${escapeHtml(dateBR(item.date))}</span><div><small>${escapeHtml(item.type)}</small><strong>${escapeHtml(item.title)}</strong>${item.detail ? `<p>${escapeHtml(item.detail)}</p>` : ''}</div></article>`).join('') || '<p class="profile-empty">Nenhuma interação registrada.</p>'}</div></section>`;
 }
@@ -330,18 +426,18 @@ function profileDetails(client) {
   const contacts = clientContacts(client);
   const brand = `<div class="client-wordmark ${clientBrandClass(client.name)}" aria-label="Marca ${escapeHtml(client.name)}"><span>${clientBrandMark(client.name)}</span></div>`;
   const location = client.address?.cep ? `<p class="profile-location">${escapeHtml(client.address.city)}, ${escapeHtml(client.address.stateCode)} · CEP ${escapeHtml(client.address.cep)}</p>` : '';
-  const meetingRows = meetings.length ? [...meetings].sort((a, b) => b.date.localeCompare(a.date)).map(meeting => `<article class="meeting"><span class="meeting-date">${escapeHtml(meeting.date)}</span><div><strong>${escapeHtml(meeting.title)}</strong><small>${escapeHtml(meeting.notes || '')}</small></div></article>`).join('') : '<p class="profile-empty">Nenhuma reunião registrada.</p>';
+  const meetingRows = meetings.length ? [...meetings].sort((a, b) => dateKey(b.date).localeCompare(dateKey(a.date))).map((meeting, index) => `<article class="meeting meeting-record"><span class="meeting-date">${escapeHtml(meeting.date)}</span><div><strong>${escapeHtml(meeting.title)}</strong>${meeting.invitationText ? `<small>Convite: ${escapeHtml(meeting.invitationText)}</small>` : ''}${(meeting.invitees || []).map((invitee, inviteeIndex) => `<label class="invitee-status">${escapeHtml(invitee.email)}<select data-meeting-id="${meeting.id ?? meetings.indexOf(meeting)}" data-invitee-index="${inviteeIndex}" data-client-id="${client.id}" aria-label="Resposta de ${escapeHtml(invitee.email)}">${['Sem resposta', 'Confirmado', 'Recusado'].map(status => `<option ${invitee.status === status ? 'selected' : ''}>${status}</option>`).join('')}</select></label>`).join('')}${meeting.minutes || meeting.notes ? `<small><b>Ata:</b> ${escapeHtml(meeting.minutes || meeting.notes)}</small>` : '<small>Ata ainda não preenchida.</small>'}${meeting.attachment ? `<a class="meeting-attachment" href="${escapeHtml(meeting.attachment.dataUrl)}" download="${escapeHtml(meeting.attachment.name)}">Baixar ata anexada: ${escapeHtml(meeting.attachment.name)}</a>` : ''}</div>${button('Editar reunião', 'edit-meeting', 'outline', `data-id="${client.id}" data-item-id="${meeting.id ?? meetings.indexOf(meeting)}"`)}</article>`).join('') : '<p class="profile-empty">Nenhuma reunião registrada.</p>';
   const feedbackRows = linkedFeedbacks.length ? linkedFeedbacks.slice(0, 3).map(feedback => `<p class="profile-feedback"><span>${escapeHtml(feedback.date)}</span>${escapeHtml(feedback.comment)}</p>`).join('') : '<p class="profile-empty">Nenhum feedback vinculado.</p>';
   const inviteRows = (client.invites || []).map(item => `<article class="meeting"><div><strong>${escapeHtml(item.subject)}</strong><small>Para ${escapeHtml(item.email)} · ${escapeHtml(item.date)} · Não enviado</small><small>${escapeHtml(item.message)}</small></div></article>`).join('') || '<p class="profile-empty">Nenhum convite preparado.</p>';
   const incidentRows = (client.slaIncidents || []).map((item, index) => `<article class="meeting"><span class="pill ${item.severity === 'P1' ? 'negativo' : 'neutro'}">${escapeHtml(item.severity)}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.status)} · ${escapeHtml(item.date)}</small></div><button type="button" class="button soft" data-action="resolve-incident" data-id="${client.id}" data-index="${index}">Marcar resolvida</button></article>`).join('') || '<p class="profile-empty">Nenhuma ocorrência registrada.</p>';
   return `<div class="profile-head">${brand}<div class="profile-client-copy"><span class="profile-eyebrow">PERFIL DO CLIENTE</span><h1>${escapeHtml(client.name)}</h1><p>${escapeHtml(client.contact || 'Contato não informado')} · ${escapeHtml(client.email || 'E-mail não informado')}</p>${location}</div><div class="profile-actions">${button('Editar dados', 'edit-client', 'outline', `data-id="${client.id}"`)}${button('Nova reunião', 'new-meeting', 'primary', `data-id="${client.id}"`)}</div></div>
-    <div class="metric-grid three profile-metrics">${metric('Feedbacks', feedbackCount(client.name), 'Recebidos', 'blue', 'dashboardMessage.svg')}${metric('Reuniões', meetings.length, 'Registradas', 'gold', 'dashboardCalendar.svg')}${metric('Prioridade', clientPriority(client), 'Ocorrências abertas de SLA', 'rose', 'dashboardAlert.svg')}</div>
-    <details class="profile-group" open><summary><span class="profile-section-heading"><span>01 / CONTEXTO</span><strong>Empresa e atendimento</strong><small>Dados essenciais para entender e acompanhar esta relação.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary>
-    <div class="profile-overview-grid"><section class="profile-panel"><div class="profile-panel-heading"><h3>Contatos da empresa</h3><span>${contacts.length}</span></div>${contacts.map(contact => `<p class="profile-feedback"><strong>${escapeHtml(contact.name)}</strong><span>${escapeHtml(contact.email || 'Sem e-mail')} · ${escapeHtml(contact.role || 'Contato')}</span></p>`).join('') || '<p class="profile-empty">Nenhum contato cadastrado.</p>'}<div class="profile-panel-actions">${button('Adicionar contato', 'new-contact', 'outline', `data-id="${client.id}"`)}${button('Preparar convite', 'new-invite', 'soft', `data-id="${client.id}"`)}</div><div class="profile-panel-divider"></div><h3>Serviços vinculados</h3><div class="profile-service-list">${(client.services || []).length ? (client.services || []).map(service => `<span class="chip">${escapeHtml(service)}</span>`).join('') : '<p class="profile-empty">Nenhum serviço vinculado.</p>'}</div></section>
+    <div class="metric-grid three profile-metrics">${metricCard('Feedbacks', feedbackCount(client.name), 'Recebidos', 'dashboardMessage.svg')}${metricCard('Reuniões', meetings.length, 'Registradas', 'dashboardCalendar.svg')}${metricCard('Prioridade', clientPriority(client), 'Ocorrências abertas de SLA', 'dashboardAlert.svg')}</div>
+    <details class="profile-group" open><summary><span class="profile-section-heading"><strong>Empresa e atendimento</strong><small>Dados essenciais para entender e acompanhar esta relação.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary>
+    <div class="profile-overview-grid"><section class="profile-panel"><div class="profile-panel-heading"><h3>Contatos da empresa</h3><span>${contacts.length}</span></div>${contacts.map(contact => `<p class="profile-feedback"><strong>${escapeHtml(contact.name)}</strong><span>${escapeHtml(contact.email || 'Sem e-mail')} · ${escapeHtml(contact.role || 'Contato')}</span></p>`).join('') || '<p class="profile-empty">Nenhum contato cadastrado.</p>'}<div class="profile-panel-actions">${button('Adicionar contato', 'new-contact', 'outline', `data-id="${client.id}"`)}</div><div class="profile-panel-divider"></div><h3>Serviços vinculados</h3><div class="profile-service-list">${(client.services || []).length ? (client.services || []).map(service => `<span class="chip">${escapeHtml(service)}</span>`).join('') : '<p class="profile-empty">Nenhum serviço vinculado.</p>'}</div></section>
     <section class="profile-panel"><div class="profile-panel-heading"><h3>Qualidade e SLA</h3></div><div class="profile-info-block"><h4>Contrato de SLA</h4><p>${escapeHtml(client.slaContract || 'Contrato não cadastrado. Registre um resumo ou referência fornecida pela equipe.')}</p>${button('Editar contrato', 'edit-sla', 'outline', `data-id="${client.id}"`)}</div><div class="profile-info-block"><h4>Perfil de atendimento</h4><p>${escapeHtml(client.serviceProfile || 'Sem observações revisadas pela equipe.')}</p>${button('Editar observações', 'edit-service-profile', 'outline', `data-id="${client.id}"`)}</div></section></div></details>
-    <details class="profile-group"><summary><span class="profile-section-heading"><span>02 / REGISTROS</span><strong>Histórico recente</strong><small>Reuniões, relatos e ocorrências ligados à empresa.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary>
-    <div class="profile-record-grid"><section class="profile-panel"><div class="profile-panel-heading"><h3>Últimas reuniões</h3><span>${meetings.length}</span></div>${meetingRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Feedbacks recentes</h3><span>${linkedFeedbacks.length}</span></div>${feedbackRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Ocorrências de SLA</h3><span>${(client.slaIncidents || []).length}</span></div>${incidentRows}<div class="profile-panel-actions">${button('Registrar ocorrência', 'new-incident', 'outline', `data-id="${client.id}"`)}</div></section><section class="profile-panel"><div class="profile-panel-heading"><h3>Convites em rascunho</h3><span>${(client.invites || []).length}</span></div>${inviteRows}</section></div></details>
-    <details class="profile-group"><summary><span class="profile-section-heading"><span>03 / PRÓXIMOS PASSOS</span><strong>Trabalho da equipe</strong><small>Tarefas, oportunidades e a linha do tempo completa.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary><div class="profile-workspace">${clientWorkspace(client)}</div></details>`;
+    <details class="profile-group"><summary><span class="profile-section-heading"><strong>Histórico recente</strong><small>Reuniões, relatos e ocorrências ligados à empresa.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary>
+    <div class="profile-record-grid"><section class="profile-panel"><div class="profile-panel-heading"><h3>Últimas reuniões</h3><span>${meetings.length}</span></div>${meetingRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Feedbacks recentes</h3><span>${linkedFeedbacks.length}</span></div>${feedbackRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Ocorrências de SLA</h3><span>${(client.slaIncidents || []).length}</span></div>${incidentRows}<div class="profile-panel-actions">${button('Registrar ocorrência', 'new-incident', 'outline', `data-id="${client.id}"`)}</div></section>${(client.invites || []).length ? `<section class="profile-panel"><div class="profile-panel-heading"><h3>Convites antigos</h3><span>${client.invites.length}</span></div>${inviteRows}</section>` : ""}</div></details>
+    <details class="profile-group"><summary><span class="profile-section-heading"><strong>Trabalho da equipe</strong><small>Tarefas, oportunidades e a linha do tempo completa.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary><div class="profile-workspace">${clientWorkspace(client)}</div></details>`;
 }
 function profile(id) {
   const client = state.data.clients.find(c => c.id === Number(id));
@@ -361,8 +457,8 @@ function opportunitiesPage() {
   return shell('/clientes', `${tabs('/oportunidades')}<section class="card list-card"><div class="card-heading"><div><h1>Oportunidades</h1><p>Acompanhe possibilidades de expansão por etapa. Cadastre novas oportunidades no perfil da empresa.</p></div></div><div class="summary"><div><b>${open.length}</b><span>Em andamento</span></div><div><b>${moneyBRL(open.reduce((sum, row) => sum + Number(row.opportunity.value || 0), 0))}</b><span>Valor estimado em aberto</span></div><div><b>${rows.filter(row => row.opportunity.stage === 'Ganha').length}</b><span>Ganhas</span></div></div><div class="pipeline">${opportunityStages.map(stage => `<section class="pipeline-column"><h2>${stage} <span>${rows.filter(row => row.opportunity.stage === stage).length}</span></h2>${rows.filter(row => row.opportunity.stage === stage).map(({ client, opportunity }) => `<article class="pipeline-card"><strong>${escapeHtml(opportunity.title)}</strong><small>${escapeHtml(client.name)}</small><b>${moneyBRL(opportunity.value)}</b><small>Decisão prevista: ${escapeHtml(dateBR(opportunity.expectedDate))}</small>${button('Atualizar', 'edit-opportunity', 'outline', `data-id="${client.id}" data-item-id="${opportunity.id}"`)}</article>`).join('') || '<p class="profile-empty">Sem oportunidades</p>'}</section>`).join('')}</div><p class="field-note">Valores estimados não entram na receita contratada do painel Financeiro.</p></section>`);
 }
 function triage() {
-  const cases = repairCandidates().filter(item => !state.query || `${item.client.name} ${item.theme}`.toLocaleLowerCase('pt-BR').includes(state.query.toLocaleLowerCase('pt-BR')));
-  return shell('/clientes', `${tabs('/triagem')}<section class="card list-card repair-page"><div class="card-heading"><div><h1>Triagem de reparação</h1><p>Revise padrões de atendimento antes de propor uma ação para conservar a relação.</p></div><span>${cases.length} ${cases.length === 1 ? 'análise' : 'análises'}</span></div><p class="repair-criteria">Critério demonstrativo: ${MIN_NEGATIVE_FEEDBACKS} ou mais feedbacks negativos de atendimento da mesma empresa. Uma sugestão aparece quando o mesmo motivo representa ao menos ${Math.round(MIN_REPETITION_RATIO * 100)}% deles. <strong>Simulação local, sem IA real.</strong></p><div class="filters"><input id="triage-search" type="search" value="${escapeHtml(state.query)}" placeholder="Buscar empresa ou motivo">${button('Buscar', 'filter', 'outline')}</div><div class="triage-list">${cases.map(item => `<article class="triage-row repair-row"><div><h3>${escapeHtml(item.client.name)}</h3><p>${item.feedbacks.length} feedbacks negativos de atendimento · ${item.repetitions} sobre ${escapeHtml(item.theme.toLocaleLowerCase('pt-BR'))}</p><small>${item.recurring ? 'Padrão recorrente identificado' : 'Sem motivo predominante'} · Revisão humana necessária</small></div><button type="button" data-action="analyze" data-id="${item.client.id}">Analisar</button></article>`).join('') || '<p class="empty">Nenhuma reparação pendente.</p>'}</div></section>`);
+  const cases = repairCandidates().filter(item => !state.query || `${item.theme} ${item.clients.join(' ')}`.toLocaleLowerCase('pt-BR').includes(state.query.toLocaleLowerCase('pt-BR')));
+  return shell('/clientes', `${tabs('/triagem')}<section class="card list-card repair-page"><div class="card-heading"><div><h1>Triagem de reparação</h1><p>Assuntos que se repetem nos feedbacks de atendimento e precisam de revisão.</p></div><span>${cases.length} ${cases.length === 1 ? 'análise' : 'análises'}</span></div><p class="repair-criteria">Um assunto entra na triagem após ${MIN_RECURRING_FEEDBACKS} feedbacks negativos de atendimento com o mesmo motivo, mesmo que venham de empresas diferentes. Classificação por regras, sujeita à revisão da equipe.</p><div class="filters"><input id="triage-search" type="search" value="${escapeHtml(state.query)}" placeholder="Buscar assunto ou empresa">${button('Buscar', 'filter', 'outline')}</div><div class="triage-list">${cases.map(item => `<article class="triage-row repair-row"><div><h3>${escapeHtml(item.theme)}</h3><p>${item.feedbacks.length} feedbacks negativos · ${item.clients.length} ${item.clients.length === 1 ? 'empresa' : 'empresas'}</p><small>${escapeHtml(item.clients.join(', '))} · Aguardando revisão</small></div><button type="button" data-action="analyze" data-id="${escapeHtml(item.theme)}">Analisar</button></article>`).join('') || '<p class="empty">Nenhuma reparação pendente.</p>'}</div></section>`);
 }
 function actionsPage() {
   const actions = state.data.actions;
@@ -387,17 +483,16 @@ function modal() {
       : `<label>Oportunidade<input name="title" required maxlength="140" value="${escapeHtml(item?.title || '')}"></label><label>Valor estimado (R$)<input name="value" type="number" min="0" step="0.01" required value="${item?.value ?? ''}"></label><label>Previsão de decisão<input name="expectedDate" type="date" required value="${escapeHtml(item?.expectedDate || '')}"></label><label>Etapa<select name="stage">${opportunityStages.map(stage => `<option ${item?.stage === stage ? 'selected' : ''}>${stage}</option>`).join('')}</select></label><label>Observações<textarea name="note" rows="3" maxlength="500">${escapeHtml(item?.note || '')}</textarea></label><p class="field-note">O valor estimado não entra na receita mensal contratada do painel financeiro.</p>`;
     return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${editing ? 'Atualizar' : 'Nova'} ${isTask ? 'tarefa' : 'oportunidade'}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="client-work-form" data-client-id="${client.id}" data-kind="${state.modal.kind}" data-item-id="${item?.id || ''}"><div class="modal-body">${fields}</div><div class="modal-actions"><button class="button primary">Salvar</button></div></form></section></div>`;
   }
-  const extraKinds = ['new-contact', 'new-invite', 'edit-sla', 'edit-service-profile', 'new-incident'];
+  const extraKinds = ['new-contact', 'edit-sla', 'edit-service-profile', 'new-incident'];
   if (extraKinds.includes(state.modal?.kind)) {
     const client = state.data.clients.find(item => item.id === state.modal.id);
     if (!client) return '';
     const kind = state.modal.kind;
     const fields = kind === 'new-contact' ? '<label>Nome<input name="name" required maxlength="100"></label><label>E-mail<input name="email" type="email" required></label><label>Função<input name="role" maxlength="80"></label>'
-      : kind === 'new-invite' ? `<label>Destinatário<select name="email" required>${clientContacts(client).filter(item => item.email).map(item => `<option value="${escapeHtml(item.email)}">${escapeHtml(item.name)} · ${escapeHtml(item.email)}</option>`).join('')}</select></label><label>Assunto<input name="subject" required maxlength="120" value="Convite para reunião"></label><label>Mensagem<textarea name="message" rows="5" required>Olá, gostaríamos de agendar uma reunião para acompanhar o atendimento à sua empresa.</textarea></label><p class="field-note">Rascunho local para revisão. Nenhuma mensagem será enviada.</p>`
       : kind === 'edit-sla' ? `<label>Resumo ou referência do contrato<textarea name="slaContract" rows="5" required>${escapeHtml(client.slaContract || '')}</textarea></label><p class="field-note">Inclua apenas informações verificadas pela equipe.</p>`
       : kind === 'edit-service-profile' ? `<label>Observações revisadas pela equipe<textarea name="serviceProfile" rows="5" required>${escapeHtml(client.serviceProfile || '')}</textarea></label>`
       : '<label>Ocorrência<input name="title" required maxlength="140"></label><label>Severidade<select name="severity"><option>P1</option><option>P2</option><option>P3</option><option>P4</option></select></label><label>Situação<select name="status"><option>Em triagem</option><option>Em andamento</option><option>Resolvida</option></select></label><p class="field-note">P1: indisponibilidade crítica; P2: impacto alto; P3: impacto moderado; P4: impacto baixo. Classificação demonstrativa, revisada pela equipe.</p>';
-    const headings = { 'new-contact': 'Adicionar contato', 'new-invite': 'Preparar convite', 'edit-sla': 'Contrato de SLA', 'edit-service-profile': 'Perfil de atendimento', 'new-incident': 'Registrar ocorrência de SLA' };
+    const headings = { 'new-contact': 'Adicionar contato', 'edit-sla': 'Contrato de SLA', 'edit-service-profile': 'Perfil de atendimento', 'new-incident': 'Registrar ocorrência de SLA' };
     return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${headings[kind]}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="client-extra-form" data-client-id="${client.id}" data-kind="${kind}"><div class="modal-body">${fields}</div><div class="modal-actions"><button class="button primary">Salvar</button></div></form></section></div>`;
   }
   if (state.modal.kind === 'profile') {
@@ -405,16 +500,24 @@ function modal() {
     if (!client) return '';
     return `<div class="modal-backdrop" data-action="close"><section class="modal profile-modal" role="dialog" aria-modal="true" aria-labelledby="profile-modal-title"><div class="modal-head"><div><h2 id="profile-modal-title">Perfil do cliente</h2><p>Dados e histórico da empresa</p></div><button type="button" class="close" data-action="close" aria-label="Fechar perfil">×</button></div><div class="profile-scroll"><div class="profile-card">${profileDetails(client)}</div></div></section></div>`;
   }
-  if (state.modal.kind === 'edit-client' || state.modal.kind === 'new-meeting') {
+  if (state.modal.kind === 'new-meeting' || state.modal.kind === 'edit-meeting') {
     const client = state.data.clients.find(item => item.id === state.modal.id);
     if (!client) return '';
-    const editing = state.modal.kind === 'edit-client';
-    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${editing ? 'Editar dados do cliente' : 'Registrar reunião'}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">&times;</button></div><form id="${editing ? 'client-edit-form' : 'meeting-form'}" data-client-id="${client.id}"><div class="modal-body">${editing ? `<div class="client-edit-layout"><section class="client-edit-section"><h3>Dados da empresa</h3><div class="client-edit-fields"><label class="edit-field-wide">Nome da empresa<input name="name" required value="${escapeHtml(client.name)}"></label><label>Contato<input name="contact" value="${escapeHtml(client.contact || '')}"></label><label>E-mail<input name="email" type="email" value="${escapeHtml(client.email || '')}"></label><label>Receita mensal informada (R$)<input name="monthlyRevenue" type="number" min="0" step="0.01" value="${Number(client.monthlyRevenue || 0)}"></label></div></section><section class="client-edit-section"><h3>Serviços vinculados</h3><div class="client-edit-fields"><label class="edit-field-wide">Serviços vinculados<input name="services" value="${escapeHtml((client.services || []).join(', '))}" placeholder="Separe os serviços por vírgula"></label><p class="section-note">Separe vários serviços com vírgula.</p></div></section><section class="client-edit-section client-edit-location"><h3>Localização</h3><p class="section-note">Consulte o CEP para preencher cidade e estado.</p><div class="cep-lookup"><label>CEP<input id="client-cep" name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" value="${escapeHtml(client.address?.cep || '')}" placeholder="00000-000"></label><button type="button" class="button soft" data-action="lookup-cep">Consultar CEP</button></div><small id="cep-status" class="cep-status" aria-live="polite"></small><div class="location-fields"><label>Município<input id="client-city" name="city" value="${escapeHtml(client.address?.city || '')}" readonly></label><label>Estado (UF)<input id="client-state-code" name="stateCode" value="${escapeHtml(client.address?.stateCode || '')}" readonly></label></div></section></div>` : `<section class="client-edit-section meeting-form-section"><h3>Detalhes da reunião</h3><div class="meeting-form-fields"><label>Título<input name="title" required placeholder="Ex.: Reunião de acompanhamento"></label><label>Data<input name="date" type="date" required value="${new Date().toISOString().slice(0, 10)}"></label><label class="meeting-field-wide">Registro<textarea name="notes" rows="4" placeholder="Pauta, decisões e próximos passos"></textarea></label></div></section>`}</div><div class="modal-actions"><button class="button primary">${editing ? 'Salvar dados' : 'Salvar reunião'}</button></div></form></section></div>`;
+    const editing = state.modal.kind === 'edit-meeting';
+    const meeting = editing ? (client.meetings || []).find((item, index) => (item.id ?? index) === state.modal.itemId) : null;
+    if (editing && !meeting) return '';
+    const invitees = meeting?.invitees?.map(item => item.email).join(', ') || (editing ? '' : client.email || '');
+    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${editing ? 'Editar reunião' : 'Nova reunião'}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="meeting-form" data-client-id="${client.id}" data-meeting-id="${meeting?.id ?? state.modal.itemId ?? ''}"><div class="modal-body meeting-form-section"><div class="meeting-form-fields"><label>Título<input name="title" required maxlength="120" value="${escapeHtml(meeting?.title || '')}" placeholder="Ex.: Revisão mensal"></label><label>Data<input name="date" type="date" required value="${dateKey(meeting?.date) || new Date().toISOString().slice(0, 10)}"></label><label class="meeting-field-wide">Convidados (e-mails separados por vírgula)<textarea name="invitees" rows="2" required placeholder="nome@empresa.com, equipe@empresa.com">${escapeHtml(invitees)}</textarea></label><label class="meeting-field-wide">Texto do convite<textarea name="invitationText" rows="3" required placeholder="Informe o objetivo e os assuntos da reunião">${escapeHtml(meeting?.invitationText || '')}</textarea></label><label class="meeting-field-wide">Ata da reunião<textarea name="minutes" rows="5" placeholder="Registre pauta, decisões, responsáveis e próximos passos">${escapeHtml(meeting?.minutes || meeting?.notes || '')}</textarea></label><label class="meeting-field-wide">Anexar ata (PDF, DOCX ou TXT, até 2 MB)<input name="attachment" type="file" accept=".pdf,.docx,.txt"></label>${meeting?.attachment ? `<p class="section-note">Anexo atual: ${escapeHtml(meeting.attachment.name)} <label><input name="removeAttachment" type="checkbox" value="yes"> Remover anexo</label></p>` : ''}<p class="section-note meeting-field-wide">O convite fica registrado para envio pela equipe. As respostas são atualizadas manualmente no histórico.</p></div></div><div class="modal-actions"><button class="button primary">Salvar reunião</button></div></form></section></div>`;
+  }
+  if (state.modal.kind === 'edit-client') {
+    const client = state.data.clients.find(item => item.id === state.modal.id);
+    if (!client) return '';
+    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>Editar dados do cliente</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">&times;</button></div><form id="client-edit-form" data-client-id="${client.id}"><div class="modal-body"><div class="client-edit-layout"><section class="client-edit-section"><h3>Dados da empresa</h3><div class="client-edit-fields"><label class="edit-field-wide">Nome da empresa<input name="name" required value="${escapeHtml(client.name)}"></label><label>Contato<input name="contact" value="${escapeHtml(client.contact || '')}"></label><label>E-mail<input name="email" type="email" value="${escapeHtml(client.email || '')}"></label><label>Receita mensal informada (R$)<input name="monthlyRevenue" type="number" min="0" step="0.01" value="${Number(client.monthlyRevenue || 0)}"></label></div></section><section class="client-edit-section"><h3>Serviços vinculados</h3><div class="client-edit-fields"><label class="edit-field-wide">Serviços vinculados<input name="services" value="${escapeHtml((client.services || []).join(', '))}" placeholder="Separe os serviços por vírgula"></label><p class="section-note">Separe vários serviços com vírgula.</p></div></section><section class="client-edit-section client-edit-location"><h3>Localização</h3><p class="section-note">Consulte o CEP para preencher cidade e estado.</p><div class="cep-lookup"><label>CEP<input id="client-cep" name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" value="${escapeHtml(client.address?.cep || '')}" placeholder="00000-000"></label><button type="button" class="button soft" data-action="lookup-cep">Consultar CEP</button></div><small id="cep-status" class="cep-status" aria-live="polite"></small><div class="location-fields"><label>Município<input id="client-city" name="city" value="${escapeHtml(client.address?.city || '')}" readonly></label><label>Estado (UF)<input id="client-state-code" name="stateCode" value="${escapeHtml(client.address?.stateCode || '')}" readonly></label></div></section></div></div><div class="modal-actions"><button class="button primary">Salvar dados</button></div></form></section></div>`;
   }
   if (state.modal.kind === 'repair') {
-    const item = repairCandidates().find(candidate => candidate.client.id === state.modal.id);
+    const item = repairCandidates().find(candidate => candidate.theme === state.modal.id);
     if (!item) return '';
-    return `<div class="modal-backdrop" data-action="close"><section class="modal repair-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><h2 id="modal-title">Análise da relação com ${escapeHtml(item.client.name)}</h2><p>${item.feedbacks.length} feedbacks negativos de atendimento · Simulação local, sem IA real</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><div class="modal-body"><div class="repair-evidence"><strong>Padrão observado</strong><p>${item.repetitions} de ${item.feedbacks.length} feedbacks mencionam ${escapeHtml(item.theme.toLocaleLowerCase('pt-BR'))}. A análise considera apenas relatos marcados como atendimento.</p></div><h3>Feedbacks relacionados</h3><ol class="repair-feedbacks">${item.feedbacks.map(feedback => `<li><span>${escapeHtml(feedback.date)}</span>${escapeHtml(feedback.comment)}</li>`).join('')}</ol><div class="ai-box"><strong>Sugestão de reparação</strong><p>${item.proposal ? escapeHtml(item.proposal) : 'Não há um motivo suficientemente recorrente para sugerir uma proposta. Revise os relatos antes de decidir.'}</p><small>Proposta demonstrativa baseada em regras; a decisão é da equipe.</small></div><div class="proposal-editor"><label>Proposta da equipe<textarea id="repair-proposal" rows="4" placeholder="Escreva o que a equipe propõe fazer para conservar a relação"></textarea></label>${item.proposal ? button('Usar sugestão local', 'use-suggestion', 'soft') : ''}<p>Você pode escrever uma proposta totalmente diferente da sugestão acima.</p></div><label>Justificativa da decisão<textarea id="decision-note" rows="3" placeholder="Registre por que a proposta será aceita ou descartada"></textarea></label></div><div class="modal-actions">${button(item.proposal ? 'Descartar proposta' : 'Concluir análise', 'reject', 'outline')}${button('Aceitar e criar ação', 'accept', 'primary')}</div></section></div>`;
+    return `<div class="modal-backdrop" data-action="close"><section class="modal repair-modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><div class="modal-head"><div><h2 id="modal-title">Reincidência: ${escapeHtml(item.theme)}</h2><p>${item.feedbacks.length} feedbacks negativos · ${item.clients.length} ${item.clients.length === 1 ? 'empresa' : 'empresas'}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><div class="modal-body"><div class="repair-evidence"><strong>Assunto recorrente</strong><p>Os ${item.feedbacks.length} relatos abaixo tratam de ${escapeHtml(item.theme.toLocaleLowerCase('pt-BR'))}. Confira se a classificação corresponde ao conteúdo antes de decidir.</p></div><h3>Feedbacks relacionados</h3><ol class="repair-feedbacks">${item.feedbacks.map(feedback => `<li><span>${escapeHtml(feedback.date)} · ${escapeHtml(feedback.client || 'Não vinculada')}</span>${escapeHtml(feedback.comment)}</li>`).join('')}</ol><div class="repair-guidance"><strong>Possível encaminhamento</strong><p>${escapeHtml(item.proposal)}</p><small>Revise os relatos antes de registrar a medida.</small></div><div class="proposal-editor"><label>Proposta da equipe<textarea id="repair-proposal" rows="4" placeholder="Registre a medida, o responsável e o prazo"></textarea></label>${button('Usar texto como base', 'use-suggestion', 'soft')}</div><label>Justificativa da decisão<textarea id="decision-note" rows="3" placeholder="Explique por que a proposta será aceita ou descartada"></textarea></label></div><div class="modal-actions">${button('Descartar análise', 'reject', 'outline')}${button('Aceitar e criar ação', 'accept', 'primary')}</div></section></div>`;
   }
   if (state.modal.kind === 'action') {
     const action = state.data.actions.find(item => item.id === state.modal.id);
@@ -465,11 +568,11 @@ document.addEventListener('click', async event => {
   if (action === 'profile') { state.modal = { kind: 'profile', id: Number(control.dataset.id) }; render(); }
   if (action === 'resolve-incident') { const client = state.data.clients.find(item => item.id === Number(control.dataset.id)); const incident = client?.slaIncidents?.[Number(control.dataset.index)]; if (incident) { incident.status = 'Resolvida'; save(); render(); } }
   if (['new-task', 'edit-task', 'new-opportunity', 'edit-opportunity'].includes(action)) { state.modal = { kind: action, id: Number(control.dataset.id), itemId: Number(control.dataset.itemId) }; render(); }
-  if (['new-contact', 'new-invite', 'edit-sla', 'edit-service-profile', 'new-incident'].includes(action)) { state.modal = { kind: action, id: Number(control.dataset.id) }; render(); }
-  if (action === 'edit-client' || action === 'new-meeting') { state.modal = { kind: action, id: Number(control.dataset.id) }; render(); }
-  if (action === 'analyze' || action === 'action') { state.modal = { kind: action === 'analyze' ? 'repair' : 'action', id: Number(control.dataset.id) }; render(); }
+  if (['new-contact', 'edit-sla', 'edit-service-profile', 'new-incident'].includes(action)) { state.modal = { kind: action, id: Number(control.dataset.id) }; render(); }
+  if (action === 'edit-client' || action === 'new-meeting' || action === 'edit-meeting') { state.modal = { kind: action, id: Number(control.dataset.id), itemId: action === 'edit-meeting' ? Number(control.dataset.itemId) : undefined }; render(); }
+  if (action === 'analyze' || action === 'action') { state.modal = { kind: action === 'analyze' ? 'repair' : 'action', id: action === 'analyze' ? control.dataset.id : Number(control.dataset.id) }; render(); }
   if (action === 'use-suggestion') {
-    const proposal = repairCandidates().find(item => item.client.id === state.modal?.id)?.proposal;
+    const proposal = repairCandidates().find(item => item.theme === state.modal?.id)?.proposal;
     const field = document.querySelector('#repair-proposal');
     if (proposal && field) field.value = proposal;
   }
@@ -478,15 +581,15 @@ document.addEventListener('click', async event => {
   if (action === 'accept' || action === 'reject') {
     const note = document.querySelector('#decision-note').value.trim();
     if (!note) { document.querySelector('#decision-note').focus(); return; }
-    const candidate = repairCandidates().find(item => item.client.id === state.modal.id);
+    const candidate = repairCandidates().find(item => item.theme === state.modal.id);
     if (!candidate) return;
     const proposalField = document.querySelector('#repair-proposal');
     const proposal = action === 'accept' ? proposalField.value.trim() : '';
     if (action === 'accept' && !proposal) { proposalField.focus(); return; }
     const date = new Date().toLocaleDateString('pt-BR');
-    state.data.repairReviews.push({ key: candidate.key, clientId: candidate.client.id, decision: action === 'accept' ? 'Aceita' : 'Descartada', note, date });
+    state.data.repairReviews.push({ key: candidate.key, theme: candidate.theme, decision: action === 'accept' ? 'Aceita' : 'Descartada', note, date });
     if (action === 'accept') {
-      state.data.actions.push({ id: Math.max(0, ...state.data.actions.map(item => item.id)) + 1, clientId: candidate.client.id, clientName: candidate.client.name, theme: candidate.theme, proposal, source: proposal === candidate.proposal ? 'Sugestão local aceita' : 'Proposta da equipe', feedbackIds: candidate.feedbacks.map(feedback => feedback.id), status: 'Pendente', createdAt: date, history: [{ status: 'Pendente', date, note }] });
+      state.data.actions.push({ id: Math.max(0, ...state.data.actions.map(item => item.id)) + 1, clientId: null, clientName: candidate.clients.join(', '), clientNames: candidate.clients, theme: candidate.theme, proposal, source: proposal === candidate.proposal ? 'Texto base adotado' : 'Proposta da equipe', feedbackIds: candidate.feedbacks.map(feedback => feedback.id), status: 'Pendente', createdAt: date, history: [{ status: 'Pendente', date, note }] });
     }
     save(); state.modal = null; announce(action === 'accept' ? 'Proposta aceita e enviada para Ações.' : 'Proposta descartada com justificativa.');
   }
@@ -500,7 +603,7 @@ document.addEventListener('click', async event => {
     save(); state.modal = null; announce('Acompanhamento registrado no histórico da empresa.');
   }
 });
-document.addEventListener('submit', event => {
+document.addEventListener('submit', async event => {
   event.preventDefault();
   const form = event.target;
   const values = Object.fromEntries(new FormData(form));
@@ -525,15 +628,42 @@ document.addEventListener('submit', event => {
     if (!client) return;
     const kind = form.dataset.kind;
     if (kind === 'new-contact') { client.contacts = clientContacts(client); client.contacts.push({ name: values.name.trim(), email: values.email.trim(), role: values.role.trim() }); }
-    if (kind === 'new-invite') { client.invites ||= []; client.invites.push({ email: values.email, subject: values.subject.trim(), message: values.message.trim(), status: 'Rascunho', date: new Date().toLocaleDateString('pt-BR') }); }
     if (kind === 'edit-sla') client.slaContract = values.slaContract.trim();
     if (kind === 'edit-service-profile') client.serviceProfile = values.serviceProfile.trim();
     if (kind === 'new-incident') { client.slaIncidents ||= []; client.slaIncidents.push({ title: values.title.trim(), severity: values.severity, status: values.status, date: new Date().toLocaleDateString('pt-BR') }); }
     save(); state.modal = { kind: 'profile', id: client.id }; render(); return;
   }
   if (form.id === 'login-form') { state.loggedIn = true; sessionStorage.setItem('avaliaplay-login', '1'); go('/'); }
-  if (form.id === 'client-edit-form') { const client = state.data.clients.find(item => item.id === Number(form.dataset.clientId)); if (!client) return; client.name = values.name.trim(); client.contact = values.contact.trim(); client.email = values.email.trim(); client.monthlyRevenue = Math.max(0, Number(values.monthlyRevenue) || 0); client.services = values.services.split(',').map(value => value.trim()).filter(Boolean); client.address = values.cep && values.city && values.stateCode ? { cep: values.cep.trim(), city: values.city.trim(), stateCode: values.stateCode.trim().toUpperCase() } : null; save(); state.modal = { kind: 'profile', id: client.id }; render(); }
-  if (form.id === 'meeting-form') { const client = state.data.clients.find(item => item.id === Number(form.dataset.clientId)); if (!client) return; if (!Array.isArray(client.meetings)) client.meetings = []; const [year, month, day] = values.date.split('-'); client.meetings.push({ title: values.title.trim(), date: `${day}/${month}/${year}`, notes: values.notes.trim() }); save(); state.modal = { kind: 'profile', id: client.id }; render(); }
+  if (form.id === 'client-edit-form') { const client = state.data.clients.find(item => item.id === Number(form.dataset.clientId)); if (!client) return; client.name = values.name.trim(); client.contact = values.contact.trim(); client.email = values.email.trim(); client.monthlyRevenue = Math.max(0, Number(values.monthlyRevenue) || 0); if (!Array.isArray(client.revenueHistory)) client.revenueHistory = []; const currentMonth = monthKey(0); const revenueRecord = client.revenueHistory.find(item => item.month === currentMonth); if (revenueRecord) revenueRecord.value = client.monthlyRevenue; else client.revenueHistory.push({ month: currentMonth, value: client.monthlyRevenue }); client.services = values.services.split(',').map(value => value.trim()).filter(Boolean); client.address = values.cep && values.city && values.stateCode ? { cep: values.cep.trim(), city: values.city.trim(), stateCode: values.stateCode.trim().toUpperCase() } : null; save(); state.modal = { kind: 'profile', id: client.id }; render(); }
+  if (form.id === 'meeting-form') {
+    const client = state.data.clients.find(item => item.id === Number(form.dataset.clientId));
+    if (!client) return;
+    client.meetings ||= [];
+    const editing = state.modal?.kind === 'edit-meeting';
+    const meeting = editing ? client.meetings.find((item, index) => (item.id ?? index) === Number(form.dataset.meetingId)) : { id: Math.max(client.meetings.length, ...client.meetings.map(item => item.id || 0)) + 1 };
+    if (!meeting) return;
+    const previousMeeting = editing ? copy(meeting) : null;
+    const emails = meetingInvitees(values.invitees);
+    if (!emails.length || !values.invitationText?.trim()) { announce('Informe ao menos um convidado e o texto do convite.'); return; }
+    if (emails.some(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) { announce('Confira os e-mails dos convidados.'); return; }
+    const file = form.querySelector?.('[name="attachment"]')?.files?.[0];
+    try {
+      if (file) meeting.attachment = await readMeetingAttachment(file);
+    } catch (error) { announce(error.message); return; }
+    if (values.removeAttachment === 'yes' && !file) delete meeting.attachment;
+    meeting.title = values.title.trim();
+    meeting.date = dateBR(values.date);
+    meeting.invitationText = values.invitationText.trim();
+    meeting.minutes = values.minutes.trim();
+    meeting.invitees = emails.map(email => ({ email, status: meeting.invitees?.find(item => item.email === email)?.status || 'Sem resposta' }));
+    if (!editing) client.meetings.push(meeting);
+    try { save(); } catch {
+      if (editing) { Object.keys(meeting).forEach(key => delete meeting[key]); Object.assign(meeting, previousMeeting); }
+      else client.meetings.pop();
+      announce('Não foi possível salvar a reunião no navegador. Reduza o tamanho da ata anexada.'); return;
+    }
+    state.modal = { kind: 'profile', id: client.id }; render(); return;
+  }
   if (form.id === 'service-form') { state.data.services.unshift({ name: values.name.trim(), type: values.type, description: values.description.trim() }); save(); announce('Serviço cadastrado nesta demonstração local.'); }
 });
 document.addEventListener('input', event => {
@@ -544,6 +674,16 @@ document.addEventListener('input', event => {
   if (cityInput) cityInput.value = '';
   if (stateInput) stateInput.value = '';
   if (status) status.textContent = 'Consulte o CEP para atualizar cidade e UF.';
+});
+document.addEventListener('change', event => {
+  const field = event.target;
+  if (!field?.dataset?.meetingId || field.dataset.inviteeIndex === undefined) return;
+  const client = state.data.clients.find(item => item.id === Number(field.dataset.clientId));
+  const meeting = client?.meetings?.find((item, index) => (item.id ?? index) === Number(field.dataset.meetingId));
+  const invitee = meeting?.invitees?.[Number(field.dataset.inviteeIndex)];
+  if (!invitee || !['Sem resposta', 'Confirmado', 'Recusado'].includes(field.value)) return;
+  invitee.status = field.value;
+  save(); render();
 });
 addEventListener('popstate', render);
 render();

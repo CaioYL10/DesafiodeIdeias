@@ -14,6 +14,9 @@
 .repair-evidence { padding: 16px 18px; border: 1px solid #dce9f0; border-radius: 9px; background: #f8fbfd; }
 .repair-evidence strong { color: #4c5055; font-size: 14px; }
 .repair-evidence p { margin: 8px 0 0; color: #687985; font-size: 13px; line-height: 1.6; }
+.repair-guidance { margin: 20px 0; padding: 16px 18px; border-left: 3px solid #a8bbc6; background: #f7f9fa; color: #4d626e; font-size: 13px; line-height: 1.5; }
+.repair-guidance p { margin: 7px 0; }
+.repair-guidance small { color: #70818a; }
 .repair-feedbacks, .action-history { margin: 0; padding: 0; list-style: none; }
 .repair-feedbacks { display: grid; gap: 8px; max-height: 230px; overflow: auto; padding-right: 6px; }
 .repair-feedbacks li { display: flex; gap: 12px; padding: 10px 12px; border: 1px solid #e5edf2; border-radius: 8px; color: #566169; font-size: 12px; line-height: 1.5; }

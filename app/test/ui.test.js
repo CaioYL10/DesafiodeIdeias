@@ -23,6 +23,7 @@ function createPage(route, data, loggedIn = true) {
     scrollTo() {},
     setTimeout() {},
     FormData: class { constructor(form) { return Object.entries(form.values || {}); } },
+    FileReader: class { readAsDataURL(file) { this.result = `data:${file.type};base64,VEVTVEU=`; this.onload(); } },
     Intl,
     Date
   };
@@ -31,12 +32,56 @@ function createPage(route, data, loggedIn = true) {
 }
 const renderRoute = (route, data) => createPage(route, data).root.innerHTML;
 
+test('reunião reúne convite, respostas e ata no mesmo registro', () => {
+  const page = createPage('/clientes/1');
+  const click = (action, id = '1', itemId = '') => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id, itemId } } : null } });
+  click('new-meeting');
+  assert.match(page.root.innerHTML, /name="invitees"/);
+  assert.match(page.root.innerHTML, /name="invitationText"/);
+  assert.match(page.root.innerHTML, /name="minutes"/);
+  page.listeners.submit({ preventDefault() {}, target: { id: 'meeting-form', dataset: { clientId: '1' }, values: { title: 'Revisão mensal', date: '2026-11-20', invitees: 'ana@example.com, bia@example.com', invitationText: 'Vamos revisar o serviço.', minutes: 'Decidimos revisar o SLA.' } } });
+  const saved = JSON.parse(page.storage.getItem('avaliaplay-data'));
+  const meeting = saved.clients[0].meetings.at(-1);
+  assert.equal(meeting.invitees.length, 2);
+  assert.equal(meeting.invitees[0].status, 'Sem resposta');
+  assert.match(page.root.innerHTML, /Decidimos revisar o SLA/);
+  click('edit-meeting', '1', String(meeting.id));
+  assert.match(page.root.innerHTML, /name="minutes"/);
+  assert.doesNotMatch(page.root.innerHTML, /Preparar convite/);
+});
+
+test('arquivo da ata é anexado à reunião e continua disponível após recarregar', async () => {
+  const page = createPage('/clientes/1');
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'new-meeting', id: '1' } } : null } });
+  const form = { id: 'meeting-form', dataset: { clientId: '1' }, values: { title: 'Revisão', date: '2026-11-20', invitees: 'ana@example.com', invitationText: 'Vamos revisar o SLA.', minutes: 'Prazos definidos.' }, querySelector: () => ({ files: [{ name: 'ata.pdf', type: 'application/pdf', size: 100 }] }) };
+  await page.listeners.submit({ preventDefault() {}, target: form });
+  const saved = JSON.parse(page.storage.getItem('avaliaplay-data'));
+  assert.equal(saved.clients[0].meetings.at(-1).attachment.name, 'ata.pdf');
+  assert.match(createPage('/clientes/1', saved).root.innerHTML, /Baixar ata anexada: ata.pdf/);
+});
+
+test('triagem agrupa reincidência do mesmo assunto entre empresas', () => {
+  const feedbacks = Array.from({ length: 3 }, (_, index) => ({ id: index + 60, client: `Empresa ${index}`, comment: 'Demora no retorno', service: 'Internet dedicada', sentiment: 'Negativo', area: 'Atendimento', theme: 'Demora no retorno', date: '06/11/2026' }));
+  const html = renderRoute('/triagem', { clients: [], feedbacks, services: [] });
+  assert.match(html, /Demora no retorno/);
+  assert.match(html, /3 feedbacks negativos/);
+  assert.match(html, /3 empresas/);
+});
+
+test('financeiro mantém o painel existente sem simulação de viabilidade', () => {
+  const page = createPage('/dashboard');
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'dashboard-financial' } } : null } });
+  assert.match(page.root.innerHTML, /Receita por empresa/);
+  assert.match(page.root.innerHTML, /Histórico da receita mensal/);
+  assert.doesNotMatch(page.root.innerHTML, /Simular viabilidade|Ponto de equilíbrio|Payback|ROI|id="financial-form"/);
+});
+
 test('alternância de tema atualiza o controle e salva a preferência', () => {
   const page = createPage('/dashboard');
-  assert.match(page.root.innerHTML, /Ativar modo claro/);
+  assert.match(page.root.innerHTML, /aria-label="Modo escuro"[^>]*aria-pressed="true"/);
   page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'toggle-theme' } } : null } });
   assert.equal(page.storage.getItem('avaliaplay-theme'), 'light');
-  assert.match(page.root.innerHTML, /Ativar modo escuro/);
+  assert.match(page.root.innerHTML, /aria-label="Modo escuro"[^>]*aria-pressed="false"/);
 });
 
 test('tarefas e oportunidades podem ser criadas, atualizadas e aparecem na linha do tempo', () => {
@@ -78,14 +123,16 @@ test('dados fictícios preenchem financeiro e SLA sem sobrescrever registros exi
   page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? control : null } });
   assert.match(page.root.innerHTML, /Receita por empresa/);
   assert.match(page.root.innerHTML, /financial-chart-card/);
-  assert.equal((page.root.innerHTML.match(/class="financial-chart-item"/g) || []).length, 6);
-  assert.match(page.root.innerHTML, /--bar-height:100%/);
+  assert.equal((page.root.innerHTML.match(/<polyline /g) || []).length, 5);
+  assert.match(page.root.innerHTML, /revenue-history-chart/);
+  assert.equal((page.root.innerHTML.match(/class="revenue-legend-item"/g) || []).length, 5);
+  assert.doesNotMatch(page.root.innerHTML, /Contribuição mensal cadastrada/);
+  assert.doesNotMatch(page.root.innerHTML, /class="financial-help"/);
   assert.match(page.root.innerHTML, /29\.800,00/);
-  assert.match(page.root.innerHTML, /Não representam dados financeiros da CTI/);
+  assert.match(page.root.innerHTML, /não representa dados financeiros da CTI/);
   assert.match(page.root.innerHTML, /Receita mensal cadastrada/);
   assert.match(page.root.innerHTML, /Projeção anual simples/);
   assert.match(page.root.innerHTML, /Concentração das 3 maiores/);
-  assert.match(page.root.innerHTML, /Dados da empresa → Receita mensal informada/);
   const edit = { dataset: { action: 'edit-client', id: '1' } };
   page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? edit : null } });
   assert.match(page.root.innerHTML, /name="monthlyRevenue"/);
@@ -109,7 +156,7 @@ test('cada quadro principal renderiza conteúdo e navegação local', () => {
   const pages = [
     ['/', 'Conheça cada cliente'],
     ['/login', 'Entrar na gestão'],
-    ['/dashboard', 'Movimento de feedbacks'],
+    ['/dashboard', 'Feedbacks por dia'],
     ['/feedbacks', 'Pesquise e acompanhe'],
     ['/clientes', 'Lista de clientes'],
     ['/tarefas', 'Tarefas de acompanhamento'],
@@ -216,11 +263,12 @@ test('login apresenta o CRM e mantém o formulário de acesso', () => {
   assert.doesNotMatch(html, /Feedbacks claros/);
 });
 
-test('visão interna mostra ícones e remove avisos e contadores solicitados', () => {
+test('visão interna mostra o resumo e acessos em lista', () => {
   const home = renderRoute('/');
   assert.doesNotMatch(home, /Relacionamento e qualidade · CTI|Dados demonstrativos/);
   assert.doesNotMatch(home, /<span>01<\/span>|<span>02<\/span>|<span>03<\/span>/);
-  assert.match(home, /class="shortcut-icon/);
+  assert.match(home, /class="crm-links"/);
+  assert.doesNotMatch(home, /class="shortcut-icon|Resumo do relacionamento|Visão da equipe/);
   assert.match(home, /class="crm-row-icon blue"><svg/);
   assert.match(home, /class="crm-row-icon gold"><svg/);
   assert.match(home, /class="crm-row-icon green"><svg/);
@@ -293,103 +341,31 @@ test('serviços da CTI substituem exemplos antigos sem apagar cadastros próprio
   assert.doesNotMatch(feedbacks, /<option[^>]*>Cloud<\/option>/);
 });
 
-test('triagem reúne apenas padrões negativos de atendimento vinculados à empresa', () => {
-  const feedbacks = Array.from({ length: 10 }, (_, index) => ({
-    id: index + 30, client: 'Cliente de teste', comment: `Retorno demorado ${index}`,
-    service: 'Internet dedicada', sentiment: 'Negativo', area: 'Atendimento', theme: 'Demora no retorno', date: '06/11/2026'
-  }));
-  const data = { clients: [{ id: 1, name: 'Cliente de teste' }], feedbacks: feedbacks.slice(0, 9), services: [], problems: [] };
+test('triagem ignora relatos fora de atendimento e permite acompanhar uma medida por assunto', () => {
+  const feedbacks = Array.from({ length: 3 }, (_, index) => ({ id: index + 30, client: `Empresa ${index}`, comment: 'O retorno demorou vários dias.', service: 'Internet dedicada', sentiment: 'Negativo', area: 'Atendimento', date: '06/11/2026' }));
+  const data = { clients: [], feedbacks: feedbacks.slice(0, 2), services: [] };
   assert.match(renderRoute('/triagem', data), /Nenhuma reparação pendente/);
   data.feedbacks = feedbacks;
-  const html = renderRoute('/triagem', data);
-  assert.match(html, /10 feedbacks negativos/);
-  assert.match(html, /demora no retorno/i);
-  assert.match(html, /Cliente de teste/);
-  assert.match(html, /Simulação local/);
+  const page = createPage('/triagem', data);
+  const click = (action, id) => page.listeners.click({ target: { closest(selector) { return selector === '[data-action]' ? { dataset: { action, id } } : null; } } });
+  assert.match(page.root.innerHTML, /3 empresas/);
+  click('analyze', 'Demora no retorno');
+  assert.match(page.root.innerHTML, /Reincidência: Demora no retorno/);
+  page.fields['#repair-proposal'] = { value: 'Definir responsável pelos retornos.' };
+  page.fields['#decision-note'] = { value: 'Aprovado.' };
+  click('accept');
+  const saved = JSON.parse(page.storage.getItem('avaliaplay-data'));
+  assert.equal(saved.actions[0].theme, 'Demora no retorno');
+  assert.equal(saved.actions[0].clientId, null);
   data.feedbacks = feedbacks.map(feedback => ({ ...feedback, area: 'Técnico' }));
   assert.match(renderRoute('/triagem', data), /Nenhuma reparação pendente/);
 });
 
-test('proposta aceita vira ação da empresa com acompanhamento e histórico', () => {
-  const page = createPage('/triagem');
-  const click = (action, id) => page.listeners.click({ target: { closest(selector) { return selector === '[data-action]' ? { dataset: { action, id } } : null; } } });
-  assert.match(page.root.innerHTML, /Triagem de reparação/);
-  assert.match(page.root.innerHTML, /Empresa de demonstração/);
-  click('analyze', '0');
-  assert.match(page.root.innerHTML, /10 feedbacks negativos/);
-  assert.match(page.root.innerHTML, /Sugestão de reparação/);
-  assert.match(page.root.innerHTML, /id="repair-proposal"/);
-  page.fields['#repair-proposal'] = { value: '' };
-  click('use-suggestion');
-  assert.match(page.fields['#repair-proposal'].value, /Agendar uma conversa com a empresa/);
-  page.fields['#decision-note'] = { value: 'Proposta adequada para retomar o contato.' };
-  click('accept');
-  page.listeners.click({ preventDefault() {}, target: { closest(selector) { return selector === '[data-link]' ? { getAttribute: () => '/acoes' } : null; } } });
-  assert.equal(page.location.pathname, '/acoes');
-  assert.match(page.root.innerHTML, /Empresa de demonstração/);
-  assert.match(page.root.innerHTML, /Pendente/);
-  click('action', '1');
-  page.fields['#action-status'] = { value: 'Concluída' };
-  page.fields['#action-note'] = { value: 'Reunião de alinhamento realizada com a empresa.' };
-  click('save-action');
-  assert.match(page.root.innerHTML, /Concluída/);
-  click('action', '1');
-  assert.match(page.root.innerHTML, /Reunião de alinhamento realizada com a empresa/);
-  const reloaded = createPage('/acoes', JSON.parse(page.storage.getItem('avaliaplay-data')));
-  assert.match(reloaded.root.innerHTML, /Concluída/);
-  assert.match(reloaded.root.innerHTML, /Empresa de demonstração/);
-});
-
-test('análise sem motivo recorrente não cria proposta automaticamente', () => {
-  const feedbacks = Array.from({ length: 10 }, (_, index) => ({
-    id: index + 30, client: 'Cliente de teste', comment: `Atendimento ${index}`,
-    service: 'Internet dedicada', sentiment: 'Negativo', area: 'Atendimento',
-    theme: index % 2 ? 'Falta de contexto' : 'Demora no retorno', date: '06/11/2026'
-  }));
-  const data = { clients: [{ id: 1, name: 'Cliente de teste' }], feedbacks, services: [], problems: [] };
-  const page = createPage('/triagem', data);
-  page.listeners.click({ target: { closest(selector) { return selector === '[data-action]' ? { dataset: { action: 'analyze', id: '1' } } : null; } } });
-  assert.match(page.root.innerHTML, /Não há um motivo suficientemente recorrente/);
-  assert.match(page.root.innerHTML, /data-action="accept"/);
-  assert.doesNotMatch(page.root.innerHTML, /data-action="use-suggestion"/);
-});
-
-test('equipe pode escrever proposta própria diferente da sugestão local', () => {
-  const page = createPage('/triagem');
-  const click = (action, id) => page.listeners.click({ target: { closest(selector) { return selector === '[data-action]' ? { dataset: { action, id } } : null; } } });
-  click('analyze', '0');
-  page.fields['#repair-proposal'] = { value: 'Convidar a empresa para uma reunião de escuta e definir um canal direto com o gestor.' };
-  page.fields['#decision-note'] = { value: 'A equipe considera este contato mais adequado.' };
-  click('accept');
-  page.listeners.click({ preventDefault() {}, target: { closest(selector) { return selector === '[data-link]' ? { getAttribute: () => '/acoes' } : null; } } });
-  assert.match(page.root.innerHTML, /Convidar a empresa para uma reunião de escuta/);
-  assert.match(page.root.innerHTML, /Proposta da equipe/);
-  assert.doesNotMatch(page.root.innerHTML, /Agendar uma conversa com a empresa/);
-});
-
-test('motivo recorrente é reconhecido nos textos sem etiqueta prévia', () => {
-  const feedbacks = Array.from({ length: 10 }, (_, index) => ({
-    id: index + 30, client: 'Cliente de teste', comment: `O retorno do atendimento demorou ${index} dias.`,
-    service: 'Internet dedicada', sentiment: 'Negativo', area: 'Atendimento', date: '06/11/2026'
-  }));
-  const data = { clients: [{ id: 1, name: 'Cliente de teste' }], feedbacks, services: [], problems: [] };
-  const page = createPage('/triagem', data);
-  page.listeners.click({ target: { closest(selector) { return selector === '[data-action]' ? { dataset: { action: 'analyze', id: '1' } } : null; } } });
-  assert.match(page.root.innerHTML, /10 de 10 feedbacks mencionam demora no retorno/);
-  assert.match(page.root.innerHTML, /Aceitar e criar ação/);
-});
-
-test('proposta descartada não entra em Ações e rota antiga redireciona', () => {
-  const page = createPage('/triagem');
-  const click = (action, id) => page.listeners.click({ target: { closest(selector) { return selector === '[data-action]' ? { dataset: { action, id } } : null; } } });
-  click('analyze', '0');
-  page.fields['#decision-note'] = { value: 'Ainda não há contexto para contato.' };
-  click('reject');
-  assert.match(page.root.innerHTML, /Nenhuma reparação pendente/);
-  page.listeners.click({ preventDefault() {}, target: { closest(selector) { return selector === '[data-link]' ? { getAttribute: () => '/acoes' } : null; } } });
-  assert.match(page.root.innerHTML, /Nenhuma ação aceita/);
-  const oldRoute = createPage('/problemas');
-  assert.equal(oldRoute.location.pathname, '/acoes');
-  const visitor = createPage('/acoes', undefined, false);
-  assert.equal(visitor.location.pathname, '/login');
+test('resposta ao convite é atualizada na reunião', () => {
+  const page = createPage('/clientes/1');
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'new-meeting', id: '1' } } : null } });
+  page.listeners.submit({ preventDefault() {}, target: { id: 'meeting-form', dataset: { clientId: '1' }, values: { title: 'Revisão', date: '2026-11-20', invitees: 'ana@example.com', invitationText: 'Vamos conversar.', minutes: '' } } });
+  const meeting = JSON.parse(page.storage.getItem('avaliaplay-data')).clients[0].meetings.at(-1);
+  page.listeners.change({ target: { dataset: { clientId: '1', meetingId: String(meeting.id), inviteeIndex: '0' }, value: 'Confirmado' } });
+  assert.equal(JSON.parse(page.storage.getItem('avaliaplay-data')).clients[0].meetings.at(-1).invitees[0].status, 'Confirmado');
 });
