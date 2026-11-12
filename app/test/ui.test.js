@@ -22,6 +22,7 @@ function createPage(route, data, loggedIn = true) {
     addEventListener() {},
     scrollTo() {},
     setTimeout() {},
+    FormData: class { constructor(form) { return Object.entries(form.values || {}); } },
     Intl,
     Date
   };
@@ -30,6 +31,69 @@ function createPage(route, data, loggedIn = true) {
 }
 const renderRoute = (route, data) => createPage(route, data).root.innerHTML;
 
+test('tarefas e oportunidades podem ser criadas, atualizadas e aparecem na linha do tempo', () => {
+  const page = createPage('/clientes/1');
+  const click = (action, id = 1, itemId) => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id, itemId } } : null } });
+  const submit = (kind, values, itemId = '') => page.listeners.submit({ preventDefault() {}, target: { id: 'client-work-form', dataset: { clientId: '1', kind, itemId }, values } });
+  assert.match(page.root.innerHTML, /Linha do tempo/);
+  assert.match(page.root.innerHTML, /Revisão de conectividade/);
+  click('new-task');
+  assert.match(page.root.innerHTML, /Responsável/);
+  submit('new-task', { title: 'Ligar para o cliente', owner: 'Caio', dueDate: '2026-11-20', status: 'Pendente' });
+  assert.match(page.root.innerHTML, /Ligar para o cliente/);
+  const saved = JSON.parse(page.storage.getItem('avaliaplay-data'));
+  const task = saved.clients[0].tasks.at(-1);
+  click('edit-task', 1, task.id);
+  submit('edit-task', { title: task.title, owner: 'Caio', dueDate: '2026-11-20', status: 'Concluída' }, task.id);
+  assert.match(page.root.innerHTML, /Tarefa atualizada/);
+  click('new-opportunity');
+  submit('new-opportunity', { title: 'Novo serviço', value: '2500', expectedDate: '2026-12-20', stage: 'Proposta', note: 'Expansão' });
+  assert.match(page.root.innerHTML, /Novo serviço/);
+  const opportunity = JSON.parse(page.storage.getItem('avaliaplay-data')).clients[0].opportunities.at(-1);
+  click('edit-opportunity', 1, opportunity.id);
+  submit('edit-opportunity', { title: opportunity.title, value: '3000', expectedDate: '2026-12-20', stage: 'Ganha', note: 'Confirmada' }, opportunity.id);
+  const updated = JSON.parse(page.storage.getItem('avaliaplay-data')).clients[0];
+  assert.equal(updated.opportunities.at(-1).value, 3000);
+  assert.equal(updated.opportunities.at(-1).stage, 'Ganha');
+  assert.match(page.root.innerHTML, /Oportunidade atualizada/);
+  const tasks = createPage('/tarefas', JSON.parse(page.storage.getItem('avaliaplay-data')));
+  assert.match(tasks.root.innerHTML, /Ligar para o cliente/);
+  assert.match(tasks.root.innerHTML, /Concluídas/);
+  const opportunities = createPage('/oportunidades', JSON.parse(page.storage.getItem('avaliaplay-data')));
+  assert.match(opportunities.root.innerHTML, /Novo serviço/);
+  assert.match(opportunities.root.innerHTML, /Valor estimado em aberto/);
+});
+
+test('dados fictícios preenchem financeiro e SLA sem sobrescrever registros existentes', () => {
+  const page = createPage('/dashboard');
+  const control = { dataset: { action: 'dashboard-financial' } };
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? control : null } });
+  assert.match(page.root.innerHTML, /Receita por empresa/);
+  assert.match(page.root.innerHTML, /29\.800,00/);
+  assert.match(page.root.innerHTML, /Não representam dados financeiros da CTI/);
+  assert.match(page.root.innerHTML, /Receita mensal cadastrada/);
+  assert.match(page.root.innerHTML, /Projeção anual simples/);
+  assert.match(page.root.innerHTML, /Concentração das 3 maiores/);
+  assert.match(page.root.innerHTML, /Dados da empresa → Receita mensal informada/);
+  const edit = { dataset: { action: 'edit-client', id: '1' } };
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? edit : null } });
+  assert.match(page.root.innerHTML, /name="monthlyRevenue"/);
+  const profile = renderRoute('/clientes/1');
+  assert.match(profile, /Interrupção do link principal/);
+  assert.match(profile, /disponibilidade mensal de 99,9%/);
+
+  const migrated = createPage('/clientes/1', { demoDataVersion: 3, clients: [{ id: 1, name: 'Formtap' }], feedbacks: [], services: [] });
+  const saved = JSON.parse(migrated.storage.getItem('avaliaplay-data'));
+  saved.clients[0].monthlyRevenue = 42000;
+  saved.clients[0].slaContract = 'Contrato editado pela equipe';
+  saved.clients[0].slaIncidents = [];
+  const revisited = createPage('/clientes/1', saved);
+  const updated = JSON.parse(revisited.storage.getItem('avaliaplay-data'));
+  assert.equal(updated.clients[0].monthlyRevenue, 42000);
+  assert.equal(updated.clients[0].slaContract, 'Contrato editado pela equipe');
+  assert.equal(updated.clients[0].slaIncidents.length, 0);
+});
+
 test('cada quadro principal renderiza conteúdo e navegação local', () => {
   const pages = [
     ['/', 'Conheça cada cliente'],
@@ -37,6 +101,8 @@ test('cada quadro principal renderiza conteúdo e navegação local', () => {
     ['/dashboard', 'Movimento de feedbacks'],
     ['/feedbacks', 'Pesquise e acompanhe'],
     ['/clientes', 'Lista de clientes'],
+    ['/tarefas', 'Tarefas de acompanhamento'],
+    ['/oportunidades', 'Oportunidades'],
     ['/clientes/1', 'Revisão de conectividade'],
     ['/triagem', 'Triagem de reparação'],
     ['/acoes', 'Ações'],

@@ -136,7 +136,7 @@ test('migra clientes já salvos sem CEP e recupera as localizações demonstrati
 
   assert.match(page.root.innerHTML, /6 empresas em 6 estados/);
   assert.match(page.root.innerHTML, /Salvador/);
-  assert.equal(JSON.parse(page.context.localStorage.getItem('avaliaplay-data')).demoDataVersion, 3);
+  assert.equal(JSON.parse(page.context.localStorage.getItem('avaliaplay-data')).demoDataVersion, 5);
 });
 
 test('formulário de cliente permite editar CEP e município', () => {
