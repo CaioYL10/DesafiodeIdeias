@@ -31,6 +31,14 @@ function createPage(route, data, loggedIn = true) {
 }
 const renderRoute = (route, data) => createPage(route, data).root.innerHTML;
 
+test('alternância de tema atualiza o controle e salva a preferência', () => {
+  const page = createPage('/dashboard');
+  assert.match(page.root.innerHTML, /Ativar modo claro/);
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'toggle-theme' } } : null } });
+  assert.equal(page.storage.getItem('avaliaplay-theme'), 'light');
+  assert.match(page.root.innerHTML, /Ativar modo escuro/);
+});
+
 test('tarefas e oportunidades podem ser criadas, atualizadas e aparecem na linha do tempo', () => {
   const page = createPage('/clientes/1');
   const click = (action, id = 1, itemId) => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id, itemId } } : null } });
@@ -69,6 +77,9 @@ test('dados fictícios preenchem financeiro e SLA sem sobrescrever registros exi
   const control = { dataset: { action: 'dashboard-financial' } };
   page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? control : null } });
   assert.match(page.root.innerHTML, /Receita por empresa/);
+  assert.match(page.root.innerHTML, /financial-chart-card/);
+  assert.equal((page.root.innerHTML.match(/class="financial-chart-item"/g) || []).length, 6);
+  assert.match(page.root.innerHTML, /--bar-height:100%/);
   assert.match(page.root.innerHTML, /29\.800,00/);
   assert.match(page.root.innerHTML, /Não representam dados financeiros da CTI/);
   assert.match(page.root.innerHTML, /Receita mensal cadastrada/);
@@ -159,6 +170,13 @@ test('ver perfil abre modal com rolagem própria sobre clientes', () => {
   assert.equal(page.location.pathname, '/clientes');
   assert.match(page.root.innerHTML, /class="modal-backdrop"/);
   assert.match(page.root.innerHTML, /class="profile-scroll"/);
+  assert.match(page.root.innerHTML, /class="profile-overview-grid"/);
+  assert.match(page.root.innerHTML, /class="profile-record-grid"/);
+  assert.match(page.root.innerHTML, /class="profile-workspace"/);
+  assert.equal((page.root.innerHTML.match(/<details class="profile-group"/g) || []).length, 3);
+  assert.equal((page.root.innerHTML.match(/<details class="profile-group" open>/g) || []).length, 1);
+  assert.match(page.root.innerHTML, /Empresa e atendimento/);
+  assert.match(page.root.innerHTML, /Trabalho da equipe/);
   assert.match(page.root.innerHTML, /Revisão de conectividade/);
   assert.match(page.root.innerHTML, /Internet dedicada/);
   assert.match(page.root.innerHTML, /São Paulo, SP · CEP 01001-000/);
