@@ -151,11 +151,39 @@ function readData() {
     return saved;
   } catch { return copy(initial); }
 }
-const state = { data: readData(), loggedIn: sessionStorage.getItem('avaliaplay-login') === '1', theme: localStorage.getItem('avaliaplay-theme') === 'light' ? 'light' : 'dark', query: '', service: '', sentiment: '', modal: null, map: false, dashboardView: 'feedbacks', toast: '' };
+const state = { data: readData(), loggedIn: sessionStorage.getItem('avaliaplay-login') === '1', theme: localStorage.getItem('avaliaplay-theme') === 'light' ? 'light' : 'dark', navExpanded: localStorage.getItem('avaliaplay-nav-expanded') === 'true', settingsOpen: false, dashboardMenuOpen: false, financialSelection: [], query: '', service: '', sentiment: '', modal: null, map: false, dashboardView: 'feedbacks', dashboardCompanyId: '', feedbackCompany: '', dashboardDay: null, dashboardDays: 14, feedbackPage: 1, feedbackSort: null, feedbackSortBy: 'rating', toast: '' };
 const save = () => localStorage.setItem('avaliaplay-data', JSON.stringify(state.data));
 const escapeHtml = value => String(value ?? '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]);
 const path = () => location.pathname.replace(/\/$/, '') || '/';
-const go = destination => { history.pushState(null, '', destination); state.modal = null; state.query = ''; state.service = ''; state.sentiment = ''; render(); scrollTo(0, 0); };
+let publicNavAnimating = false;
+let dashboardModeAnimating = false;
+let settingsExitTimer = null;
+let dashboardHoverTimer = null;
+let dashboardCloseTimer = null;
+let dashboardExitTimer = null;
+let dashboardSelectionClosing = false;
+const go = destination => {
+  const previous = document.querySelector('.manager-header nav a[aria-current="page"]')?.getBoundingClientRect();
+  const previousTab = document.querySelector('.tabs a[aria-current="page"]')?.getBoundingClientRect();
+  history.pushState(null, '', destination);
+  state.modal = null; state.settingsOpen = false; state.query = ''; state.service = ''; state.sentiment = ''; state.feedbackCompany = ''; state.feedbackPage = 1;
+  publicNavAnimating = true; render(); publicNavAnimating = false;
+  const active = document.querySelector('.manager-header nav a[aria-current="page"]');
+  if (previous && active) {
+    const offset = previous.top - active.getBoundingClientRect().top;
+    if (offset) { active.style.setProperty('--nav-slide-offset', `${offset}px`); active.classList.add('nav-slide'); }
+  }
+  const activeTab = document.querySelector('.tabs a[aria-current="page"]');
+  if (previousTab && activeTab) {
+    const currentTab = activeTab.getBoundingClientRect();
+    if (currentTab.width && (previousTab.left !== currentTab.left || previousTab.width !== currentTab.width)) {
+      activeTab.style.setProperty('--tab-slide-offset', `${previousTab.left - currentTab.left}px`);
+      activeTab.style.setProperty('--tab-slide-scale', previousTab.width / currentTab.width);
+      activeTab.classList.add('tab-slide');
+    }
+  }
+  scrollTo(0, 0);
+};
 const A = '/assets/';
 const iconPaths = {
   company: '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h2m4 0h2M8 11h2m4 0h2m-6 10v-5h4v5"/>',
@@ -164,7 +192,9 @@ const iconPaths = {
   home: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10Z"/><path d="M9 21v-7h6v7"/>',
   dashboard: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
   feedback: '<path d="M4 5h16v12H9l-5 4V5Z"/><path d="M8 9h8m-8 4h6"/>',
-  clients: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2H3Zm12-14a3 3 0 0 1 0 6m2 3a5 5 0 0 1 4 5h-4"/>'
+  clients: '<circle cx="9" cy="8" r="3"/><path d="M3 20v-2a6 6 0 0 1 12 0v2H3Zm12-14a3 3 0 0 1 0 6m2 3a5 5 0 0 1 4 5h-4"/>',
+  navExpand: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m4-8 3-3m-3 3 3 3"/>',
+  navCollapse: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16m6-8-3-3m3 3-3 3"/>',
 };
 const icon = name => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${iconPaths[name]}</svg>`;
 
@@ -175,22 +205,33 @@ function header(current) {
   const navIcons = ['home', 'dashboard', 'feedback', 'clients'];
   const themeIcon = '<path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/>';
   const themeButton = `<button class="theme-toggle" type="button" data-action="toggle-theme" aria-label="Modo escuro" title="Modo escuro" aria-pressed="${state.theme === 'dark'}"><span class="theme-toggle-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${themeIcon}</svg></span><span class="theme-toggle-label">Modo escuro</span><span class="theme-toggle-track" aria-hidden="true"><span class="theme-toggle-thumb"></span></span></button>`;
-  const brand = state.loggedIn ? `<span class="logo-mark" aria-hidden="true"><img src="${A}imgImage2.png" alt=""></span><img class="logo-full" src="${A}imgImage2.png" alt="CTI conectando empresas e pessoas">` : `<img src="${A}imgImage2.png" alt="CTI conectando empresas e pessoas">`;
-  return `<header class="site-header ${state.loggedIn ? 'manager-header' : 'public-header'}"><a class="logo" href="/" data-link aria-label="CTI, visão geral">${brand}</a><nav aria-label="Navegação principal">${items.map(([url, label], index) => `<a href="${url}" data-link ${current === url ? 'aria-current="page"' : ''}>${state.loggedIn ? `<span class="nav-icon">${icon(navIcons[index])}</span><span class="nav-label">${label}</span>` : label}</a>`).join('')}</nav>${themeButton}${state.loggedIn ? `<button class="signout" type="button" data-action="logout" aria-label="Sair da gestão"><img src="${A}imgSignOut.svg" alt=""><span>Sair da gestão</span></button>` : ''}</header>`;
+  const settingsControl = `<div class="public-settings ${state.loggedIn ? 'manager-settings' : ''}"><button class="settings-trigger" type="button" data-action="toggle-settings" aria-label="Configurações" title="Configurações" aria-expanded="${state.settingsOpen}" aria-controls="public-settings-menu"><img src="${A}gear-fine.svg" alt=""></button><div id="public-settings-menu" class="settings-menu" ${state.settingsOpen ? '' : 'hidden'}><span class="settings-menu-heading">Aparência</span>${themeButton}</div></div>`;
+  const navToggle = state.loggedIn ? `<button class="nav-size-toggle" type="button" data-action="toggle-nav-size" aria-label="${state.navExpanded ? 'Recolher navegação' : 'Expandir navegação'}" title="${state.navExpanded ? 'Recolher navegação' : 'Expandir navegação'}" aria-expanded="${state.navExpanded}">${icon(state.navExpanded ? 'navCollapse' : 'navExpand')}</button>` : '';
+  const managerFooter = state.loggedIn ? `<div class="manager-footer">${navToggle}${settingsControl}<button class="signout" type="button" data-action="logout" aria-label="Sair da gestão" title="Sair da gestão"><img src="${A}imgSignOut.svg" alt=""><span>Sair da gestão</span></button></div>` : '';
+  const brand = state.loggedIn ? `<span class="logo-mark" aria-hidden="true"><img src="${A}cti-mark.png" alt=""></span><img class="logo-full" src="${A}imgImage2.png" alt="CTI conectando empresas e pessoas">` : `<img src="${A}imgImage2.png" alt="CTI conectando empresas e pessoas">`;
+  return `<header class="site-header ${state.loggedIn ? `manager-header${state.navExpanded ? ' nav-expanded' : ''}${state.settingsOpen ? ' settings-open' : ''}${state.dashboardMenuOpen ? ' dashboard-menu-open' : ''}` : `public-header${publicNavAnimating ? ' nav-animating' : ''}`}"><a class="logo" href="/" data-link aria-label="CTI, visão geral">${brand}</a><nav aria-label="Navegação principal">${items.map(([url, label], index) => {
+    const link = `<a href="${url}" data-link ${current === url ? 'aria-current="page"' : ''}>${state.loggedIn ? `<span class="nav-icon">${icon(navIcons[index])}</span><span class="nav-label">${label}</span>` : label}</a>`;
+    if (!state.loggedIn || url !== '/dashboard') return link;
+    const options = [['feedbacks', 'Feedbacks'], ['relations', 'Relações'], ['financial', 'Financeiro']];
+    return `<div class="dashboard-nav ${state.dashboardMenuOpen ? 'is-open' : ''}"><div class="dashboard-nav-row">${link}<button type="button" class="dashboard-nav-toggle" data-action="toggle-dashboard-menu" aria-label="Opções do dashboard" aria-expanded="${state.dashboardMenuOpen}" aria-controls="dashboard-nav-menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button></div><div class="dashboard-nav-menu" id="dashboard-nav-menu" ${state.dashboardMenuOpen ? '' : 'hidden'}>${options.map(([value, text]) => `<button type="button" data-action="dashboard-${value}" ${current === '/dashboard' && state.dashboardView === value ? 'aria-current="true"' : ''}><span class="dashboard-option-icon dashboard-option-${value}" aria-hidden="true"></span><span>${text}</span></button>`).join('')}</div></div>`;
+  }).join('')}</nav>${state.loggedIn ? managerFooter : settingsControl}</header>`;
 }
 function shell(current, content, narrow = false) { return `${header(current)}<main class="page ${narrow ? 'page-narrow' : ''}">${content}</main>${state.toast ? `<div class="toast" role="status">${escapeHtml(state.toast)}</div>` : ''}${state.modal ? modal() : ''}`; }
 function title(text, subtitle = '', eyebrow = '') { return `<div class="page-heading">${eyebrow ? `<small>${eyebrow}</small>` : ''}<h1>${text}</h1>${subtitle ? `<p>${subtitle}</p>` : ''}</div>`; }
 function button(label, action, kind = 'primary', extra = '') { return `<button type="button" class="button ${kind}" data-action="${action}" ${extra}>${label}</button>`; }
+function publicFooter() {
+  return `<footer class="public-footer"><div class="public-footer-inner"><div class="footer-brand"><a href="https://www.cti.com.br/" target="_blank" rel="noopener noreferrer" aria-label="Site da CTI"><img src="${A}cti-mark.png" alt="CTI"></a><p>© ${new Date().getFullYear()} Todos os direitos reservados</p></div><nav class="footer-social" aria-label="Redes sociais da CTI"><a href="https://www.facebook.com/CTIBrasil/" target="_blank" rel="noopener noreferrer" aria-label="Facebook da CTI"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.3 21v-8h2.7l.4-3.1h-3.1V8c0-.9.3-1.5 1.6-1.5h1.7V3.7c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2H8V13h2.9v8z"/></svg></a><a href="https://www.linkedin.com/company/cti-solu-es-em-tecnologia-da-informa-o/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn da CTI"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5.2 8.2a1.8 1.8 0 1 0 0-3.6 1.8 1.8 0 0 0 0 3.6ZM3.7 9.5h3V20h-3zm5 0h2.9v1.4h.1a3.2 3.2 0 0 1 2.9-1.6c3.1 0 3.7 2 3.7 4.7v6h-3v-5.3c0-1.3 0-2.9-1.8-2.9s-2 1.4-2 2.8V20h-2.8z"/></svg></a><a href="https://www.instagram.com/ctibrasil/" target="_blank" rel="noopener noreferrer" aria-label="Instagram da CTI"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.5"/><circle cx="17" cy="7" r=".8" fill="currentColor" stroke="none"/></svg></a><a href="https://youtube.com/@ctibrasil" target="_blank" rel="noopener noreferrer" aria-label="YouTube da CTI"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 8.2a2.6 2.6 0 0 0-1.8-1.8C17.6 6 12 6 12 6s-5.6 0-7.2.4A2.6 2.6 0 0 0 3 8.2 27 27 0 0 0 2.6 12c0 1.3.1 2.6.4 3.8a2.6 2.6 0 0 0 1.8 1.8C6.4 18 12 18 12 18s5.6 0 7.2-.4a2.6 2.6 0 0 0 1.8-1.8c.3-1.2.4-2.5.4-3.8s-.1-2.6-.4-3.8ZM10 15V9l5 3z"/></svg></a></nav><img class="footer-seal" src="${A}sustainability-seal.png" alt="Selo de Empresa Sustentável D4Sign Eco"><nav class="footer-links" aria-label="Links da CTI"><a href="https://myportal.cti.com.br/" target="_blank" rel="noopener noreferrer">Portal do cliente</a><a href="https://www.cti.com.br/politica-de-privacidade" target="_blank" rel="noopener noreferrer">Políticas de privacidade</a><a href="https://www.cti.com.br/contato" target="_blank" rel="noopener noreferrer">Contato</a></nav></div></footer>`;
+}
 function publicOverview() {
-  return `${header('/')}<main class="public-home"><section class="public-overview"><div class="public-copy"><h1>Relacionamento com contexto. Qualidade com direção.</h1><p>Um espaço de trabalho para acompanhar a experiência dos clientes e organizar as melhorias da equipe.</p><a class="button primary" href="/login" data-link>Login</a></div><div class="public-concept" aria-label="Etapas da gestão de relacionamento"><div class="public-concept-head"><span>Uma jornada conectada</span><h2>Do contato à melhoria</h2></div><div class="public-concept-step"><span>01</span><div><strong>Clientes</strong><p>Contexto e histórico da relação</p></div></div><div class="public-concept-step"><span>02</span><div><strong>Relatos</strong><p>Leitura e decisão da equipe</p></div></div><div class="public-concept-step"><span>03</span><div><strong>Ações</strong><p>Acompanhamento da qualidade</p></div></div></div></section></main>`;
+return `${header('/')}<main class="public-home"><section class="public-overview"><div class="public-copy"><h1>Relacionamento com contexto.<br><span>Qualidade com direção.</span></h1><p>Um espaço de trabalho para acompanhar a experiência dos clientes e organizar as melhorias da equipe.</p><a class="button primary" href="/login" data-link>Acessar plataforma <svg aria-hidden="true" viewBox="0 0 256 256"><path d="M200 56v96a8 8 0 0 1-16 0V75.31L61.66 197.66a8 8 0 0 1-11.32-11.32L172.69 64H96a8 8 0 0 1 0-16h96a8 8 0 0 1 8 8Z"/></svg></a></div><div class="public-concept" aria-label="Mapa conceitual do atendimento"><div class="concept-map"><span id="concept-help" class="concept-help">Arraste os elementos ou use as setas do teclado para movê-los.</span><svg class="concept-connections" viewBox="0 0 430 360" preserveAspectRatio="none" aria-hidden="true"><path d="M215 180 C165 160 145 115 105 85 M215 180 C270 150 290 120 332 94 M215 180 C190 235 155 262 115 280 M215 180 C270 215 300 252 332 280"/></svg><div class="concept-node concept-center" tabindex="0" role="group" aria-describedby="concept-help"><strong>Atendimento</strong></div><div class="concept-node concept-clients" tabindex="0" role="group" aria-describedby="concept-help"><strong>Clientes</strong><span>Contexto e histórico</span></div><div class="concept-node concept-reports" tabindex="0" role="group" aria-describedby="concept-help"><strong>Relatos</strong><span>Escuta e análise</span></div><div class="concept-node concept-actions" tabindex="0" role="group" aria-describedby="concept-help"><strong>Ações</strong><span>Melhoria contínua</span></div><div class="concept-node concept-quality" tabindex="0" role="group" aria-describedby="concept-help"><strong>Qualidade</strong><span>Acompanhamento</span></div></div></div></section></main>${publicFooter()}`;
 }
 function overview() {
   const pending = repairCandidates().length;
   const open = state.data.actions.filter(action => action.status !== 'Concluída').length;
-  return `${header('/')}<main class="home crm-home"><section class="crm-hero"><div class="crm-copy"><h1>Conheça cada cliente. Cuide de cada relação.</h1><p>Acompanhe o relacionamento com cada empresa, consulte feedbacks e organize ações de melhoria em um só lugar.</p><div class="crm-actions"><a class="button primary" href="/dashboard" data-link>Abrir dashboard</a><a class="button soft" href="/clientes" data-link>Ver clientes</a></div></div><div class="crm-panel" aria-label="Carteira em foco"><div class="crm-panel-row"><span class="crm-row-icon blue">${icon('company')}</span><div><strong>Clientes cadastrados</strong><small>Contexto da carteira</small></div><b>${state.data.clients.length}</b></div><div class="crm-panel-row"><span class="crm-row-icon gold">${icon('report')}</span><div><strong>Triagens de reparação</strong><small>Aguardam revisão da equipe</small></div><b>${pending}</b></div><div class="crm-panel-row"><span class="crm-row-icon green">${icon('action')}</span><div><strong>Ações em acompanhamento</strong><small>Propostas aceitas ainda não concluídas</small></div><b>${open}</b></div></div></section><nav class="crm-links" aria-label="Acesso rápido"><a href="/clientes" data-link><span class="crm-link-icon" aria-hidden="true">${icon('company')}</span><span class="crm-link-copy"><strong>Clientes</strong><small>Consulte perfis e feedbacks</small></span></a><a href="/triagem" data-link><span class="crm-link-icon" aria-hidden="true">${icon('report')}</span><span class="crm-link-copy"><strong>Triagem de reparação</strong><small>Revise padrões de atendimento</small></span></a><a href="/acoes" data-link><span class="crm-link-icon" aria-hidden="true">${icon('action')}</span><span class="crm-link-copy"><strong>Ações</strong><small>Acompanhe as propostas aceitas</small></span></a></nav></main>`;
+  return `${header('/')}<main class="home crm-home"><section class="crm-hero"><div class="crm-copy"><h1>Conheça cada <span>cliente.</span> Cuide de cada <span>relação.</span></h1><p>Acompanhe o relacionamento com cada empresa, consulte feedbacks e organize ações de melhoria em um só lugar.</p></div><div class="crm-panel" aria-label="Carteira em foco"><div class="crm-panel-row"><span class="crm-row-icon blue">${icon('company')}</span><div><strong>Clientes cadastrados</strong><small>Contexto da carteira</small></div><b>${state.data.clients.length}</b></div><div class="crm-panel-row"><span class="crm-row-icon gold">${icon('report')}</span><div><strong>Triagens de reparação</strong><small>Aguardam revisão da equipe</small></div><b>${pending}</b></div><div class="crm-panel-row"><span class="crm-row-icon green">${icon('action')}</span><div><strong>Ações em acompanhamento</strong><small>Propostas aceitas ainda não concluídas</small></div><b>${open}</b></div></div></section><nav class="crm-links" aria-label="Acesso rápido"><a href="/clientes" data-link><span class="crm-link-icon" aria-hidden="true">${icon('company')}</span><span class="crm-link-copy"><strong>Clientes</strong><small>Consulte perfis e feedbacks</small></span></a><a href="/triagem" data-link><span class="crm-link-icon" aria-hidden="true">${icon('report')}</span><span class="crm-link-copy"><strong>Triagem de reparação</strong><small>Revise padrões de atendimento</small></span></a><a href="/acoes" data-link><span class="crm-link-icon" aria-hidden="true">${icon('action')}</span><span class="crm-link-copy"><strong>Ações</strong><small>Acompanhe as propostas aceitas</small></span></a></nav></main>`;
 }
 function login() {
-  return shell('/login', `<div class="login-grid"><div class="login-copy"><p class="login-kicker">Acesso à equipe</p><h1>Gestão de relacionamento da CTI.</h1><p>Entre para acompanhar clientes, relatos e ações de qualidade em um só lugar.</p></div><section class="login-card"><small>ÁREA DO GESTOR</small><h2>Entrar na gestão</h2><form id="login-form"><label>E-mail<input name="email" type="email" autocomplete="username" placeholder="gestor@exemplo.com" required></label><label>Senha<input name="password" type="password" autocomplete="current-password" placeholder="Sua senha" required></label><button class="button primary wide">Entrar no painel</button><p class="field-note">Ambiente de demonstração local.</p></form></section></div>`, true);
+  return shell('/login', `<div class="login-grid"><div class="login-copy"><h1>Gestão de relacionamento da <span>CTI.</span></h1><p>Entre para acompanhar clientes, relatos e ações de qualidade em um só lugar.</p></div><section class="login-card"><h2>Entrar</h2><form id="login-form"><label>E-mail<input name="email" type="email" autocomplete="username" placeholder="nome.sobrenome@empresa.com" required></label><div class="login-password-group"><label for="login-password">Senha</label><div class="login-password-field"><input id="login-password" name="password" type="password" autocomplete="current-password" placeholder="Digite sua senha" required><button type="button" class="password-visibility" data-action="toggle-login-password" aria-label="Mostrar senha" title="Mostrar senha" aria-pressed="false"><span aria-hidden="true"></span></button></div></div><button class="button primary wide">Entrar</button></form></section></div>`, true) + (state.loggedIn ? '' : publicFooter());
 }
 function dashboardCard(label, icon, className, content) {
   const watermark = icon ? `<img class="metric-watermark" src="${A}${icon}" alt="" aria-hidden="true">` : '';
@@ -199,29 +240,29 @@ function dashboardCard(label, icon, className, content) {
 function metricCard(label, value, note, icon = '') {
   return dashboardCard(label, icon, 'dashboard-metric-card', `<strong>${escapeHtml(value)}</strong><span>${escapeHtml(note)}</span>`);
 }
-function dashboardHeading(text) {
-  const feedbacksActive = state.dashboardView === 'feedbacks';
-  return `<div class="dashboard-page-heading"><h1>${text}</h1><div class="dashboard-switch" role="group" aria-label="Visualização do dashboard">${button('Feedbacks', 'dashboard-feedbacks', feedbacksActive ? 'primary' : 'outline', `aria-pressed="${feedbacksActive}"`)}${button('Relações', 'dashboard-relations', state.dashboardView === 'relations' ? 'primary' : 'outline', `aria-pressed="${state.dashboardView === 'relations'}"`)}${button('Financeiro', 'dashboard-financial', state.dashboardView === 'financial' ? 'primary' : 'outline', `aria-pressed="${state.dashboardView === 'financial'}"`)}</div></div>`;
+function dashboardHeading(text, extra = '') {
+  return `<div class="dashboard-page-heading"><h1>${text}</h1>${extra}</div>`;
 }
 function rankingMetric(label, clients, iconName, detail) {
   const rows = clients.map((client, index) => `<li><span class="ranking-position">${index + 1}</span><span class="ranking-name" title="${escapeHtml(client.name)}">${escapeHtml(client.name)}</span>${detail ? `<b>${escapeHtml(detail(client))}</b>` : ''}</li>`).join('');
   return dashboardCard(label, iconName, 'ranking-card', `<ol class="ranking-list">${rows || '<li>Sem dados para este ranking</li>'}</ol>`);
 }
-function topRecurringClients() {
+function topRecurringClients(feedbacks = state.data.feedbacks) {
   const counts = new Map([...state.data.clients, demoClient].map(client => [client.name, 0]));
-  state.data.feedbacks.forEach(feedback => { if (counts.has(feedback.client)) counts.set(feedback.client, counts.get(feedback.client) + 1); });
+  feedbacks.forEach(feedback => { if (counts.has(feedback.client)) counts.set(feedback.client, counts.get(feedback.client) + 1); });
   return [...state.data.clients, demoClient].filter(client => counts.get(client.name) > 0).sort((a, b) => counts.get(b.name) - counts.get(a.name) || a.id - b.id).slice(0, 3).map(client => ({ ...client, feedbackCount: counts.get(client.name) }));
 }
 function topClosestClients() {
   return [...state.data.clients].filter(client => Number(client.relationStrength) > 0).sort((a, b) => Number(b.relationStrength) - Number(a.relationStrength) || a.id - b.id).slice(0, 3);
 }
-function reminder(icon, tone, titleText, detail, status) {
-  return `<div class="reminder"><span class="reminder-icon ${tone}"><img src="${A}${icon}" alt=""></span><div><strong>${titleText}</strong><p>${detail}</p></div><span class="reminder-status">${status}</span></div>`;
+function reminder(icon, tone, titleText, detail, status, href = '') {
+  const statusContent = href ? `<a class="reminder-status reminder-link" href="${escapeHtml(href)}" data-link>${status}</a>` : `<span class="reminder-status">${status}</span>`;
+  return `<div class="reminder"><span class="reminder-icon ${tone}"><img src="${A}${icon}" alt=""></span><div><strong>${titleText}</strong><p>${detail}</p></div>${statusContent}</div>`;
 }
 function comparisonChart(items, formatValue, maximum) {
   if (!items.length) return '<p class="empty">Nenhum valor cadastrado para comparar.</p>';
   const limit = maximum || Math.max(0, ...items.map(item => item.value));
-  return `<div class="comparison-chart" role="img" aria-label="${escapeHtml(items.map(item => `${item.label}: ${formatValue(item.value)}`).join('; '))}">${items.map(item => `<div class="comparison-row"><span class="comparison-name" title="${escapeHtml(item.label)}">${escapeHtml(item.label)}</span><span class="comparison-track"><span class="comparison-fill" style="width:${limit ? item.value / limit * 100 : 0}%"></span></span><strong>${escapeHtml(formatValue(item.value))}</strong></div>`).join('')}</div>`;
+  return `<div class="comparison-chart" role="group" aria-label="${escapeHtml(items.map(item => `${item.label}: ${formatValue(item.value)}`).join('; '))}">${items.map(item => `<div class="comparison-row"><button type="button" class="comparison-name" data-action="profile" data-id="${escapeHtml(item.id)}" aria-label="Abrir perfil de ${escapeHtml(item.label)}" title="Abrir perfil de ${escapeHtml(item.label)}">${escapeHtml(item.label)}</button><span class="comparison-track"><span class="comparison-fill" style="width:${limit ? item.value / limit * 100 : 0}%"></span></span><strong>${escapeHtml(formatValue(item.value))}</strong></div>`).join('')}</div>`;
 }
 function dailyFeedbackChart(feedbacks) {
   const today = new Date();
@@ -234,25 +275,39 @@ function dailyFeedbackChart(feedbacks) {
       counts.set(key, (counts.get(key) || 0) + 1);
     }
   });
-  const days = Array.from({ length: 14 }, (_, index) => {
+  const days = Array.from({ length: state.dashboardDays }, (_, index) => {
     const date = new Date(end);
-    date.setDate(end.getDate() - 13 + index);
+    date.setDate(end.getDate() - state.dashboardDays + 1 + index);
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-    return { label: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), count: counts.get(key) || 0 };
+    return { key, label: date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), count: counts.get(key) || 0 };
   });
   const maximum = Math.max(1, ...days.map(day => day.count));
-  if (days.every(day => day.count === 0)) return '<p class="empty">Nenhum feedback recebido nos últimos 14 dias.</p>';
+  if (days.every(day => day.count === 0)) return `<p class="empty">Nenhum feedback recebido nos últimos ${state.dashboardDays} dias.</p>`;
   const countLabel = count => `${count} ${count === 1 ? 'feedback' : 'feedbacks'}`;
-  return `<div class="daily-chart" role="img" aria-label="${escapeHtml(days.map(day => `${day.label}: ${countLabel(day.count)}`).join('; '))}"><div class="daily-chart-bars">${days.map(day => `<div class="daily-chart-day" title="${day.label}: ${countLabel(day.count)}"><span class="daily-chart-count">${day.count || ''}</span><span class="daily-chart-bar" style="height:${day.count ? Math.round(day.count / maximum * 140) : 0}px"></span><span class="daily-chart-date">${day.label}</span></div>`).join('')}</div></div>`;
+  return `<div class="daily-chart" role="group" aria-label="Feedbacks por dia"><div class="daily-chart-bars" style="--chart-days:${state.dashboardDays};--chart-min-width:${state.dashboardDays > 14 ? state.dashboardDays * 40 : 0}px">${days.map(day => day.count ? `<button type="button" class="daily-chart-day" data-action="dashboard-select-day" data-date="${day.key}" aria-pressed="${state.dashboardDay === day.key}" aria-label="${day.label}: ${countLabel(day.count)}"><span class="daily-chart-count">${day.count}</span><span class="daily-chart-bar" style="height:${Math.round(day.count / maximum * 140)}px"></span><span class="daily-chart-date">${day.label}</span></button>` : `<div class="daily-chart-day"><span class="daily-chart-count"></span><span class="daily-chart-bar" style="height:0"></span><span class="daily-chart-date">${day.label}</span></div>`).join('')}</div></div>`;
 }
 function sentimentChart(counts) {
   const total = counts.reduce((sum, item) => sum + item.value, 0);
-  return `<div class="sentiment-chart"><div class="sentiment-stack" role="img" aria-label="${escapeHtml(counts.map(item => `${item.label}: ${item.value} de ${total}`).join('; '))}">${counts.map(item => `<span class="${item.tone}" style="width:${total ? item.value / total * 100 : 0}%"></span>`).join('')}</div><div class="sentiment-legend">${counts.map(item => `<div><span class="sentiment-label"><i class="dot ${item.tone}"></i>${item.label}</span><strong>${item.value}</strong><small>${total ? Math.round(item.value / total * 100) : 0}%</small></div>`).join('')}</div></div>`;
+  const highest = Math.max(...counts.map(item => item.value));
+  const leaders = counts.filter(item => item.value === highest);
+  let insight = '<strong>Ainda não há sentimentos registrados</strong><p>A leitura aparecerá quando houver comentários classificados.</p>';
+  if (total && leaders.length === 1) {
+    const leader = leaders[0];
+    const label = leader.label.toLocaleLowerCase('pt-BR');
+    const prefix = total === 1 ? 'Um comentário' : 'Predominam comentários';
+    insight = `<strong>${prefix} <span class="sentiment-insight-word ${leader.tone}">${escapeHtml(label)}${total === 1 ? '' : 's'}</span></strong><p>${leader.value} de ${total} ${total === 1 ? 'comentário foi classificado' : 'comentários foram classificados'} como ${escapeHtml(label)}${leader.value === 1 ? '' : 's'}.</p>`;
+  } else if (total) {
+    const labels = leaders.map(item => item.label.toLocaleLowerCase('pt-BR'));
+    const names = labels.length === 2 ? labels.join(' e ') : `${labels.slice(0, -1).join(', ')} e ${labels.at(-1)}`;
+    insight = `<strong>Sentimentos empatados</strong><p>${escapeHtml(names)}: ${highest} ${highest === 1 ? 'comentário em cada categoria' : 'comentários em cada categoria'}.</p>`;
+  }
+  return `<div class="sentiment-chart"><div class="sentiment-stack" role="img" aria-label="${escapeHtml(counts.map(item => `${item.label}: ${item.value} de ${total}`).join('; '))}">${counts.map(item => `<span class="${item.tone}" style="width:${total ? item.value / total * 100 : 0}%"></span>`).join('')}</div><div class="sentiment-legend">${counts.map(item => `<div><span class="sentiment-label"><i class="dot ${item.tone}"></i>${item.label}</span><strong>${item.value}</strong><small>${total ? Math.round(item.value / total * 100) : 0}%</small></div>`).join('')}</div><div class="sentiment-insight">${insight}</div></div>`;
 }
 function revenueHistoryChart(clients, money) {
   const months = Array.from({ length: 6 }, (_, index) => monthKey(index - 5));
   const colors = ['#1788cd', '#17b9a9', '#d99a28', '#d86789', '#746bd4'];
   const series = clients.slice(0, 5).map((client, index) => ({
+    id: String(client.id),
     name: client.name,
     color: colors[index],
     values: months.map(month => {
@@ -260,6 +315,8 @@ function revenueHistoryChart(clients, money) {
       return month === monthKey(0) ? Number(client.monthlyRevenue) : record ? Number(record.value) : null;
     })
   }));
+  const selected = state.financialSelection.filter(id => series.some(item => item.id === id));
+  const visibleSeries = selected.length ? series.filter(item => selected.includes(item.id)) : series;
   const maximum = Math.max(5000, Math.ceil(Math.max(0, ...series.flatMap(item => item.values.filter(value => value !== null))) / 5000) * 5000);
   const x = index => 70 + index * 140;
   const y = value => 220 - value / maximum * 180;
@@ -267,24 +324,25 @@ function revenueHistoryChart(clients, money) {
     const value = maximum * index / 4;
     return `<line x1="70" x2="770" y1="${y(value)}" y2="${y(value)}" class="revenue-grid-line"/><text x="62" y="${y(value) + 4}" text-anchor="end" class="revenue-axis-label">${value ? `R$ ${(value / 1000).toLocaleString('pt-BR', { maximumFractionDigits: 1 })} mil` : 'R$ 0'}</text>`;
   }).join('');
-  const lines = series.map(item => {
+  const lines = visibleSeries.map(item => {
     const points = item.values.map((value, index) => value === null ? null : `${x(index)},${y(value)}`).filter(Boolean);
-    return `<polyline points="${points.join(' ')}" fill="none" stroke="${item.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${item.values.map((value, index) => value === null ? '' : `<circle cx="${x(index)}" cy="${y(value)}" r="4" fill="${item.color}"><title>${escapeHtml(item.name)} · ${months[index]} · ${escapeHtml(money(value))}</title></circle>`).join('')}`;
+    const lastIndex = item.values.findLastIndex(value => value !== null);
+    return `<polyline points="${points.join(' ')}" fill="none" stroke="${item.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>${item.values.map((value, index) => value === null ? '' : index === lastIndex ? `<path d="M${x(index) - 7} ${y(value) - 5} L${x(index)} ${y(value)} L${x(index) - 7} ${y(value) + 5}" fill="none" stroke="${item.color}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><title>${escapeHtml(item.name)} · ${months[index]} · ${escapeHtml(money(value))}</title></path>` : `<circle cx="${x(index)}" cy="${y(value)}" r="4" fill="${item.color}"><title>${escapeHtml(item.name)} · ${months[index]} · ${escapeHtml(money(value))}</title></circle>`).join('')}`;
   }).join('');
   const monthNames = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   const labels = months.map((month, index) => {
     const [year, number] = month.split('-').map(Number);
     return `<text x="${x(index)}" y="251" text-anchor="middle" class="revenue-axis-label">${monthNames[number - 1]}/${String(year).slice(-2)}</text>`;
   }).join('');
-  const description = series.map(item => `${item.name}: ${item.values.map((value, index) => value === null ? '' : `${months[index]} ${money(value)}`).filter(Boolean).join(', ')}`).join('; ');
-  return `<div class="revenue-history-chart"><svg viewBox="0 0 800 270" role="img" aria-label="${escapeHtml(description)}">${grid}${lines}${labels}</svg><div class="revenue-legend">${series.map(item => `<div class="revenue-legend-item"><i style="background:${item.color}"></i><span>${escapeHtml(item.name)}</span><strong>${escapeHtml(money(item.values.at(-1) || 0))}</strong></div>`).join('')}</div></div>`;
+  const description = visibleSeries.map(item => `${item.name}: ${item.values.map((value, index) => value === null ? '' : `${months[index]} ${money(value)}`).filter(Boolean).join(', ')}`).join('; ');
+  return `<div class="revenue-history-chart"><svg viewBox="0 0 800 270" role="img" aria-label="${escapeHtml(description)}">${grid}${lines}${labels}</svg><p class="revenue-filter-hint">Selecione empresas para comparar. Sem seleção, todas são exibidas.</p><div class="revenue-legend" aria-label="Empresas para comparar">${series.map(item => `<button type="button" class="revenue-legend-item" data-action="toggle-financial-client" data-id="${escapeHtml(item.id)}" aria-pressed="${selected.length === 0 || selected.includes(item.id)}"><i style="background:${item.color}"></i><span>${escapeHtml(item.name)}</span><strong>${escapeHtml(money(item.values.at(-1) || 0))}</strong></button>`).join('')}</div></div>`;
 }
 function relationsDashboard() {
   const pendingRepairs = repairCandidates().length;
   const missingContacts = state.data.clients.filter(client => !client.email).length;
   return shell('/dashboard', `${dashboardHeading('Análise das relações')}
     <div class="metric-grid relations-metrics">${metricCard('Clientes cadastrados', state.data.clients.length, 'Total de clientes', 'dashboardClients.svg')}${rankingMetric('Top 3 empresas mais próximas', topClosestClients(), 'dashboardStar.svg')}${metricCard('Novos vínculos', '—', 'Sem histórico cadastrado', 'dashboardGrowth.svg')}${metricCard('Relações para revisão', pendingRepairs, 'Padrões de atendimento pendentes', 'dashboardAlert.svg')}</div>
-    <div class="dashboard-grid"><section class="card chart-card"><div class="card-heading"><div><h2>Força dos relacionamentos</h2><p>Pontuação cadastrada por empresa, de 1 a 5</p></div><span class="tag">Situação atual</span></div>${comparisonChart([...state.data.clients].filter(client => Number(client.relationStrength) > 0).sort((a, b) => b.relationStrength - a.relationStrength).map(client => ({ label: client.name, value: Number(client.relationStrength) })), value => `${value}/5`, 5)}</section><section class="card reminders"><div class="card-heading"><div><h2>Lembretes importantes</h2><p>Assuntos de urgência</p></div></div><div class="reminder-list">${reminder('dashboardMessage.svg', 'blue', 'Consultar feedbacks', `${state.data.feedbacks.length} relatos de demonstração`, 'Consultar')}${reminder('dashboardLightbulb.svg', 'green', 'Reparações para revisão', `${pendingRepairs} ${pendingRepairs === 1 ? 'análise' : 'análises'} aguardando a equipe`, 'Pendente')}${reminder('dashboardCalendar.svg', 'gold', 'Completar dados dos clientes', `${missingContacts} contatos não informados`, 'Pendente')}</div></section></div>`);
+    <div class="dashboard-grid relations-grid"><section class="card chart-card"><div class="card-heading"><div><h2>Força dos relacionamentos</h2><p>Pontuação cadastrada por empresa, de 1 a 5</p></div><span class="tag">Situação atual</span></div>${comparisonChart([...state.data.clients].filter(client => Number(client.relationStrength) > 0).sort((a, b) => b.relationStrength - a.relationStrength).map(client => ({ id: client.id, label: client.name, value: Number(client.relationStrength) })), value => `${value}/5`, 5)}</section><section class="card reminders"><div class="card-heading"><div><h2>Lembretes importantes</h2><p>Assuntos de urgência</p></div></div><div class="reminder-list">${reminder('dashboardMessage.svg', 'blue', 'Consultar feedbacks', `${state.data.feedbacks.length} relatos de demonstração`, 'Consultar', '/feedbacks')}${reminder('dashboardLightbulb.svg', 'green', 'Reparações para revisão', `${pendingRepairs} ${pendingRepairs === 1 ? 'análise' : 'análises'} aguardando a equipe`, 'Pendente')}${reminder('dashboardCalendar.svg', 'gold', 'Completar dados dos clientes', `${missingContacts} contatos não informados`, 'Pendente')}</div></section></div>`);
 }
 function dashboard() {
   if (state.dashboardView === 'relations') return relationsDashboard();
@@ -295,20 +353,26 @@ function dashboard() {
     const chartClients = clients.slice(0, 5);
     const concentration = total ? Math.round(clients.slice(0, 3).reduce((sum, client) => sum + Number(client.monthlyRevenue), 0) / total * 100) : 0;
     return shell('/dashboard', `${dashboardHeading('Receita por empresa')}
-      <div class="metric-grid financial-metrics">${metricCard('Receita mensal cadastrada', money(total), 'Soma dos valores informados', 'dashboardGrowth.svg')}${metricCard('Projeção anual simples', money(total * 12), '12 meses no mesmo valor, sem reajustes', 'dashboardTrend.svg')}${metricCard('Média por empresa', money(clients.length ? total / clients.length : 0), `${clients.length} empresas com valor`, 'dashboardClients.svg')}${metricCard('Concentração das 3 maiores', `${concentration}%`, 'Participação na receita cadastrada', 'dashboardAlert.svg')}</div>
+      <div class="metric-grid financial-metrics">${metricCard('Receita mensal cadastrada', money(total), 'Soma dos valores informados', 'dashboardGrowth.svg')}${metricCard('Projeção anual simples', money(total * 12), '12 meses no mesmo valor, sem reajustes', 'dashboardMoney.svg')}${metricCard('Média por empresa', money(clients.length ? total / clients.length : 0), `${clients.length} empresas com valor`, 'math-operations.svg')}${metricCard('Concentração das 3 maiores', `${concentration}%`, 'Participação na receita cadastrada', 'percent.svg')}</div>
       <section class="card financial-chart-card"><div class="card-heading"><div><h2>Histórico da receita mensal</h2><p>Cinco empresas com maior valor mensal cadastrado. Série fictícia de demonstração; não representa dados financeiros da CTI.</p></div><span class="tag">Últimos 6 meses · R$</span></div>${chartClients.length ? revenueHistoryChart(chartClients, money) : '<p class="empty">Cadastre uma receita mensal para visualizar o gráfico.</p>'}</section>`);
   }
-  const data = state.data.feedbacks;
+  const selectedClient = state.data.clients.find(client => String(client.id) === state.dashboardCompanyId);
+  const allFeedbacks = selectedClient ? state.data.feedbacks.filter(item => item.client === selectedClient.name) : state.data.feedbacks;
+  const companyFilter = `<div class="dashboard-mode-control"><div class="dashboard-mode-switch ${selectedClient ? 'is-company' : 'is-general'}${dashboardModeAnimating ? ' is-animating' : ''}" role="group" aria-label="Tipo de análise"><span class="dashboard-mode-indicator" aria-hidden="true"></span><button type="button" data-action="dashboard-company-all" aria-label="Análise geral" title="Análise geral" aria-pressed="${!selectedClient}">${icon('dashboard')}</button><button type="button" data-action="dashboard-company-open" aria-label="Análise por empresa" title="Análise por empresa" aria-pressed="${Boolean(selectedClient)}">${icon('company')}</button></div></div>`;
+
+  const data = state.dashboardDay ? allFeedbacks.filter(item => dateKey(item.date) === state.dashboardDay) : allFeedbacks;
+  const companySla = selectedClient ? dashboardCard('Análise de SLA', '', 'dashboard-sla-card', `${slaInsight(selectedClient)}${button('Ver perfil da empresa', 'profile', 'outline', `data-id="${selectedClient.id}" data-open-section="sla"`)}`) : rankingMetric('Top 3 empresas mais recorrentes', topRecurringClients(data), 'dashboardRecurrence.svg', client => `${client.feedbackCount} ${client.feedbackCount === 1 ? 'relato' : 'relatos'}`);
+  const dayFilter = state.dashboardDay ? `<div class="dashboard-day-filter" role="status"><span>Dados de <strong>${dateBR(state.dashboardDay)}</strong></span><button type="button" data-action="dashboard-clear-day">Ver todos os dias</button></div>` : '';
   const average = data.length ? (data.reduce((sum, f) => sum + Number(f.rating), 0) / data.length).toFixed(1).replace('.', ',') : '0';
   const positive = data.filter(f => f.sentiment === 'Positivo').length;
   const negative = data.filter(f => f.sentiment === 'Negativo').length;
   const neutral = data.filter(f => f.sentiment === 'Neutro').length;
-  return shell('/dashboard', `${dashboardHeading('Análise dos feedbacks')}
-    <div class="metric-grid">${metricCard('Feedbacks recebidos', data.length, 'Total registrado', 'dashboardClients.svg')}${metricCard('Nota média', average, 'De 1 a 5 pontos', 'dashboardStar.svg')}${metricCard('Sentimento positivo', positive, `${Math.round(positive / (data.length || 1) * 100)}% dos comentários analisados`, 'dashboardGrowth.svg')}${metricCard('Sentimento negativo', negative, 'Sentimento negativo', 'dashboardAlert.svg')}${rankingMetric('Top 3 empresas mais recorrentes', topRecurringClients(), 'dashboardRecurrence.svg', client => `${client.feedbackCount} ${client.feedbackCount === 1 ? 'relato' : 'relatos'}`)}</div>
-    <div class="dashboard-grid"><section class="card chart-card"><div class="card-heading"><div><h2>Feedbacks por dia</h2><p>Quantidade recebida em cada dia</p></div><span class="tag">Últimos 14 dias</span></div>${dailyFeedbackChart(data)}</section><section class="card climate"><div class="card-heading"><div><h2>Clima dos comentários</h2><p>Participação de cada sentimento no total</p></div></div>${sentimentChart([{ label: 'Positivo', value: positive, tone: 'green' }, { label: 'Neutro', value: neutral, tone: 'gold' }, { label: 'Negativo', value: negative, tone: 'rose' }])}</section></div>`);
+  return shell('/dashboard', `${dashboardHeading(`Análise dos feedbacks${selectedClient ? `: <span class="dashboard-heading-scope">${escapeHtml(selectedClient.name)}</span>` : ' <span class="dashboard-heading-scope">geral</span>'}`, companyFilter)}${dayFilter}
+    <div class="metric-grid">${metricCard('Feedbacks recebidos', data.length, 'Total registrado', 'dashboardClients.svg')}${metricCard('Nota média', average, 'De 1 a 5 pontos', 'dashboardStar.svg')}${metricCard('Sentimento positivo', positive, `${Math.round(positive / (data.length || 1) * 100)}% dos comentários analisados`, 'dashboardGrowth.svg')}${metricCard('Sentimento negativo', negative, 'Sentimento negativo', 'dashboardAlert.svg')}${companySla}</div>
+    <div class="dashboard-grid feedback-grid"><section class="card chart-card"><div class="card-heading"><div><h2>Feedbacks por dia</h2><p>Quantidade recebida em cada dia</p></div><select class="chart-period" id="dashboard-period" aria-label="Período do gráfico de feedbacks">${[14, 21, 31].map(days => `<option value="${days}" ${state.dashboardDays === days ? 'selected' : ''}>Últimos ${days} dias</option>`).join('')}</select></div>${dailyFeedbackChart(allFeedbacks)}</section><section class="card climate"><div class="card-heading"><div><h2>Clima dos comentários</h2><p>Participação de cada sentimento no total</p></div></div>${sentimentChart([{ label: 'Positivo', value: positive, tone: 'green' }, { label: 'Neutro', value: neutral, tone: 'gold' }, { label: 'Negativo', value: negative, tone: 'rose' }])}</section></div>`);
 }
 function filteredFeedbacks() {
-  return state.data.feedbacks.filter(f => (!state.query || `${f.comment} ${f.service} ${f.client}`.toLocaleLowerCase('pt-BR').includes(state.query.toLocaleLowerCase('pt-BR'))) && (!state.service || f.service === state.service) && (!state.sentiment || f.sentiment === state.sentiment));
+  return state.data.feedbacks.filter(f => (!state.feedbackCompany || f.client === state.feedbackCompany) && (!state.query || `${f.comment} ${f.service} ${f.client}`.toLocaleLowerCase('pt-BR').includes(state.query.toLocaleLowerCase('pt-BR'))) && (!state.service || f.service === state.service) && (!state.sentiment || f.sentiment === state.sentiment));
 }
 function feedbackTheme(feedback) {
   const text = String(feedback.comment || '').toLocaleLowerCase('pt-BR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -345,7 +409,28 @@ function repairCandidates() {
 }
 function feedbacks() {
   const rows = filteredFeedbacks();
-  return shell('/feedbacks', `${title('Feedbacks', 'Pesquise e acompanhe cada tratativa.')}<section class="card list-card feedback-list"><div class="filters"><input id="feedback-search" type="search" placeholder="Buscar coment&#225;rio..." value="${escapeHtml(state.query)}"><select id="service-filter"><option value="">Todos os serviços</option>${state.data.services.map(service => `<option ${state.service === service.name ? 'selected' : ''}>${escapeHtml(service.name)}</option>`).join('')}</select><select id="sentiment-filter"><option value="">Todos sentimentos</option>${['Positivo', 'Neutro', 'Negativo'].map(v => `<option ${state.sentiment === v ? 'selected' : ''}>${v}</option>`).join('')}</select>${button('Filtrar', 'filter', 'outline')}</div><div class="table-wrap"><table><thead><tr><th>COMENTÁRIO</th><th>EMPRESA</th><th>SERVIÇO</th><th>NOTA</th><th>SENTIMENTO</th><th>RECEBIDO</th></tr></thead><tbody>${rows.map(f => `<tr><td class="feedback-comment">${escapeHtml(f.comment)}</td><td>${escapeHtml(f.client || 'Não vinculada')}</td><td>${escapeHtml(f.service)}</td><td class="rating">&#9733; ${f.rating}</td><td><span class="pill ${f.sentiment.toLowerCase()}">${f.sentiment}</span></td><td>${f.date}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhum feedback encontrado.</td></tr>'}</tbody></table></div><div class="pagination">Página 1 a ${rows.length} registros <span>‹ Anterior &nbsp; Próxima ›</span></div></section>`);
+  if (state.feedbackSort && state.feedbackSortBy === 'date') rows.sort((a, b) => {
+    const aDate = dateKey(a.date);
+    const bDate = dateKey(b.date);
+    if (!aDate) return bDate ? 1 : 0;
+    if (!bDate) return -1;
+    return state.feedbackSort === 'ascending' ? aDate.localeCompare(bDate) : bDate.localeCompare(aDate);
+  });
+  if (state.feedbackSort && state.feedbackSortBy === 'rating') rows.sort((a, b) => {
+    const aRating = a.rating == null || a.rating === '' ? NaN : Number(a.rating);
+    const bRating = b.rating == null || b.rating === '' ? NaN : Number(b.rating);
+    if (!Number.isFinite(aRating)) return Number.isFinite(bRating) ? 1 : 0;
+    if (!Number.isFinite(bRating)) return -1;
+    return state.feedbackSort === 'ascending' ? aRating - bRating : bRating - aRating;
+  });
+  const pageSize = 8;
+  const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+  state.feedbackPage = Math.min(Math.max(1, state.feedbackPage), totalPages);
+  const start = (state.feedbackPage - 1) * pageSize;
+  const pageRows = rows.slice(start, start + pageSize);
+  const ratingSort = state.feedbackSortBy === 'rating' ? state.feedbackSort : null;
+  const dateSort = state.feedbackSortBy === 'date' ? state.feedbackSort : null;
+  return shell('/feedbacks', `${title('Feedbacks', 'Pesquise e acompanhe cada tratativa.')}<section class="card list-card feedback-list"><div class="filters"><input id="feedback-search" type="search" placeholder="Buscar coment&#225;rio..." value="${escapeHtml(state.query)}"><select id="feedback-company-filter" aria-label="Filtrar por empresa"><option value="">Todas as empresas</option>${[...new Set(state.data.feedbacks.map(item => item.client).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(name => `<option value="${escapeHtml(name)}" ${state.feedbackCompany === name ? 'selected' : ''}>${escapeHtml(name)}</option>`).join('')}</select><select id="service-filter"><option value="">Todos os serviços</option>${state.data.services.map(service => `<option ${state.service === service.name ? 'selected' : ''}>${escapeHtml(service.name)}</option>`).join('')}</select><select id="sentiment-filter"><option value="">Todos sentimentos</option>${['Positivo', 'Neutro', 'Negativo'].map(v => `<option ${state.sentiment === v ? 'selected' : ''}>${v}</option>`).join('')}</select>${button('Filtrar', 'filter', 'outline')}</div><div class="table-wrap"><table><thead><tr><th>COMENTÁRIO</th><th>EMPRESA</th><th>SERVIÇO</th><th aria-sort="${ratingSort || 'none'}"><button type="button" class="rating-sort ${ratingSort || 'unsorted'}" data-action="feedback-sort" aria-label="Ordenar por nota${ratingSort === 'descending' ? ', da maior para a menor' : ratingSort === 'ascending' ? ', da menor para a maior' : ''}">NOTA<span class="rating-sort-icon" aria-hidden="true"></span></button></th><th>SENTIMENTO</th><th aria-sort="${dateSort || 'none'}"><button type="button" class="rating-sort ${dateSort || 'unsorted'}" data-action="feedback-sort-date" aria-label="Ordenar por data${dateSort === 'descending' ? ', da mais recente para a mais antiga' : dateSort === 'ascending' ? ', da mais antiga para a mais recente' : ''}">RECEBIDO<span class="rating-sort-icon" aria-hidden="true"></span></button></th></tr></thead><tbody>${pageRows.map(f => `<tr><td class="feedback-comment">${escapeHtml(f.comment)}</td><td>${escapeHtml(f.client || 'Não vinculada')}</td><td>${escapeHtml(f.service)}</td><td class="rating">&#9733; ${f.rating}</td><td><span class="pill ${f.sentiment.toLowerCase()}">${f.sentiment}</span></td><td>${f.date}</td></tr>`).join('') || '<tr><td colspan="6" class="empty">Nenhum feedback encontrado.</td></tr>'}</tbody></table></div><div class="pagination"><span>${rows.length ? `${start + 1}–${start + pageRows.length} de ${rows.length} registros` : 'Nenhum registro'} · Página ${state.feedbackPage} de ${totalPages}</span><div class="pagination-controls"><button type="button" data-action="feedback-prev" ${state.feedbackPage === 1 ? 'disabled' : ''}>‹ Anterior</button><button type="button" data-action="feedback-next" ${state.feedbackPage === totalPages ? 'disabled' : ''}>Próxima ›</button></div></div></section>`);
 }
 function tabs(current) { return `<nav class="tabs" aria-label="Etapas de gestão">${[['/clientes', 'Clientes'], ['/tarefas', 'Tarefas'], ['/oportunidades', 'Oportunidades'], ['/triagem', 'Triagem de reparação'], ['/acoes', 'Ações']].map(([url, label]) => `<a href="${url}" data-link ${current === url ? 'aria-current="page"' : ''}>${label}</a>`).join('')}</nav>`; }
 function feedbackCount(clientName) { return state.data.feedbacks.filter(feedback => feedback.client === clientName).length; }
@@ -362,6 +447,21 @@ function readMeetingAttachment(file) {
     const reader = new FileReader();
     reader.onload = () => resolve({ name: file.name, dataUrl: reader.result });
     reader.onerror = () => reject(new Error('Não foi possível ler o arquivo da ata.'));
+    reader.readAsDataURL(file);
+  });
+}
+function slaInsight(client) {
+  const count = Array.isArray(client.slaIncidents) ? client.slaIncidents.length : 0;
+  return `<div class="sla-indicator ${count ? 'sla-warning' : 'sla-clear'}"><strong>${count ? 'Possível descumprimento' : 'Indicativo de cumprimento'}</strong><span>${count} ${count === 1 ? 'ocorrência registrada' : 'ocorrências registradas'}</span></div>`;
+}
+function readSlaAttachment(file) {
+  if (!file) return Promise.resolve(null);
+  if (file.size > 2 * 1024 * 1024) return Promise.reject(new Error('O arquivo do SLA deve ter até 2 MB.'));
+  if (!/\.(pdf|docx|txt)$/i.test(file.name)) return Promise.reject(new Error('Anexe o SLA em PDF, DOCX ou TXT.'));
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve({ name: file.name, dataUrl: reader.result });
+    reader.onerror = () => reject(new Error('Não foi possível ler o arquivo do SLA.'));
     reader.readAsDataURL(file);
   });
 }
@@ -418,7 +518,7 @@ function clientTimeline(client) {
 function clientWorkspace(client) {
   const tasks = client.tasks || [];
   const opportunities = client.opportunities || [];
-  return `<section class="client-work-section"><div class="client-work-heading"><div><h2>Tarefas de acompanhamento</h2><p class="section-note">Responsável, prazo e situação de cada próximo passo.</p></div>${button('Nova tarefa', 'new-task', 'primary', `data-id="${client.id}"`)}</div>${tasks.map(item => `<article class="work-row"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.owner)} · prazo ${escapeHtml(dateBR(item.dueDate))}</small></div><span class="pill ${item.status === 'Concluída' ? 'positivo' : 'neutro'}">${escapeHtml(item.status)}</span>${button('Atualizar', 'edit-task', 'outline', `data-id="${client.id}" data-item-id="${item.id}"`)}</article>`).join('') || '<p class="profile-empty">Nenhuma tarefa registrada.</p>'}</section><section class="client-work-section"><div class="client-work-heading"><div><h2>Oportunidades</h2><p class="section-note">Possibilidades de expansão em análise, sem alterar a receita contratada.</p></div>${button('Nova oportunidade', 'new-opportunity', 'primary', `data-id="${client.id}"`)}</div>${opportunities.map(item => `<article class="work-row"><div><strong>${escapeHtml(item.title)}</strong><small>${moneyBRL(item.value)} · previsão ${escapeHtml(dateBR(item.expectedDate))}${item.note ? ` · ${escapeHtml(item.note)}` : ''}</small></div><span class="pill ${item.stage === 'Ganha' ? 'positivo' : item.stage === 'Perdida' ? 'negativo' : 'neutro'}">${escapeHtml(item.stage)}</span>${button('Atualizar', 'edit-opportunity', 'outline', `data-id="${client.id}" data-item-id="${item.id}"`)}</article>`).join('') || '<p class="profile-empty">Nenhuma oportunidade registrada.</p>'}</section>${clientTimeline(client)}`;
+  return `<section class="client-work-section"><div class="client-work-heading"><div><h2>Tarefas de acompanhamento</h2><p class="section-note">Responsável, prazo e situação de cada próximo passo.</p></div>${button('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>', 'new-task', 'primary work-add', `data-id="${client.id}" aria-label="Nova tarefa" title="Nova tarefa"`)}</div>${tasks.map(item => `<article class="work-row"><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.owner)} · prazo ${escapeHtml(dateBR(item.dueDate))}</small></div><span class="pill ${item.status === 'Concluída' ? 'positivo' : 'neutro'}">${escapeHtml(item.status)}</span>${button('Atualizar', 'edit-task', 'outline', `data-id="${client.id}" data-item-id="${item.id}"`)}</article>`).join('') || '<p class="profile-empty">Nenhuma tarefa registrada.</p>'}</section><section class="client-work-section"><div class="client-work-heading"><div><h2>Oportunidades</h2><p class="section-note">Possibilidades de expansão em análise, sem alterar a receita contratada.</p></div>${button('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>', 'new-opportunity', 'primary work-add', `data-id="${client.id}" aria-label="Nova oportunidade" title="Nova oportunidade"`)}</div>${opportunities.map(item => `<article class="work-row"><div><strong>${escapeHtml(item.title)}</strong><small>${moneyBRL(item.value)} · previsão ${escapeHtml(dateBR(item.expectedDate))}${item.note ? ` · ${escapeHtml(item.note)}` : ''}</small></div><span class="pill ${item.stage === 'Ganha' ? 'positivo' : item.stage === 'Perdida' ? 'negativo' : 'neutro'}">${escapeHtml(item.stage)}</span>${button('Atualizar', 'edit-opportunity', 'outline', `data-id="${client.id}" data-item-id="${item.id}"`)}</article>`).join('') || '<p class="profile-empty">Nenhuma oportunidade registrada.</p>'}</section>${clientTimeline(client)}`;
 }
 function profileDetails(client) {
   const meetings = Array.isArray(client.meetings) ? client.meetings : [];
@@ -432,11 +532,11 @@ function profileDetails(client) {
   const incidentRows = (client.slaIncidents || []).map((item, index) => `<article class="meeting"><span class="pill ${item.severity === 'P1' ? 'negativo' : 'neutro'}">${escapeHtml(item.severity)}</span><div><strong>${escapeHtml(item.title)}</strong><small>${escapeHtml(item.status)} · ${escapeHtml(item.date)}</small></div><button type="button" class="button soft" data-action="resolve-incident" data-id="${client.id}" data-index="${index}">Marcar resolvida</button></article>`).join('') || '<p class="profile-empty">Nenhuma ocorrência registrada.</p>';
   return `<div class="profile-head">${brand}<div class="profile-client-copy"><span class="profile-eyebrow">PERFIL DO CLIENTE</span><h1>${escapeHtml(client.name)}</h1><p>${escapeHtml(client.contact || 'Contato não informado')} · ${escapeHtml(client.email || 'E-mail não informado')}</p>${location}</div><div class="profile-actions">${button('Editar dados', 'edit-client', 'outline', `data-id="${client.id}"`)}${button('Nova reunião', 'new-meeting', 'primary', `data-id="${client.id}"`)}</div></div>
     <div class="metric-grid three profile-metrics">${metricCard('Feedbacks', feedbackCount(client.name), 'Recebidos', 'dashboardMessage.svg')}${metricCard('Reuniões', meetings.length, 'Registradas', 'dashboardCalendar.svg')}${metricCard('Prioridade', clientPriority(client), 'Ocorrências abertas de SLA', 'dashboardAlert.svg')}</div>
-    <details class="profile-group" open><summary><span class="profile-section-heading"><strong>Empresa e atendimento</strong><small>Dados essenciais para entender e acompanhar esta relação.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary>
+    <details class="profile-group"${state.modal?.openSection === 'sla' ? ' open' : ''}><summary><span class="profile-section-heading"><strong>Empresa e atendimento</strong><small>Dados essenciais para entender e acompanhar esta relação.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary>
     <div class="profile-overview-grid"><section class="profile-panel"><div class="profile-panel-heading"><h3>Contatos da empresa</h3><span>${contacts.length}</span></div>${contacts.map(contact => `<p class="profile-feedback"><strong>${escapeHtml(contact.name)}</strong><span>${escapeHtml(contact.email || 'Sem e-mail')} · ${escapeHtml(contact.role || 'Contato')}</span></p>`).join('') || '<p class="profile-empty">Nenhum contato cadastrado.</p>'}<div class="profile-panel-actions">${button('Adicionar contato', 'new-contact', 'outline', `data-id="${client.id}"`)}</div><div class="profile-panel-divider"></div><h3>Serviços vinculados</h3><div class="profile-service-list">${(client.services || []).length ? (client.services || []).map(service => `<span class="chip">${escapeHtml(service)}</span>`).join('') : '<p class="profile-empty">Nenhum serviço vinculado.</p>'}</div></section>
-    <section class="profile-panel"><div class="profile-panel-heading"><h3>Qualidade e SLA</h3></div><div class="profile-info-block"><h4>Contrato de SLA</h4><p>${escapeHtml(client.slaContract || 'Contrato não cadastrado. Registre um resumo ou referência fornecida pela equipe.')}</p>${button('Editar contrato', 'edit-sla', 'outline', `data-id="${client.id}"`)}</div><div class="profile-info-block"><h4>Perfil de atendimento</h4><p>${escapeHtml(client.serviceProfile || 'Sem observações revisadas pela equipe.')}</p>${button('Editar observações', 'edit-service-profile', 'outline', `data-id="${client.id}"`)}</div></section></div></details>
+    <section class="profile-panel" id="profile-sla"><div class="profile-panel-heading"><h3>Qualidade e SLA</h3></div><div class="profile-info-block"><h4>Contrato de SLA</h4><p>${escapeHtml(client.slaContract || 'Nenhum resumo cadastrado.')}</p>${client.slaAttachment ? `<a class="meeting-attachment" href="${escapeHtml(client.slaAttachment.dataUrl)}" download="${escapeHtml(client.slaAttachment.name)}">Baixar SLA anexado: ${escapeHtml(client.slaAttachment.name)}</a>` : ''}${slaInsight(client)}<small class="sla-disclaimer">Indicativo baseado na quantidade total de ocorrências, inclusive as resolvidas; confirme o cumprimento com o contrato.</small>${button('Editar contrato', 'edit-sla', 'outline', `data-id="${client.id}"`)}</div><div class="profile-info-block"><h4>Perfil de atendimento</h4><p>${escapeHtml(client.serviceProfile || 'Sem observações revisadas pela equipe.')}</p>${button('Editar observações', 'edit-service-profile', 'outline', `data-id="${client.id}"`)}</div></section></div></details>
     <details class="profile-group"><summary><span class="profile-section-heading"><strong>Histórico recente</strong><small>Reuniões, relatos e ocorrências ligados à empresa.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary>
-    <div class="profile-record-grid"><section class="profile-panel"><div class="profile-panel-heading"><h3>Últimas reuniões</h3><span>${meetings.length}</span></div>${meetingRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Feedbacks recentes</h3><span>${linkedFeedbacks.length}</span></div>${feedbackRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Ocorrências de SLA</h3><span>${(client.slaIncidents || []).length}</span></div>${incidentRows}<div class="profile-panel-actions">${button('Registrar ocorrência', 'new-incident', 'outline', `data-id="${client.id}"`)}</div></section>${(client.invites || []).length ? `<section class="profile-panel"><div class="profile-panel-heading"><h3>Convites antigos</h3><span>${client.invites.length}</span></div>${inviteRows}</section>` : ""}</div></details>
+    <div class="profile-record-grid"><section class="profile-panel"><div class="profile-panel-heading"><h3>Últimas reuniões</h3><span>${meetings.length}</span></div>${meetingRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Feedbacks recentes</h3><span>${linkedFeedbacks.length}</span></div>${feedbackRows}</section><section class="profile-panel"><div class="profile-panel-heading"><h3>Ocorrências de SLA</h3><div class="profile-panel-heading-actions"><span>${(client.slaIncidents || []).length}</span>${button('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>', 'new-incident', 'primary work-add', `data-id="${client.id}" aria-label="Registrar ocorrência" title="Registrar ocorrência"`)}</div></div>${incidentRows}</section>${(client.invites || []).length ? `<section class="profile-panel"><div class="profile-panel-heading"><h3>Convites antigos</h3><span>${client.invites.length}</span></div>${inviteRows}</section>` : ""}</div></details>
     <details class="profile-group"><summary><span class="profile-section-heading"><strong>Trabalho da equipe</strong><small>Tarefas, oportunidades e a linha do tempo completa.</small></span><span class="profile-group-chevron" aria-hidden="true"></span></summary><div class="profile-workspace">${clientWorkspace(client)}</div></details>`;
 }
 function profile(id) {
@@ -471,6 +571,10 @@ function services() {
   return shell('/servicos', `${title('Catálogo de serviços', 'Organize os produtos e serviços da equipe.', 'GESTÃO')}<div class="services-grid"><section class="card form-card"><h2>Novo cadastro</h2><form id="service-form"><label>Nome<input name="name" required maxlength="100"></label><label>Tipo<select name="type"><option>Serviço</option><option>Produto</option></select></label><label>Descrição<textarea name="description" required rows="5" maxlength="500"></textarea></label><button class="button primary wide">Cadastrar</button></form></section><section class="card service-list"><h2>Produtos e serviços cadastrados</h2>${state.data.services.map(s => `<article><small>${escapeHtml(s.type)}</small><h3>${escapeHtml(s.name)}</h3><p>${escapeHtml(s.description)}</p></article>`).join('')}</section></div>`);
 }
 function modal() {
+  if (state.modal?.kind === 'dashboard-company-select') {
+    const choices = [...state.data.clients].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).map(client => `<button type="button" class="dashboard-company-choice" data-action="dashboard-company-select" data-id="${escapeHtml(String(client.id))}" ${String(client.id) === state.dashboardCompanyId ? 'aria-current="true"' : ''}>${icon('company')}<span>${escapeHtml(client.name)}</span></button>`).join('');
+    return `<div class="modal-backdrop" data-action="close"><section class="modal dashboard-company-modal" role="dialog" aria-modal="true" aria-labelledby="dashboard-company-title"><div class="modal-head"><div><h2 id="dashboard-company-title">Selecione uma empresa</h2><p>Escolha a empresa para analisar seus feedbacks e ocorrências de SLA.</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><div class="dashboard-company-search"><label for="dashboard-company-search">Buscar empresa</label><input id="dashboard-company-search" type="search" placeholder="Digite o nome da empresa" autocomplete="off"></div><div class="dashboard-company-list">${choices}<p class="empty dashboard-company-empty" role="status" ${choices ? 'hidden' : ''}>Nenhuma empresa encontrada.</p></div><div class="modal-actions"><button type="button" class="button outline" data-action="close">Cancelar</button></div></section></div>`;
+  }
   if (['new-task', 'edit-task', 'new-opportunity', 'edit-opportunity'].includes(state.modal?.kind)) {
     const client = state.data.clients.find(item => item.id === state.modal.id);
     if (!client) return '';
@@ -481,7 +585,7 @@ function modal() {
     const fields = isTask
       ? `<label>Tarefa<input name="title" required maxlength="140" value="${escapeHtml(item?.title || '')}"></label><label>Responsável<input name="owner" required maxlength="100" value="${escapeHtml(item?.owner || '')}"></label><label>Prazo<input name="dueDate" type="date" required value="${escapeHtml(item?.dueDate || '')}"></label><label>Situação<select name="status">${['Pendente', 'Em andamento', 'Concluída'].map(status => `<option ${item?.status === status ? 'selected' : ''}>${status}</option>`).join('')}</select></label>`
       : `<label>Oportunidade<input name="title" required maxlength="140" value="${escapeHtml(item?.title || '')}"></label><label>Valor estimado (R$)<input name="value" type="number" min="0" step="0.01" required value="${item?.value ?? ''}"></label><label>Previsão de decisão<input name="expectedDate" type="date" required value="${escapeHtml(item?.expectedDate || '')}"></label><label>Etapa<select name="stage">${opportunityStages.map(stage => `<option ${item?.stage === stage ? 'selected' : ''}>${stage}</option>`).join('')}</select></label><label>Observações<textarea name="note" rows="3" maxlength="500">${escapeHtml(item?.note || '')}</textarea></label><p class="field-note">O valor estimado não entra na receita mensal contratada do painel financeiro.</p>`;
-    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${editing ? 'Atualizar' : 'Nova'} ${isTask ? 'tarefa' : 'oportunidade'}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="client-work-form" data-client-id="${client.id}" data-kind="${state.modal.kind}" data-item-id="${item?.id || ''}"><div class="modal-body">${fields}</div><div class="modal-actions"><button class="button primary">Salvar</button></div></form></section></div>`;
+    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${editing ? 'Atualizar' : 'Nova'} ${isTask ? 'tarefa' : 'oportunidade'}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="client-work-form" data-client-id="${client.id}" data-kind="${state.modal.kind}" data-item-id="${item?.id || ''}"><div class="modal-body">${fields}</div><div class="modal-actions"><button type="button" class="button outline" data-action="close">Cancelar</button><button class="button primary">Salvar</button></div></form></section></div>`;
   }
   const extraKinds = ['new-contact', 'edit-sla', 'edit-service-profile', 'new-incident'];
   if (extraKinds.includes(state.modal?.kind)) {
@@ -489,11 +593,11 @@ function modal() {
     if (!client) return '';
     const kind = state.modal.kind;
     const fields = kind === 'new-contact' ? '<label>Nome<input name="name" required maxlength="100"></label><label>E-mail<input name="email" type="email" required></label><label>Função<input name="role" maxlength="80"></label>'
-      : kind === 'edit-sla' ? `<label>Resumo ou referência do contrato<textarea name="slaContract" rows="5" required>${escapeHtml(client.slaContract || '')}</textarea></label><p class="field-note">Inclua apenas informações verificadas pela equipe.</p>`
+      : kind === 'edit-sla' ? `<label>Resumo ou referência do contrato<textarea name="slaContract" rows="5">${escapeHtml(client.slaContract || '')}</textarea></label><label>Anexar SLA (PDF, DOCX ou TXT, até 2 MB)<input name="slaAttachment" type="file" accept=".pdf,.docx,.txt"></label>${client.slaAttachment ? `<p class="section-note">Anexo atual: ${escapeHtml(client.slaAttachment.name)}</p><label><input type="checkbox" name="removeSlaAttachment" value="yes"> Remover anexo</label>` : ''}<p class="field-note">O arquivo e o resumo são armazenados neste navegador.</p>`
       : kind === 'edit-service-profile' ? `<label>Observações revisadas pela equipe<textarea name="serviceProfile" rows="5" required>${escapeHtml(client.serviceProfile || '')}</textarea></label>`
       : '<label>Ocorrência<input name="title" required maxlength="140"></label><label>Severidade<select name="severity"><option>P1</option><option>P2</option><option>P3</option><option>P4</option></select></label><label>Situação<select name="status"><option>Em triagem</option><option>Em andamento</option><option>Resolvida</option></select></label><p class="field-note">P1: indisponibilidade crítica; P2: impacto alto; P3: impacto moderado; P4: impacto baixo. Classificação demonstrativa, revisada pela equipe.</p>';
     const headings = { 'new-contact': 'Adicionar contato', 'edit-sla': 'Contrato de SLA', 'edit-service-profile': 'Perfil de atendimento', 'new-incident': 'Registrar ocorrência de SLA' };
-    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${headings[kind]}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="client-extra-form" data-client-id="${client.id}" data-kind="${kind}"><div class="modal-body">${fields}</div><div class="modal-actions"><button class="button primary">Salvar</button></div></form></section></div>`;
+    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${headings[kind]}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="client-extra-form" data-client-id="${client.id}" data-kind="${kind}"><div class="modal-body">${fields}</div><div class="modal-actions"><button type="button" class="button outline" data-action="close">Cancelar</button><button class="button primary">Salvar</button></div></form></section></div>`;
   }
   if (state.modal.kind === 'profile') {
     const client = state.data.clients.find(item => item.id === state.modal.id);
@@ -507,12 +611,12 @@ function modal() {
     const meeting = editing ? (client.meetings || []).find((item, index) => (item.id ?? index) === state.modal.itemId) : null;
     if (editing && !meeting) return '';
     const invitees = meeting?.invitees?.map(item => item.email).join(', ') || (editing ? '' : client.email || '');
-    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${editing ? 'Editar reunião' : 'Nova reunião'}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="meeting-form" data-client-id="${client.id}" data-meeting-id="${meeting?.id ?? state.modal.itemId ?? ''}"><div class="modal-body meeting-form-section"><div class="meeting-form-fields"><label>Título<input name="title" required maxlength="120" value="${escapeHtml(meeting?.title || '')}" placeholder="Ex.: Revisão mensal"></label><label>Data<input name="date" type="date" required value="${dateKey(meeting?.date) || new Date().toISOString().slice(0, 10)}"></label><label class="meeting-field-wide">Convidados (e-mails separados por vírgula)<textarea name="invitees" rows="2" required placeholder="nome@empresa.com, equipe@empresa.com">${escapeHtml(invitees)}</textarea></label><label class="meeting-field-wide">Texto do convite<textarea name="invitationText" rows="3" required placeholder="Informe o objetivo e os assuntos da reunião">${escapeHtml(meeting?.invitationText || '')}</textarea></label><label class="meeting-field-wide">Ata da reunião<textarea name="minutes" rows="5" placeholder="Registre pauta, decisões, responsáveis e próximos passos">${escapeHtml(meeting?.minutes || meeting?.notes || '')}</textarea></label><label class="meeting-field-wide">Anexar ata (PDF, DOCX ou TXT, até 2 MB)<input name="attachment" type="file" accept=".pdf,.docx,.txt"></label>${meeting?.attachment ? `<p class="section-note">Anexo atual: ${escapeHtml(meeting.attachment.name)} <label><input name="removeAttachment" type="checkbox" value="yes"> Remover anexo</label></p>` : ''}<p class="section-note meeting-field-wide">O convite fica registrado para envio pela equipe. As respostas são atualizadas manualmente no histórico.</p></div></div><div class="modal-actions"><button class="button primary">Salvar reunião</button></div></form></section></div>`;
+    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>${editing ? 'Editar reunião' : 'Nova reunião'}</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">×</button></div><form id="meeting-form" data-client-id="${client.id}" data-meeting-id="${meeting?.id ?? state.modal.itemId ?? ''}"><div class="modal-body meeting-form-section"><div class="meeting-form-fields"><label>Título<input name="title" required maxlength="120" value="${escapeHtml(meeting?.title || '')}" placeholder="Ex.: Revisão mensal"></label><label>Data<input name="date" type="date" required value="${dateKey(meeting?.date) || new Date().toISOString().slice(0, 10)}"></label><label class="meeting-field-wide">Convidados (e-mails separados por vírgula)<textarea name="invitees" rows="2" required placeholder="nome@empresa.com, equipe@empresa.com">${escapeHtml(invitees)}</textarea></label><label class="meeting-field-wide">Texto do convite<textarea name="invitationText" rows="3" required placeholder="Informe o objetivo e os assuntos da reunião">${escapeHtml(meeting?.invitationText || '')}</textarea></label><label class="meeting-field-wide">Ata da reunião<textarea name="minutes" rows="5" placeholder="Registre pauta, decisões, responsáveis e próximos passos">${escapeHtml(meeting?.minutes || meeting?.notes || '')}</textarea></label><label class="meeting-field-wide">Anexar ata (PDF, DOCX ou TXT, até 2 MB)<input name="attachment" type="file" accept=".pdf,.docx,.txt"></label>${meeting?.attachment ? `<p class="section-note">Anexo atual: ${escapeHtml(meeting.attachment.name)} <label><input name="removeAttachment" type="checkbox" value="yes"> Remover anexo</label></p>` : ''}<p class="section-note meeting-field-wide">O convite fica registrado para envio pela equipe. As respostas são atualizadas manualmente no histórico.</p></div></div><div class="modal-actions"><button type="button" class="button outline" data-action="close">Cancelar</button><button class="button primary">Salvar reunião</button></div></form></section></div>`;
   }
   if (state.modal.kind === 'edit-client') {
     const client = state.data.clients.find(item => item.id === state.modal.id);
     if (!client) return '';
-    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>Editar dados do cliente</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">&times;</button></div><form id="client-edit-form" data-client-id="${client.id}"><div class="modal-body"><div class="client-edit-layout"><section class="client-edit-section"><h3>Dados da empresa</h3><div class="client-edit-fields"><label class="edit-field-wide">Nome da empresa<input name="name" required value="${escapeHtml(client.name)}"></label><label>Contato<input name="contact" value="${escapeHtml(client.contact || '')}"></label><label>E-mail<input name="email" type="email" value="${escapeHtml(client.email || '')}"></label><label>Receita mensal informada (R$)<input name="monthlyRevenue" type="number" min="0" step="0.01" value="${Number(client.monthlyRevenue || 0)}"></label></div></section><section class="client-edit-section"><h3>Serviços vinculados</h3><div class="client-edit-fields"><label class="edit-field-wide">Serviços vinculados<input name="services" value="${escapeHtml((client.services || []).join(', '))}" placeholder="Separe os serviços por vírgula"></label><p class="section-note">Separe vários serviços com vírgula.</p></div></section><section class="client-edit-section client-edit-location"><h3>Localização</h3><p class="section-note">Consulte o CEP para preencher cidade e estado.</p><div class="cep-lookup"><label>CEP<input id="client-cep" name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" value="${escapeHtml(client.address?.cep || '')}" placeholder="00000-000"></label><button type="button" class="button soft" data-action="lookup-cep">Consultar CEP</button></div><small id="cep-status" class="cep-status" aria-live="polite"></small><div class="location-fields"><label>Município<input id="client-city" name="city" value="${escapeHtml(client.address?.city || '')}" readonly></label><label>Estado (UF)<input id="client-state-code" name="stateCode" value="${escapeHtml(client.address?.stateCode || '')}" readonly></label></div></section></div></div><div class="modal-actions"><button class="button primary">Salvar dados</button></div></form></section></div>`;
+    return `<div class="modal-backdrop" data-action="close"><section class="modal profile-form-modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h2>Editar dados do cliente</h2><p>${escapeHtml(client.name)}</p></div><button type="button" class="close" data-action="close" aria-label="Fechar">&times;</button></div><form id="client-edit-form" data-client-id="${client.id}"><div class="modal-body"><div class="client-edit-layout"><section class="client-edit-section"><h3>Dados da empresa</h3><div class="client-edit-fields"><label class="edit-field-wide">Nome da empresa<input name="name" required value="${escapeHtml(client.name)}"></label><label>Contato<input name="contact" value="${escapeHtml(client.contact || '')}"></label><label>E-mail<input name="email" type="email" value="${escapeHtml(client.email || '')}"></label><label>Receita mensal informada (R$)<input name="monthlyRevenue" type="number" min="0" step="0.01" value="${Number(client.monthlyRevenue || 0)}"></label></div></section><section class="client-edit-section"><h3>Serviços vinculados</h3><div class="client-edit-fields"><label class="edit-field-wide">Serviços vinculados<input name="services" value="${escapeHtml((client.services || []).join(', '))}" placeholder="Separe os serviços por vírgula"></label><p class="section-note">Separe vários serviços com vírgula.</p></div></section><section class="client-edit-section client-edit-location"><h3>Localização</h3><p class="section-note">Consulte o CEP para preencher cidade e estado.</p><div class="cep-lookup"><label>CEP<input id="client-cep" name="cep" inputmode="numeric" autocomplete="postal-code" maxlength="9" value="${escapeHtml(client.address?.cep || '')}" placeholder="00000-000"></label><button type="button" class="button soft" data-action="lookup-cep">Consultar CEP</button></div><small id="cep-status" class="cep-status" aria-live="polite"></small><div class="location-fields"><label>Município<input id="client-city" name="city" value="${escapeHtml(client.address?.city || '')}" readonly></label><label>Estado (UF)<input id="client-state-code" name="stateCode" value="${escapeHtml(client.address?.stateCode || '')}" readonly></label></div></section></div></div><div class="modal-actions"><button type="button" class="button outline" data-action="close">Cancelar</button><button class="button primary">Salvar dados</button></div></form></section></div>`;
   }
   if (state.modal.kind === 'repair') {
     const item = repairCandidates().find(candidate => candidate.theme === state.modal.id);
@@ -535,16 +639,168 @@ function render() {
   app.innerHTML = ({ '/': state.loggedIn ? overview : publicOverview, '/login': login, '/dashboard': dashboard, '/feedbacks': feedbacks, '/clientes': clients, '/tarefas': tasksPage, '/oportunidades': opportunitiesPage, '/triagem': triage, '/acoes': actionsPage, '/servicos': services })[current]?.() || (current.startsWith('/clientes/') ? profile(current.split('/')[2]) : shell(current, title('Página não encontrada', 'Escolha uma opção na navegação.')));
 }
 function announce(message) { state.toast = message; render(); setTimeout(() => { state.toast = ''; render(); }, 3500); }
+const profileGroupAnimations = new WeakMap();
+function animateProfileGroup(summary) {
+  const group = summary.parentElement;
+  const previous = profileGroupAnimations.get(group);
+  const opening = previous ? !previous.opening : !group.open;
+  const startHeight = group.getBoundingClientRect().height;
+  previous?.animation.cancel();
+  group.open = true;
+  group.style.overflow = 'hidden';
+  const endHeight = opening ? group.scrollHeight : summary.offsetHeight;
+  const animation = group.animate([{ height: `${startHeight}px` }, { height: `${endHeight}px` }], { duration: 260, easing: 'ease-in-out' });
+  profileGroupAnimations.set(group, { animation, opening });
+  animation.onfinish = () => {
+    group.open = opening;
+    group.style.overflow = '';
+    profileGroupAnimations.delete(group);
+  };
+}
+function closeSettingsMenu(onClosed) {
+  if (settingsExitTimer) clearTimeout(settingsExitTimer);
+  const menu = document.querySelector('.settings-menu');
+  const trigger = document.querySelector('.settings-trigger');
+  if (!menu || !trigger) { state.settingsOpen = false; if (onClosed) onClosed(); else render(); return; }
+  state.settingsOpen = false;
+  menu.classList.add('is-closing');
+  trigger.setAttribute('aria-expanded', 'false');
+  trigger.classList.add('settings-closing');
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  settingsExitTimer = setTimeout(() => {
+    settingsExitTimer = null;
+    menu.hidden = true;
+    menu.classList.remove('is-closing');
+    document.querySelector('.manager-header')?.classList.remove('settings-open');
+    if (onClosed) onClosed();
+  }, reduced ? 0 : 150);
+}
+function closeDashboardMenu(onClosed) {
+  if (dashboardExitTimer) clearTimeout(dashboardExitTimer);
+  const menu = document.querySelector('.dashboard-nav-menu');
+  const nav = document.querySelector('.dashboard-nav');
+  if (!menu || !nav) { state.dashboardMenuOpen = false; if (onClosed) onClosed(); else render(); return; }
+  dashboardSelectionClosing = Boolean(onClosed);
+  menu.classList.add('is-closing');
+  nav.querySelector('.dashboard-nav-toggle')?.setAttribute('aria-expanded', 'false');
+  const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  dashboardExitTimer = setTimeout(() => {
+    dashboardExitTimer = null;
+    state.dashboardMenuOpen = false;
+    menu.hidden = true;
+    menu.classList.remove('is-closing');
+    nav.classList.remove('is-open');
+    document.querySelector('.manager-header')?.classList.remove('dashboard-menu-open');
+    dashboardSelectionClosing = false;
+    if (onClosed) onClosed();
+  }, reduced ? 0 : 150);
+}
 document.addEventListener('click', async event => {
+  const profileSummary = event.target.closest?.('details.profile-group > summary');
+  const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (profileSummary && !reduceMotion && typeof profileSummary.parentElement.animate === 'function') {
+    event.preventDefault();
+    animateProfileGroup(profileSummary);
+    return;
+  }
+  if (dashboardHoverTimer) { clearTimeout(dashboardHoverTimer); dashboardHoverTimer = null; }
+  if (dashboardCloseTimer) { clearTimeout(dashboardCloseTimer); dashboardCloseTimer = null; }
   const link = event.target.closest('[data-link]');
-  if (link) { event.preventDefault(); go(link.getAttribute('href')); return; }
+  if (link) {
+    event.preventDefault();
+    const destination = link.getAttribute('href');
+    if (link.matches?.('.public-copy .button[href="/login"]')) {
+      if (link.classList.contains('is-entering')) return;
+      const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!reduced) {
+        link.classList.add('is-entering');
+        setTimeout(() => go(destination), 380);
+        return;
+      }
+    }
+    if (destination !== '/dashboard') state.dashboardMenuOpen = false;
+    go(destination); return;
+  }
+  if (state.dashboardMenuOpen && !event.target.closest('.dashboard-nav')) closeDashboardMenu();
+  if (state.settingsOpen && !event.target.closest('.public-settings')) closeSettingsMenu();
   const control = event.target.closest('[data-action]');
   if (!control) return;
   const action = control.dataset.action;
-  if (action === 'toggle-theme') { state.theme = state.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('avaliaplay-theme', state.theme); render(); return; }
+  if (action === 'toggle-login-password') {
+    const input = document.querySelector('#login-password');
+    if (!input) return;
+    const visible = input.type === 'password';
+    input.type = visible ? 'text' : 'password';
+    const label = visible ? 'Ocultar senha' : 'Mostrar senha';
+    control.setAttribute('aria-label', label);
+    control.setAttribute('title', label);
+    control.setAttribute('aria-pressed', String(visible));
+    return;
+  }
+  if (action === 'dashboard-company-open') { state.modal = { kind: 'dashboard-company-select' }; render(); document.querySelector('#dashboard-company-search')?.focus(); return; }
+  if (action === 'dashboard-company-select') {
+    const client = state.data.clients.find(item => String(item.id) === control.dataset.id);
+    if (!client) return;
+    const changed = !state.dashboardCompanyId;
+    state.dashboardCompanyId = String(client.id); state.dashboardDay = null; state.modal = null;
+    dashboardModeAnimating = changed; render(); dashboardModeAnimating = false;
+    document.querySelector('[data-action="dashboard-company-open"]')?.focus(); return;
+  }
+  if (action === 'dashboard-company-all') {
+    const changed = Boolean(state.dashboardCompanyId);
+    state.dashboardCompanyId = ''; state.dashboardDay = null;
+    dashboardModeAnimating = changed; render(); dashboardModeAnimating = false;
+    document.querySelector('[data-action="dashboard-company-all"]')?.focus(); return;
+  }
+  if (action === 'toggle-dashboard-menu') { if (state.dashboardMenuOpen) closeDashboardMenu(); else { state.dashboardMenuOpen = true; render(); } return; }
+  if (action === 'toggle-settings') {
+    if (state.settingsOpen) closeSettingsMenu();
+    else { if (settingsExitTimer) { clearTimeout(settingsExitTimer); settingsExitTimer = null; } state.settingsOpen = true; render(); }
+    return;
+  }
+  if (action === 'toggle-financial-client') { const id = control.dataset.id; state.financialSelection = state.financialSelection.includes(id) ? state.financialSelection.filter(item => item !== id) : [...state.financialSelection, id]; render(); const nextControl = [...(document.querySelectorAll?.('[data-action="toggle-financial-client"]') || [])].find(item => item.dataset.id === id); nextControl?.focus(); return; }
+  if (action === 'toggle-nav-size') {
+    state.navExpanded = !state.navExpanded;
+    localStorage.setItem('avaliaplay-nav-expanded', String(state.navExpanded));
+    const header = document.querySelector('.manager-header');
+    if (!header) { render(); return; }
+    header.classList.toggle('nav-expanded', state.navExpanded);
+    const label = state.navExpanded ? 'Recolher navegação' : 'Expandir navegação';
+    control.setAttribute('aria-label', label);
+    control.setAttribute('title', label);
+    control.setAttribute('aria-expanded', String(state.navExpanded));
+    control.innerHTML = icon(state.navExpanded ? 'navCollapse' : 'navExpand');
+    if (state.dashboardMenuOpen) {
+      state.dashboardMenuOpen = false;
+      header.classList.remove('dashboard-menu-open');
+      header.querySelector('.dashboard-nav')?.classList.remove('is-open');
+      header.querySelector('.dashboard-nav-toggle')?.setAttribute('aria-expanded', 'false');
+      const menu = header.querySelector('.dashboard-nav-menu');
+      if (menu) menu.hidden = true;
+    }
+    return;
+  }
+  if (action === 'toggle-theme') {
+    const toggleTheme = () => { state.theme = state.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem('avaliaplay-theme', state.theme); render(); };
+    if (state.settingsOpen) {
+      const activating = state.theme !== 'dark';
+      control.classList.add(activating ? 'is-switching-on' : 'is-switching-off');
+      control.setAttribute('aria-pressed', String(activating));
+      control.disabled = true;
+      const reduced = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reduced) closeSettingsMenu(toggleTheme);
+      else setTimeout(() => closeSettingsMenu(toggleTheme), 250);
+    } else toggleTheme();
+    return;
+  }
   if (action === 'close' && event.target !== control && control.classList.contains('modal-backdrop')) return;
   if (action === 'logout') { state.loggedIn = false; sessionStorage.removeItem('avaliaplay-login'); go('/'); }
-  if (action === 'dashboard-feedbacks' || action === 'dashboard-relations' || action === 'dashboard-financial') { state.dashboardView = action.replace('dashboard-', ''); render(); }
+  if (action === 'dashboard-feedbacks' || action === 'dashboard-relations' || action === 'dashboard-financial') {
+    const view = action.replace('dashboard-', '');
+    const selectView = () => { state.dashboardView = view; if (path() !== '/dashboard') go('/dashboard'); else render(); };
+    if (state.dashboardMenuOpen) closeDashboardMenu(selectView); else selectView();
+    return;
+  }
   if (action === 'map' || action === 'table') { state.map = action === 'map'; render(); }
   if (action === 'lookup-cep') {
     const cepInput = document.querySelector('#client-cep');
@@ -565,19 +821,32 @@ document.addEventListener('click', async event => {
       if (status) status.textContent = error.message;
     }
   }
-  if (action === 'profile') { state.modal = { kind: 'profile', id: Number(control.dataset.id) }; render(); }
+  if (action === 'profile') { state.modal = { kind: 'profile', id: Number(control.dataset.id), openSection: control.dataset.openSection === 'sla' ? 'sla' : undefined }; render(); if (state.modal.openSection === 'sla') document.querySelector('#profile-sla')?.scrollIntoView?.({ block: 'center' }); }
   if (action === 'resolve-incident') { const client = state.data.clients.find(item => item.id === Number(control.dataset.id)); const incident = client?.slaIncidents?.[Number(control.dataset.index)]; if (incident) { incident.status = 'Resolvida'; save(); render(); } }
-  if (['new-task', 'edit-task', 'new-opportunity', 'edit-opportunity'].includes(action)) { state.modal = { kind: action, id: Number(control.dataset.id), itemId: Number(control.dataset.itemId) }; render(); }
-  if (['new-contact', 'edit-sla', 'edit-service-profile', 'new-incident'].includes(action)) { state.modal = { kind: action, id: Number(control.dataset.id) }; render(); }
-  if (action === 'edit-client' || action === 'new-meeting' || action === 'edit-meeting') { state.modal = { kind: action, id: Number(control.dataset.id), itemId: action === 'edit-meeting' ? Number(control.dataset.itemId) : undefined }; render(); }
+  if (['new-task', 'edit-task', 'new-opportunity', 'edit-opportunity', 'new-contact', 'edit-sla', 'edit-service-profile', 'new-incident', 'edit-client', 'new-meeting', 'edit-meeting'].includes(action)) {
+    const id = Number(control.dataset.id);
+    const returnToProfile = state.modal?.kind === 'profile' && state.modal.id === id;
+    state.modal = { kind: action, id, itemId: control.dataset.itemId === undefined ? undefined : Number(control.dataset.itemId), returnToProfile };
+    render();
+  }
   if (action === 'analyze' || action === 'action') { state.modal = { kind: action === 'analyze' ? 'repair' : 'action', id: action === 'analyze' ? control.dataset.id : Number(control.dataset.id) }; render(); }
   if (action === 'use-suggestion') {
     const proposal = repairCandidates().find(item => item.theme === state.modal?.id)?.proposal;
     const field = document.querySelector('#repair-proposal');
     if (proposal && field) field.value = proposal;
   }
-  if (action === 'close') { state.modal = null; if (path().startsWith('/clientes/')) history.replaceState(null, '', '/clientes'); render(); }
-  if (action === 'filter') { state.query = document.querySelector('#feedback-search, #triage-search')?.value || ''; state.service = document.querySelector('#service-filter')?.value || ''; state.sentiment = document.querySelector('#sentiment-filter')?.value || ''; render(); }
+  if (action === 'close') {
+    const companyModal = state.modal?.kind === 'dashboard-company-select';
+    if (state.modal?.returnToProfile) state.modal = { kind: 'profile', id: state.modal.id };
+    else { state.modal = null; if (path().startsWith('/clientes/')) history.replaceState(null, '', '/clientes'); }
+    render();
+    if (companyModal) document.querySelector('[data-action="dashboard-company-open"]')?.focus();
+  }
+  if (action === 'dashboard-select-day') { state.dashboardDay = state.dashboardDay === control.dataset.date ? null : control.dataset.date; render(); return; }
+  if (action === 'dashboard-clear-day') { state.dashboardDay = null; render(); return; }
+  if (action === 'feedback-sort' || action === 'feedback-sort-date') { const field = action === 'feedback-sort' ? 'rating' : 'date'; state.feedbackSort = state.feedbackSortBy === field && state.feedbackSort === 'descending' ? 'ascending' : 'descending'; state.feedbackSortBy = field; state.feedbackPage = 1; render(); return; }
+  if (action === 'feedback-prev' || action === 'feedback-next') { const totalPages = Math.max(1, Math.ceil(filteredFeedbacks().length / 8)); state.feedbackPage = Math.max(1, Math.min(totalPages, state.feedbackPage + (action === 'feedback-next' ? 1 : -1))); render(); return; }
+  if (action === 'filter') { state.feedbackPage = 1; state.feedbackCompany = document.querySelector('#feedback-company-filter')?.value || ''; state.query = document.querySelector('#feedback-search, #triage-search')?.value || ''; state.service = document.querySelector('#service-filter')?.value || ''; state.sentiment = document.querySelector('#sentiment-filter')?.value || ''; render(); }
   if (action === 'accept' || action === 'reject') {
     const note = document.querySelector('#decision-note').value.trim();
     if (!note) { document.querySelector('#decision-note').focus(); return; }
@@ -602,6 +871,81 @@ document.addEventListener('click', async event => {
     item.history.push({ status: item.status, note, date: new Date().toLocaleDateString('pt-BR') });
     save(); state.modal = null; announce('Acompanhamento registrado no histórico da empresa.');
   }
+});
+let conceptDrag = null;
+function moveConceptNode(node, x, y) {
+  const map = node.closest('.concept-map');
+  const bounds = map.getBoundingClientRect();
+  const width = node.offsetWidth;
+  const height = node.offsetHeight;
+  node.style.left = `${Math.max(0, Math.min(x, bounds.width - width))}px`;
+  node.style.top = `${Math.max(0, Math.min(y, bounds.height - height))}px`;
+  node.style.right = 'auto';
+  node.style.bottom = 'auto';
+  const center = item => ({ x: (item.offsetLeft + item.offsetWidth / 2) / bounds.width * 430, y: (item.offsetTop + item.offsetHeight / 2) / bounds.height * 360 });
+  const origin = center(map.querySelector('.concept-center'));
+  const lines = [...map.querySelectorAll('.concept-node:not(.concept-center)')].map(item => {
+    const target = center(item);
+    return `M${origin.x} ${origin.y} Q${(origin.x + target.x) / 2} ${origin.y} ${target.x} ${target.y}`;
+  });
+  map.querySelector('.concept-connections path').setAttribute('d', lines.join(' '));
+}
+document.addEventListener('pointerdown', event => {
+  const node = event.target.closest('.concept-node');
+  if (!node || event.button !== 0) return;
+  const map = node.closest('.concept-map');
+  const bounds = map.getBoundingClientRect();
+  const rect = node.getBoundingClientRect();
+  conceptDrag = { node, pointerId: event.pointerId, dx: event.clientX - rect.left, dy: event.clientY - rect.top };
+  node.classList.add('is-dragging');
+  node.setPointerCapture(event.pointerId);
+  moveConceptNode(node, rect.left - bounds.left, rect.top - bounds.top);
+  event.preventDefault();
+});
+document.addEventListener('pointermove', event => {
+  if (!conceptDrag || event.pointerId !== conceptDrag.pointerId) return;
+  const bounds = conceptDrag.node.closest('.concept-map').getBoundingClientRect();
+  moveConceptNode(conceptDrag.node, event.clientX - bounds.left - conceptDrag.dx, event.clientY - bounds.top - conceptDrag.dy);
+});
+function endConceptDrag(event) {
+  if (!conceptDrag || event.pointerId !== conceptDrag.pointerId) return;
+  conceptDrag.node.classList.remove('is-dragging');
+  conceptDrag = null;
+}
+document.addEventListener('pointerup', endConceptDrag);
+document.addEventListener('pointercancel', endConceptDrag);
+document.addEventListener('pointerover', event => {
+  if (event.target.closest?.('.dashboard-nav') && dashboardCloseTimer) { clearTimeout(dashboardCloseTimer); dashboardCloseTimer = null; }
+  if (event.target.closest?.('.dashboard-nav') && dashboardExitTimer && !state.navExpanded && !dashboardSelectionClosing) {
+    clearTimeout(dashboardExitTimer); dashboardExitTimer = null;
+    document.querySelector('.dashboard-nav-menu')?.classList.remove('is-closing');
+    document.querySelector('.dashboard-nav-toggle')?.setAttribute('aria-expanded', 'true');
+  }
+  if (!state.loggedIn || state.navExpanded || state.dashboardMenuOpen || !event.target.closest?.('.dashboard-nav-row')) return;
+  if (dashboardHoverTimer) clearTimeout(dashboardHoverTimer);
+  dashboardHoverTimer = setTimeout(() => { dashboardHoverTimer = null; state.dashboardMenuOpen = true; render(); }, 500);
+});
+document.addEventListener('pointerout', event => {
+  if (dashboardSelectionClosing) return;
+  const nav = event.target.closest?.('.dashboard-nav');
+  if (!nav || nav.contains(event.relatedTarget) || state.navExpanded) return;
+  if (dashboardHoverTimer) { clearTimeout(dashboardHoverTimer); dashboardHoverTimer = null; }
+  if (state.dashboardMenuOpen) {
+    if (dashboardCloseTimer) clearTimeout(dashboardCloseTimer);
+    dashboardCloseTimer = setTimeout(() => { dashboardCloseTimer = null; closeDashboardMenu(); }, 250);
+  }
+});
+document.addEventListener('keydown', event => {
+  const node = event.target.closest?.('.concept-node');
+  const offsets = { ArrowLeft: [-10, 0], ArrowRight: [10, 0], ArrowUp: [0, -10], ArrowDown: [0, 10] };
+  if (node && offsets[event.key]) {
+    event.preventDefault();
+    const [dx, dy] = offsets[event.key];
+    moveConceptNode(node, node.offsetLeft + dx, node.offsetTop + dy);
+  }
+  if (event.key === 'Escape' && state.modal?.kind === 'dashboard-company-select') { state.modal = null; render(); document.querySelector('[data-action="dashboard-company-open"]')?.focus(); return; }
+  if (event.key === 'Escape' && state.dashboardMenuOpen) { closeDashboardMenu(); return; }
+  if (event.key === 'Escape' && state.settingsOpen) { closeSettingsMenu(); }
 });
 document.addEventListener('submit', async event => {
   event.preventDefault();
@@ -628,7 +972,19 @@ document.addEventListener('submit', async event => {
     if (!client) return;
     const kind = form.dataset.kind;
     if (kind === 'new-contact') { client.contacts = clientContacts(client); client.contacts.push({ name: values.name.trim(), email: values.email.trim(), role: values.role.trim() }); }
-    if (kind === 'edit-sla') client.slaContract = values.slaContract.trim();
+    if (kind === 'edit-sla') {
+      const file = form.querySelector?.('[name="slaAttachment"]')?.files?.[0];
+      let attachment = client.slaAttachment;
+      try { if (file) attachment = await readSlaAttachment(file); }
+      catch (error) { announce(error.message); return; }
+      if (values.removeSlaAttachment === 'yes' && !file) attachment = null;
+      const previousContract = client.slaContract;
+      const previousAttachment = client.slaAttachment;
+      client.slaContract = (values.slaContract || '').trim();
+      client.slaAttachment = attachment;
+      try { save(); } catch { client.slaContract = previousContract; client.slaAttachment = previousAttachment; announce('Não foi possível salvar o SLA no navegador. Tente um arquivo menor.'); return; }
+      state.modal = { kind: 'profile', id: client.id }; render(); return;
+    }
     if (kind === 'edit-service-profile') client.serviceProfile = values.serviceProfile.trim();
     if (kind === 'new-incident') { client.slaIncidents ||= []; client.slaIncidents.push({ title: values.title.trim(), severity: values.severity, status: values.status, date: new Date().toLocaleDateString('pt-BR') }); }
     save(); state.modal = { kind: 'profile', id: client.id }; render(); return;
@@ -667,6 +1023,17 @@ document.addEventListener('submit', async event => {
   if (form.id === 'service-form') { state.data.services.unshift({ name: values.name.trim(), type: values.type, description: values.description.trim() }); save(); announce('Serviço cadastrado nesta demonstração local.'); }
 });
 document.addEventListener('input', event => {
+  if (event.target?.id === 'dashboard-company-search') {
+    const normalize = text => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('pt-BR').trim();
+    const query = normalize(event.target.value);
+    const list = document.querySelector('.dashboard-company-list');
+    if (!list) return;
+    let visible = 0;
+    list.querySelectorAll('.dashboard-company-choice').forEach(choice => { choice.hidden = !normalize(choice.textContent).includes(query); if (!choice.hidden) visible++; });
+    const empty = list.querySelector('.dashboard-company-empty');
+    if (empty) empty.hidden = visible > 0;
+    return;
+  }
   if (event.target?.id !== 'client-cep') return;
   const cityInput = document.querySelector('#client-city');
   const stateInput = document.querySelector('#client-state-code');
@@ -677,6 +1044,7 @@ document.addEventListener('input', event => {
 });
 document.addEventListener('change', event => {
   const field = event.target;
+  if (field?.id === 'dashboard-period') { const days = Number(field.value); if ([14, 21, 31].includes(days)) { state.dashboardDays = days; state.dashboardDay = null; render(); } return; }
   if (!field?.dataset?.meetingId || field.dataset.inviteeIndex === undefined) return;
   const client = state.data.clients.find(item => item.id === Number(field.dataset.clientId));
   const meeting = client?.meetings?.find((item, index) => (item.id ?? index) === Number(field.dataset.meetingId));

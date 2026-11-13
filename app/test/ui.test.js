@@ -6,7 +6,7 @@ const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, '../public/assets/app.js'), 'utf8');
 
-function createPage(route, data, loggedIn = true) {
+function createPage(route, data, loggedIn = true, timers = { setTimeout() {} }) {
   const root = { innerHTML: '' };
   const location = { pathname: route };
   const fields = {};
@@ -21,7 +21,7 @@ function createPage(route, data, loggedIn = true) {
     history: { replaceState(_state, _title, url) { location.pathname = url; }, pushState(_state, _title, url) { location.pathname = url; } },
     addEventListener() {},
     scrollTo() {},
-    setTimeout() {},
+    setTimeout: timers.setTimeout,
     FormData: class { constructor(form) { return Object.entries(form.values || {}); } },
     FileReader: class { readAsDataURL(file) { this.result = `data:${file.type};base64,VEVTVEU=`; this.onload(); } },
     Intl,
@@ -74,6 +74,57 @@ test('financeiro mantém o painel existente sem simulação de viabilidade', () 
   assert.match(page.root.innerHTML, /Receita por empresa/);
   assert.match(page.root.innerHTML, /Histórico da receita mensal/);
   assert.doesNotMatch(page.root.innerHTML, /Simular viabilidade|Ponto de equilíbrio|Payback|ROI|id="financial-form"/);
+});
+
+test('consultar feedbacks nos lembretes abre a lista de feedbacks', async () => {
+  const page = createPage('/dashboard');
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'dashboard-relations' } } : null } });
+  assert.match(page.root.innerHTML, /<a class="reminder-status reminder-link" href="\/feedbacks" data-link>Consultar<\/a>/);
+  const link = { getAttribute: () => '/feedbacks' };
+  await page.listeners.click({ preventDefault() {}, target: { closest: selector => selector === '[data-link]' ? link : null } });
+  assert.equal(page.location.pathname, '/feedbacks');
+  assert.match(page.root.innerHTML, /Pesquise e acompanhe/);
+});
+
+test('rodapé da visão pública apresenta selo e links da CTI sem aparecer na área logada', () => {
+  const visitor = createPage('/', undefined, false);
+  assert.match(visitor.root.innerHTML, /class="public-footer"/);
+  assert.match(visitor.root.innerHTML, /sustainability-seal\.png/);
+  assert.match(visitor.root.innerHTML, /https:\/\/myportal\.cti\.com\.br\//);
+  assert.match(visitor.root.innerHTML, /https:\/\/www\.cti\.com\.br\/politica-de-privacidade/);
+  assert.match(visitor.root.innerHTML, /https:\/\/www\.cti\.com\.br\/contato/);
+  assert.match(createPage('/login', undefined, false).root.innerHTML, /class="public-footer"/);
+  assert.doesNotMatch(createPage('/', undefined, true).root.innerHTML, /class="public-footer"/);
+});
+
+test('nome no gráfico de relacionamentos abre o perfil da empresa correspondente', () => {
+  const page = createPage('/dashboard');
+  const click = (action, id = '') => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id } } : null } });
+  click('dashboard-relations');
+  assert.match(page.root.innerHTML, /data-action="profile" data-id="3" aria-label="Abrir perfil de Sicredi"/);
+  click('profile', '3');
+  assert.equal(page.location.pathname, '/dashboard');
+  assert.match(page.root.innerHTML, /class="profile-scroll"/);
+  assert.match(page.root.innerHTML, /Sicredi/);
+  assert.match(page.root.innerHTML, /Juliana Costa/);
+});
+
+test('financeiro compara empresas selecionadas e volta a mostrar todas ao limpar a seleção', () => {
+  const page = createPage('/dashboard');
+  const click = (action, id = '') => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id } } : null } });
+  const lineCount = () => (page.root.innerHTML.match(/<polyline /g) || []).length;
+  click('dashboard-financial');
+  assert.equal(lineCount(), 5);
+  click('toggle-financial-client', '1');
+  assert.equal(lineCount(), 1);
+  assert.match(page.root.innerHTML, /data-id="1" aria-pressed="true"/);
+  assert.match(page.root.innerHTML, /data-id="3" aria-pressed="false"/);
+  click('toggle-financial-client', '3');
+  assert.equal(lineCount(), 2);
+  click('toggle-financial-client', '1');
+  assert.equal(lineCount(), 1);
+  click('toggle-financial-client', '3');
+  assert.equal(lineCount(), 5);
 });
 
 test('alternância de tema atualiza o controle e salva a preferência', () => {
@@ -154,8 +205,8 @@ test('dados fictícios preenchem financeiro e SLA sem sobrescrever registros exi
 
 test('cada quadro principal renderiza conteúdo e navegação local', () => {
   const pages = [
-    ['/', 'Conheça cada cliente'],
-    ['/login', 'Entrar na gestão'],
+    ['/', 'Conheça cada'],
+    ['/login', 'Entrar'],
     ['/dashboard', 'Feedbacks por dia'],
     ['/feedbacks', 'Pesquise e acompanhe'],
     ['/clientes', 'Lista de clientes'],
@@ -204,7 +255,7 @@ test('tela de feedbacks mantém somente o título externo', () => {
   assert.doesNotMatch(html, /<h2>Feedbacks<\/h2>/);
   assert.doesNotMatch(html, /class="card-heading feedback-count"/);
   assert.match(html, /<section class="card list-card feedback-list"><div class="filters">/);
-  assert.match(html, /Página 1 a 21 registros/);
+  assert.match(html, /1–8 de 21 registros/);
 });
 
 test('ver perfil abre modal com rolagem própria sobre clientes', () => {
@@ -221,7 +272,7 @@ test('ver perfil abre modal com rolagem própria sobre clientes', () => {
   assert.match(page.root.innerHTML, /class="profile-record-grid"/);
   assert.match(page.root.innerHTML, /class="profile-workspace"/);
   assert.equal((page.root.innerHTML.match(/<details class="profile-group"/g) || []).length, 3);
-  assert.equal((page.root.innerHTML.match(/<details class="profile-group" open>/g) || []).length, 1);
+  assert.equal((page.root.innerHTML.match(/<details class="profile-group" open>/g) || []).length, 0);
   assert.match(page.root.innerHTML, /Empresa e atendimento/);
   assert.match(page.root.innerHTML, /Trabalho da equipe/);
   assert.match(page.root.innerHTML, /Revisão de conectividade/);
@@ -238,7 +289,7 @@ test('visão pública não expõe dados e a visão do CRM exige entrada na gest�
   assert.equal(visitor.location.pathname, '/');
   assert.match(visitor.root.innerHTML, /Relacionamento com contexto/);
   assert.match(visitor.root.innerHTML, /href="\/login"/);
-  assert.match(visitor.root.innerHTML, /href="\/login" data-link>Login<\/a>/);
+  assert.match(visitor.root.innerHTML, /href="\/login" data-link>Acessar plataforma/);
   assert.match(visitor.root.innerHTML, /<a href="\/login" data-link >Login<\/a>/);
   assert.doesNotMatch(visitor.root.innerHTML, /AvaliaPlay · CTI/);
   assert.doesNotMatch(visitor.root.innerHTML, /Carteira em foco/);
@@ -258,7 +309,7 @@ test('visão pública não expõe dados e a visão do CRM exige entrada na gest�
 
 test('login apresenta o CRM e mantém o formulário de acesso', () => {
   const html = renderRoute('/login');
-  assert.match(html, /Gestão de relacionamento da CTI/);
+  assert.match(html, /Gestão de relacionamento da <span>CTI\.<\/span>/);
   assert.match(html, /id="login-form"/);
   assert.doesNotMatch(html, /Feedbacks claros/);
 });
@@ -368,4 +419,353 @@ test('resposta ao convite é atualizada na reunião', () => {
   const meeting = JSON.parse(page.storage.getItem('avaliaplay-data')).clients[0].meetings.at(-1);
   page.listeners.change({ target: { dataset: { clientId: '1', meetingId: String(meeting.id), inviteeIndex: '0' }, value: 'Confirmado' } });
   assert.equal(JSON.parse(page.storage.getItem('avaliaplay-data')).clients[0].meetings.at(-1).invitees[0].status, 'Confirmado');
+});
+
+
+test('mapa conceitual permite mover elementos e limita a posicao ao mapa', () => {
+  const page = createPage('/', null, false);
+  const path = { setAttribute(name, value) { this[name] = value; } };
+  const map = { getBoundingClientRect: () => ({ left: 0, top: 0, width: 430, height: 360 }), querySelector: selector => selector === '.concept-center' ? center : path, querySelectorAll: () => [node] };
+  const center = { offsetLeft: 180, offsetTop: 140, offsetWidth: 70, offsetHeight: 80 };
+  const node = { offsetLeft: 20, offsetTop: 30, offsetWidth: 100, offsetHeight: 70, style: {}, closest: selector => selector === '.concept-map' ? map : node, getBoundingClientRect: () => ({ left: 20, top: 30 }), setPointerCapture() {}, classList: { add() {}, remove() {} } };
+  page.listeners.pointerdown({ target: node, button: 0, pointerId: 1, clientX: 30, clientY: 40, preventDefault() {} });
+  page.listeners.pointermove({ pointerId: 1, clientX: 900, clientY: 900 });
+  assert.equal(node.style.left, '330px');
+  assert.equal(node.style.top, '290px');
+  assert.match(path.d, /^M/);
+  page.listeners.pointerup({ pointerId: 1 });
+  page.listeners.keydown({ target: node, key: 'ArrowRight', preventDefault() {} });
+  assert.equal(node.style.left, '30px');
+});
+
+
+test('submenu do dashboard abre e permite escolher uma visualizacao a partir de outra pagina', () => {
+  const page = createPage('/clientes');
+  const click = action => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action } } : null } });
+  assert.match(page.root.innerHTML, /id="dashboard-nav-menu" hidden/);
+  click('toggle-dashboard-menu');
+  assert.match(page.root.innerHTML, /aria-label="Op\u00e7\u00f5es do dashboard" aria-expanded="true"/);
+  click('dashboard-financial');
+  assert.equal(page.location.pathname, '/dashboard');
+  assert.match(page.root.innerHTML, /Receita por empresa/);
+  assert.doesNotMatch(page.root.innerHTML, /class="dashboard-switch"/);
+});
+
+
+test('a barra lateral muda de tamanho sem substituir o cabecalho', () => {
+  const page = createPage('/dashboard');
+  let expanded = false;
+  const header = { classList: { toggle(name, value) { if (name === 'nav-expanded') expanded = value; } } };
+  page.fields['.manager-header'] = header;
+  const attributes = {};
+  const control = { dataset: { action: 'toggle-nav-size' }, setAttribute(name, value) { attributes[name] = value; } };
+  const before = page.root.innerHTML;
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? control : null } });
+  assert.equal(expanded, true);
+  assert.equal(attributes['aria-expanded'], 'true');
+  assert.equal(page.root.innerHTML, before);
+  assert.equal(page.storage.getItem('avaliaplay-nav-expanded'), 'true');
+});
+
+
+test('topico do perfil anima abertura e fechamento preservando o estado nativo', () => {
+  const page = createPage('/clientes');
+  const frames = [];
+  const group = { open: false, style: {}, scrollHeight: 300, getBoundingClientRect() { return { height: this.open ? 300 : 60 }; }, animate(keyframes) { const animation = { cancel() {} }; frames.push({ keyframes, animation }); return animation; } };
+  const summary = { parentElement: group, offsetHeight: 60 };
+  const event = { target: { closest: selector => selector === 'details.profile-group > summary' ? summary : null }, preventDefault() {} };
+  page.listeners.click(event);
+  assert.equal(group.open, true);
+  assert.equal(frames[0].keyframes[1].height, '300px');
+  frames[0].animation.onfinish();
+  page.listeners.click(event);
+  assert.equal(frames[1].keyframes[1].height, '60px');
+  frames[1].animation.onfinish();
+  assert.equal(group.open, false);
+  assert.equal(group.style.overflow, '');
+});
+
+
+test('fechar formularios abertos no perfil retorna ao perfil sem salvar', () => {
+  const page = createPage('/clientes');
+  const click = (action, id = '1') => {
+    const control = { dataset: { action, id }, classList: { contains: () => false } };
+    page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? control : null } });
+  };
+  click('profile');
+  const original = page.storage.getItem('avaliaplay-data');
+  for (const action of ['new-task', 'new-opportunity', 'new-contact', 'edit-sla', 'edit-service-profile', 'new-incident', 'edit-client', 'new-meeting']) {
+    click(action);
+    assert.match(page.root.innerHTML, /profile-form-modal/, action);
+    click('close');
+    assert.match(page.root.innerHTML, /class="profile-scroll"/, action);
+  }
+  assert.equal(page.storage.getItem('avaliaplay-data'), original);
+  click('close');
+  assert.doesNotMatch(page.root.innerHTML, /class="profile-scroll"/);
+});
+
+
+test('feedbacks navegam em paginas e reiniciam ao filtrar', () => {
+  const feedbacks = Array.from({ length: 19 }, (_, index) => ({ id: index + 1, comment: `Comentario ${index + 1}`, client: 'Empresa', service: 'Internet', rating: 4, sentiment: 'Positivo', date: '01/11/2026' }));
+  const page = createPage('/feedbacks', { demoDataVersion: 6, clients: [], services: [], feedbacks });
+  const click = action => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action } } : null } });
+  assert.match(page.root.innerHTML, /1\u20138 de 19 registros/);
+  assert.match(page.root.innerHTML, /Comentario 1</);
+  assert.doesNotMatch(page.root.innerHTML, /Comentario 9</);
+  click('feedback-next');
+  assert.match(page.root.innerHTML, /9\u201316 de 19 registros/);
+  assert.match(page.root.innerHTML, /Comentario 9</);
+  click('feedback-next');
+  assert.match(page.root.innerHTML, /17\u201319 de 19 registros/);
+  assert.match(page.root.innerHTML, /data-action="feedback-next" disabled/);
+  click('feedback-prev');
+  assert.match(page.root.innerHTML, /9\u201316 de 19 registros/);
+  page.fields['#feedback-search, #triage-search'] = { value: 'Comentario 1' };
+  click('filter');
+  assert.match(page.root.innerHTML, /P\u00e1gina 1 de 2/);
+  page.fields['#feedback-search, #triage-search'] = { value: 'Nao existe' };
+  click('filter');
+  assert.match(page.root.innerHTML, /Nenhum registro/);
+  assert.match(page.root.innerHTML, /data-action="feedback-next" disabled/);
+});
+
+
+test('leitura do clima identifica predominancia, empate e ausencia de dados', () => {
+  const feedback = sentiment => ({ comment: 'Teste', client: 'Empresa', service: 'Servico', rating: 3, sentiment, date: '01/11/2026' });
+  const show = sentiments => createPage('/dashboard', { demoDataVersion: 6, clients: [], services: [], feedbacks: sentiments.map(feedback) }).root.innerHTML;
+  assert.match(show(['Negativo', 'Negativo', 'Positivo']), /Predominam coment\u00e1rios <span class="sentiment-insight-word rose">negativos<\/span>/);
+  assert.match(show(['Negativo', 'Negativo', 'Positivo']), /2 de 3 coment\u00e1rios foram classificados como negativos/);
+  assert.match(show(['Positivo', 'Negativo']), /Sentimentos empatados/);
+  assert.match(show([]), /Ainda n\u00e3o h\u00e1 sentimentos registrados/);
+});
+
+
+test('notas ordenam antes da paginacao nos dois sentidos', () => {
+  const feedbacks = Array.from({ length: 10 }, (_, i) => ({ id: i + 1, comment: `Nota-${i + 1}`, client: 'Empresa', service: 'Servico', rating: i + 1, sentiment: 'Positivo', date: '01/11/2026' }));
+  const page = createPage('/feedbacks', { demoDataVersion: 6, clients: [], services: [], feedbacks });
+  const click = action => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action } } : null } });
+  assert.match(page.root.innerHTML, /aria-sort="none"/);
+  click('feedback-sort');
+  assert.match(page.root.innerHTML, /aria-sort="descending"/);
+  assert.ok(page.root.innerHTML.indexOf('Nota-10</td>') < page.root.innerHTML.indexOf('Nota-9</td>'));
+  assert.doesNotMatch(page.root.innerHTML, /Nota-1<\/td>/);
+  click('feedback-next');
+  assert.match(page.root.innerHTML, /Nota-1<\/td>/);
+  click('feedback-sort');
+  assert.match(page.root.innerHTML, /aria-sort="ascending"/);
+  assert.match(page.root.innerHTML, /P\u00e1gina 1 de 2/);
+  assert.ok(page.root.innerHTML.indexOf('Nota-1</td>') < page.root.innerHTML.indexOf('Nota-2</td>'));
+});
+
+
+test('datas ordenam cronologicamente e substituem a ordenacao por nota', () => {
+  const feedbacks = ['05/01/2026', '28/12/2025', '14/11/2026'].map((date, i) => ({ id: i + 1, comment: `Data-${i}`, client: 'Empresa', service: 'Servico', rating: i + 1, sentiment: 'Positivo', date }));
+  const page = createPage('/feedbacks', { demoDataVersion: 6, clients: [], services: [], feedbacks });
+  const click = action => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action } } : null } });
+  click('feedback-sort');
+  click('feedback-sort-date');
+  assert.match(page.root.innerHTML, /aria-sort="descending"><button type="button" class="rating-sort descending" data-action="feedback-sort-date"/);
+  assert.ok(page.root.innerHTML.indexOf('Data-2</td>') < page.root.innerHTML.indexOf('Data-0</td>'));
+  assert.ok(page.root.innerHTML.indexOf('Data-0</td>') < page.root.innerHTML.indexOf('Data-1</td>'));
+  click('feedback-sort-date');
+  assert.match(page.root.innerHTML, /aria-sort="ascending"><button type="button" class="rating-sort ascending" data-action="feedback-sort-date"/);
+  assert.ok(page.root.innerHTML.indexOf('Data-1</td>') < page.root.innerHTML.indexOf('Data-0</td>'));
+});
+
+
+test('selecionar barra filtra indicadores do dia e permite voltar ao total', () => {
+  const today = new Date();
+  const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
+  const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const br = d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  const feedbacks = [{ id: 101, date: br(today), comment: 'Hoje', client: 'Teste', service: 'Internet', rating: 5, sentiment: 'Positivo' }, { id: 102, date: br(yesterday), comment: 'Ontem', client: 'Teste', service: 'Internet', rating: 1, sentiment: 'Negativo' }];
+  const page = createPage('/dashboard', { demoDataVersion: 6, clients: [{ id: 999, name: 'Teste' }], services: [], feedbacks });
+  const click = (action, date) => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, date } } : null } });
+  assert.match(page.root.innerHTML, /Feedbacks recebidos<\/div><strong>2<\/strong>/);
+  click('dashboard-select-day', key(today));
+  assert.match(page.root.innerHTML, /Feedbacks recebidos<\/div><strong>1<\/strong>/);
+  assert.match(page.root.innerHTML, /Nota m\u00e9dia<\/div><strong>5,0<\/strong>/);
+  assert.match(page.root.innerHTML, /Ver todos os dias/);
+  assert.match(page.root.innerHTML, new RegExp(`data-date="${key(yesterday)}"`));
+  click('dashboard-clear-day');
+  assert.match(page.root.innerHTML, /Feedbacks recebidos<\/div><strong>2<\/strong>/);
+  assert.doesNotMatch(page.root.innerHTML, /Ver todos os dias/);
+});
+
+
+test('grafico permite ampliar periodo ate 31 dias e selecionar uma data antiga', () => {
+  const today = new Date();
+  const old = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 25);
+  const key = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const br = d => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+  const makeFeedback = (d, id) => ({ id, date: br(d), comment: 'Teste', client: 'Empresa', service: 'Servico', rating: 4, sentiment: 'Positivo' });
+  const page = createPage('/dashboard', { demoDataVersion: 6, clients: [], services: [], feedbacks: [makeFeedback(today, 101), makeFeedback(old, 102)] });
+  assert.match(page.root.innerHTML, /--chart-days:14/);
+  assert.doesNotMatch(page.root.innerHTML, new RegExp(`data-date="${key(old)}"`));
+  page.listeners.change({ target: { id: 'dashboard-period', value: '31' } });
+  assert.match(page.root.innerHTML, /--chart-days:31/);
+  assert.match(page.root.innerHTML, new RegExp(`data-date="${key(old)}"`));
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'dashboard-select-day', date: key(old) } } : null } });
+  assert.match(page.root.innerHTML, /Feedbacks recebidos<\/div><strong>1<\/strong>/);
+  page.listeners.change({ target: { id: 'dashboard-period', value: '21' } });
+  assert.match(page.root.innerHTML, /--chart-days:21/);
+  assert.doesNotMatch(page.root.innerHTML, /Ver todos os dias/);
+  page.listeners.change({ target: { id: 'dashboard-period', value: '32' } });
+  assert.match(page.root.innerHTML, /--chart-days:21/);
+});
+
+
+test('acesso a plataforma navega depois da animacao e ignora cliques repetidos', () => {
+  let finish, calls = 0;
+  const page = createPage('/', undefined, false, { setTimeout(callback, delay) { calls++; assert.equal(delay, 380); finish = callback; } });
+  const classes = new Set();
+  const link = { matches: () => true, getAttribute: () => '/login', classList: { contains: value => classes.has(value), add: value => classes.add(value) } };
+  const event = { target: { closest: selector => selector === '[data-link]' ? link : null }, preventDefault() {} };
+  page.listeners.click(event);
+  page.listeners.click(event);
+  assert.equal(page.location.pathname, '/');
+  assert.equal(calls, 1);
+  assert.ok(classes.has('is-entering'));
+  finish();
+  assert.equal(page.location.pathname, '/login');
+});
+
+
+test('controle do login mostra e oculta senha sem apagar o valor', () => {
+  const page = createPage('/login', undefined, false);
+  const input = { type: 'password', value: 'teste123' };
+  page.fields['#login-password'] = input;
+  const attrs = {};
+  const control = { dataset: { action: 'toggle-login-password' }, setAttribute(name, value) { attrs[name] = value; } };
+  const event = { target: { closest: selector => selector === '[data-action]' ? control : null } };
+  page.listeners.click(event);
+  assert.equal(input.type, 'text');
+  assert.equal(attrs['aria-label'], 'Ocultar senha');
+  assert.equal(attrs['aria-pressed'], 'true');
+  page.listeners.click(event);
+  assert.equal(input.type, 'password');
+  assert.equal(input.value, 'teste123');
+  assert.equal(attrs['aria-label'], 'Mostrar senha');
+  assert.equal(attrs['aria-pressed'], 'false');
+});
+
+
+test('analise por empresa filtra feedbacks e estima SLA pelas ocorrencias', () => {
+  const clients = [{ id: 101, name: 'Empresa A', slaIncidents: [{ title: 'Falha', status: 'Resolvida' }] }, { id: 102, name: 'Empresa B', slaIncidents: [] }, { id: 103, name: 'Empresa C' }];
+  const feedbacks = [{ id: 101, client: 'Empresa A', comment: 'Primeira', service: 'Internet', rating: 2, sentiment: 'Negativo', date: '01/11/2026' }, { id: 102, client: 'Empresa B', comment: 'Segunda', service: 'Internet', rating: 5, sentiment: 'Positivo', date: '01/11/2026' }];
+  const page = createPage('/dashboard', { demoDataVersion: 6, clients, services: [], feedbacks });
+  const click = (action, id) => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id }, classList: { contains: () => false } } : null } });
+  assert.match(page.root.innerHTML, /aria-label="An\u00e1lise geral"/);
+  assert.match(page.root.innerHTML, /Análise dos feedbacks <span class="dashboard-heading-scope">geral<\/span>/);
+  click('dashboard-company-open');
+  assert.match(page.root.innerHTML, /Selecione uma empresa/);
+  click('dashboard-company-select', '101');
+  assert.match(page.root.innerHTML, /Análise dos feedbacks: <span class="dashboard-heading-scope">Empresa A<\/span>/);
+  assert.match(page.root.innerHTML, /Feedbacks recebidos<\/div><strong>1<\/strong>/);
+  assert.match(page.root.innerHTML, /Possível descumprimento/);
+  assert.match(page.root.innerHTML, /1 ocorrência registrada/);
+  click('dashboard-company-open');
+  click('dashboard-company-select', '102');
+  assert.match(page.root.innerHTML, /Indicativo de cumprimento/);
+  click('dashboard-company-open');
+  click('dashboard-company-select', '103');
+  assert.match(page.root.innerHTML, /Indicativo de cumprimento/);
+  click('dashboard-company-all');
+  assert.match(page.root.innerHTML, /Feedbacks recebidos<\/div><strong>2<\/strong>/);
+});
+
+test('sla permite anexar e baixar documento sem perder o arquivo', async () => {
+  const page = createPage('/clientes/1');
+  const click = action => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id: '1' } } : null } });
+  click('edit-sla');
+  assert.match(page.root.innerHTML, /name="slaAttachment"/);
+  const form = { id: 'client-extra-form', dataset: { clientId: '1', kind: 'edit-sla' }, values: { slaContract: 'Contrato' }, querySelector: () => ({ files: [{ name: 'sla.pdf', type: 'application/pdf', size: 100 }] }) };
+  await page.listeners.submit({ preventDefault() {}, target: form });
+  const saved = JSON.parse(page.storage.getItem('avaliaplay-data'));
+  assert.equal(saved.clients[0].slaAttachment.name, 'sla.pdf');
+  assert.match(page.root.innerHTML, /download="sla.pdf"/);
+  assert.match(page.root.innerHTML, /Possível descumprimento/);
+  click('edit-sla');
+  await page.listeners.submit({ preventDefault() {}, target: { ...form, querySelector: () => ({ files: [] }) } });
+  assert.equal(JSON.parse(page.storage.getItem('avaliaplay-data')).clients[0].slaAttachment.name, 'sla.pdf');
+});
+
+
+test('filtro de empresa da lista considera apenas feedbacks correspondentes', () => {
+  const feedbacks = ['Empresa A', 'Empresa B'].map((client, i) => ({ id: i + 101, client, comment: `Relato ${i}`, service: 'Internet', rating: 4, sentiment: 'Positivo', date: '01/11/2026' }));
+  const page = createPage('/feedbacks', { demoDataVersion: 6, clients: [], services: [], feedbacks });
+  page.fields['#feedback-company-filter'] = { value: 'Empresa B' };
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'filter' } } : null } });
+  assert.match(page.root.innerHTML, /Relato 1/);
+  assert.doesNotMatch(page.root.innerHTML, /Relato 0/);
+  assert.match(page.root.innerHTML, /1\u20131 de 1 registros/);
+});
+
+test('sla rejeita arquivo acima do limite sem alterar o contrato salvo', async () => {
+  const page = createPage('/clientes/1');
+  page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action: 'edit-sla', id: '1' } } : null } });
+  const before = page.storage.getItem('avaliaplay-data');
+  const form = { id: 'client-extra-form', dataset: { clientId: '1', kind: 'edit-sla' }, values: { slaContract: 'Novo resumo' }, querySelector: () => ({ files: [{ name: 'sla.pdf', size: 2 * 1024 * 1024 + 1 }] }) };
+  await page.listeners.submit({ preventDefault() {}, target: form });
+  assert.equal(page.storage.getItem('avaliaplay-data'), before);
+  assert.match(page.root.innerHTML, /arquivo do SLA deve ter at\u00e9 2 MB/);
+});
+
+
+test('cancelar selecao de empresa mantem a analise anterior', () => {
+  const clients = [{ id: 101, name: 'Empresa A', slaIncidents: [] }, { id: 102, name: 'Empresa B', slaIncidents: [] }];
+  const page = createPage('/dashboard', { demoDataVersion: 6, clients, services: [], feedbacks: [] });
+  const click = (action, id) => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id }, classList: { contains: () => false } } : null } });
+  click('dashboard-company-open');
+  click('dashboard-company-select', '101');
+  assert.match(page.root.innerHTML, /An\u00e1lise de SLA/);
+  click('dashboard-company-open');
+  assert.match(page.root.innerHTML, /Selecione uma empresa/);
+  click('close');
+  assert.match(page.root.innerHTML, /An\u00e1lise de SLA/);
+  assert.doesNotMatch(page.root.innerHTML, /Selecione uma empresa/);
+  assert.match(page.root.innerHTML, /aria-label="An\u00e1lise por empresa"[^>]*aria-pressed="true"/);
+});
+
+
+test('card de sla substitui ranking e abre o perfil com a secao de sla aberta', () => {
+  const client = { id: 101, name: 'Empresa A', slaIncidents: [] };
+  const page = createPage('/dashboard', { demoDataVersion: 6, clients: [client], services: [], feedbacks: [] });
+  const click = (action, id, openSection) => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action, id, openSection }, classList: { contains: () => false } } : null } });
+  assert.match(page.root.innerHTML, /Top 3 empresas mais recorrentes/);
+  click('dashboard-company-open'); click('dashboard-company-select', '101');
+  assert.match(page.root.innerHTML, /An\u00e1lise de SLA/);
+  assert.doesNotMatch(page.root.innerHTML, /Top 3 empresas mais recorrentes/);
+  assert.match(page.root.innerHTML, /data-open-section="sla"/);
+  click('profile', '101', 'sla');
+  assert.match(page.root.innerHTML, /<details class="profile-group" open><summary><span class="profile-section-heading"><strong>Empresa e atendimento/);
+  assert.match(page.root.innerHTML, /id="profile-sla"/);
+});
+
+
+test('busca de empresas filtra por nome sem diferenciar acentos e permite limpar', () => {
+  const page = createPage('/dashboard', { demoDataVersion: 6, clients: [{ id: 1, name: 'Acrilex' }, { id: 2, name: 'Tecnolab' }], services: [], feedbacks: [] });
+  const click = action => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action }, classList: { contains: () => false } } : null } });
+  click('dashboard-company-open');
+  assert.match(page.root.innerHTML, /id="dashboard-company-search"/);
+  const choices = [{ textContent: 'Acrilex', hidden: false }, { textContent: 'Tecnolab', hidden: false }];
+  const empty = { hidden: true };
+  page.fields['.dashboard-company-list'] = { querySelectorAll: () => choices, querySelector: () => empty };
+  page.listeners.input({ target: { id: 'dashboard-company-search', value: 'técno' } });
+  assert.equal(choices[0].hidden, true);
+  assert.equal(choices[1].hidden, false);
+  assert.equal(empty.hidden, true);
+  page.listeners.input({ target: { id: 'dashboard-company-search', value: 'inexistente' } });
+  assert.equal(empty.hidden, false);
+  page.listeners.input({ target: { id: 'dashboard-company-search', value: '' } });
+  assert.ok(choices.every(choice => !choice.hidden));
+  assert.equal(empty.hidden, true);
+});
+
+
+test('visao interna destaca cliente e relacao no titulo', () => {
+  const html = renderRoute('/');
+  assert.match(html, /Conhe\u00e7a cada <span>cliente\.<\/span>/);
+  assert.match(html, /Cuide de cada <span>rela\u00e7\u00e3o\.<\/span>/);
 });

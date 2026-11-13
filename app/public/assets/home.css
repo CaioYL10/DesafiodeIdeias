@@ -3,7 +3,9 @@
 .crm-hero{display:grid;grid-template-columns:minmax(0,1fr) minmax(380px,500px);gap:64px;align-items:start;padding:32px 0 30px}
 .crm-copy{padding-top:0}
 .crm-copy h1{font-size:clamp(32px,3.6vw,42px);line-height:1.13;letter-spacing:-.035em;font-weight:650;max-width:540px;margin:0 0 20px;color:#4c5055}
-.crm-copy>p{font-size:15px;line-height:1.75;max-width:510px;color:#737b80;margin-bottom:24px}
+.crm-copy h1 span{color:#69c8f6}
+.theme-light .crm-copy h1 span{color:#0878b4}
+.crm-copy>p{font-size:15px;line-height:1.75;max-width:510px;color:#737b80;margin-bottom:0}
 .crm-actions{display:flex;gap:12px;flex-wrap:wrap}
 .crm-actions .button{min-height:46px;padding:0 20px;border-radius:9px;font-size:13px}
 .crm-panel{background:#fff;border:1px solid #dce9f0;border-radius:18px;padding:24px 27px;box-shadow:0 18px 42px rgba(31,74,102,.07)}
@@ -30,8 +32,10 @@
 .crm-hero .crm-copy>p{max-width:690px}
 
 /* Acesso rápido em lista, com divisórias no lugar dos cards. */
-.crm-home .crm-hero{padding-bottom:20px}
-.crm-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin-top:0}
+.crm-home .crm-hero{align-items:center;gap:clamp(36px,5vw,84px);padding-bottom:40px}
+@media(min-width:1001px){.manager-header+main.crm-home{padding-top:56px;padding-bottom:56px}}
+@media(min-width:901px){.crm-home .crm-copy{align-self:center}}
+.crm-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:24px;margin-top:8px}
 .crm-links a{display:flex;align-items:center;gap:16px;min-height:100px;min-width:0;padding:18px 24px 18px 0;color:var(--ink)}
 .crm-links a+a{border-left:1px solid var(--line);padding-left:24px}
 .crm-link-icon{display:grid;place-items:center;flex:0 0 28px;width:28px;color:#fff}
@@ -40,6 +44,9 @@
 .crm-link-copy{display:block;min-width:0}
 .crm-links strong{display:block;font-size:16px;font-weight:650;line-height:1.3}
 .crm-links small{display:block;margin-top:6px;color:var(--body);font-size:12px;line-height:1.4}
+.crm-links strong,.crm-links small{transition:color .2s ease}
 .crm-links a:hover strong{color:var(--blue)}
+.crm-links a:hover small{color:var(--blue)}
 .crm-links a:focus-visible{outline:3px solid #73bde6;outline-offset:3px}
-@media(max-width:900px){.crm-links{grid-template-columns:1fr}.crm-links a{min-height:78px;padding:14px 0}.crm-links a+a{border-left:0;border-top:1px solid var(--line);padding-left:0}}
+@media(max-width:900px){.crm-home .crm-hero{gap:30px;padding-bottom:28px}.crm-links{grid-template-columns:1fr;column-gap:0}.crm-links a{min-height:78px;padding:14px 0}.crm-links a+a{border-left:0;border-top:1px solid var(--line);padding-left:0}}
+@media(prefers-reduced-motion:reduce){.crm-links strong,.crm-links small{transition:none}}
