@@ -1,5 +1,7 @@
 # Contexto do projeto — Desafio de Ideias (SENAI, GR1)
 
+> **Estado da aplicação:** a proposta CRM + gestão leve da qualidade permanece hipótese do grupo, não validada pela CTI. O app atual em `app/` é um protótipo local com dados demonstrativos, interface em HTML/CSS/JavaScript e servidor HTTP mínimo; não implementa autenticação real, banco compartilhado nem IA. As datas e etapas abaixo registram o contexto escolar em outubro de 2026; confira `app/` e os documentos atuais antes de assumir que representam o estado de hoje.
+
 Leia este arquivo antes de ajudar o Caio com qualquer coisa neste repositório. Ele existe para que uma sessão do Claude em **qualquer PC** retome o contexto sem precisar perguntar tudo de novo.
 
 ## O projeto

@@ -1,5 +1,7 @@
 # Aplicação da referência AvaliaPlay CTI — 22/10/2026
 
+> **Referência histórica da primeira versão do app.** As rotas, autenticação, SQLite e telas descritas abaixo não correspondem à implementação atual. O app atual é o protótipo local em `app/`; consulte o README da raiz e o código antes de usar estas notas como orientação.
+
 Referência consultada no navegador autenticado: https://www.figma.com/design/zyuYGp6uKAbtvYjrkgypDF/Untitled?node-id=0-1
 
 ## Implementado no código

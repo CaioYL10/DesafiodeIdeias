@@ -1,25 +1,26 @@
 # Desafio de Ideias — GR1 (SENAI)
 
-Repositório de trabalho do GR1, turma 2IEDS (2026). A proposta atual é um CRM de experiência do cliente com gestão leve da qualidade para a CTI. **A proposta ainda não foi validada pela empresa.** Documentos escolares, especificações e registros anteriores permanecem em `docs/` e `config/`.
+Repositório escolar do Grupo 1, turma 2IEDS (2026). A proposta atual é um CRM voltado à experiência do cliente da CTI, integrado a uma gestão leve da qualidade. **É uma hipótese do grupo, ainda não validada pela CTI.** A demanda original da Avanade e os documentos escolares anteriores estão preservados como histórico.
 
-## Protótipo local AvaliaPlay CTI
+## Aplicação atual
 
-O app em `app/` foi reconstruído a partir do [modelo do Figma](https://www.figma.com/design/cQdovwWJBVVa3t9SRsGTQ9/AvaliaPlay-CTI---Desafio-de-Ideias--c%C3%B3pia-?node-id=0-1) e adaptado para a proposta de CRM. Ele usa Node.js e HTML/CSS/JavaScript, sem dependências externas. Inclui visão geral interna, login demonstrativo, dashboard com as opções **Feedbacks** e **Relações**, consulta de feedbacks, clientes, perfil, mapa, triagem de reparação, acompanhamento de ações e serviços. O envio público de feedback foi retirado desta versão.
+`app/` contém um protótipo local AvaliaPlay CTI, baseado no Figma e adaptado para demonstrar fluxos de CRM. É servido por um servidor HTTP mínimo em Node.js, com interface HTML, CSS e JavaScript, sem dependências externas. A interface reúne visão geral, login demonstrativo, feedbacks, clientes, serviços, relações e acompanhamento de problemas e ações de qualidade. Não há envio público de feedback nesta versão.
 
 ```powershell
 cd app
 npm.cmd start
 ```
 
-Acesse `http://localhost:3000`. Sem sessão, a rota inicial mostra uma apresentação pública sem dados do CRM. Para entrar na gestão, abra o Login e informe um e-mail válido e uma senha qualquer. **Esse login é apenas visual e local; não protege dados reais.** Alterações feitas na interface ficam no `localStorage` do navegador e podem ser apagadas limpando os dados do site. A lista usa nomes de empresas exibidos no [site da CTI](https://www.cti.com.br/), sem inventar contatos, serviços contratados, reuniões ou localização para elas. Os feedbacks fictícios ficam vinculados a uma **Empresa de demonstração** separada da lista. Na triagem, uma regra local reúne pelo menos 10 feedbacks negativos de atendimento da mesma empresa; quando um motivo aparece em 60% deles, mostra uma sugestão. A equipe pode usar essa sugestão ou escrever uma proposta própria antes de decidir. **Não há IA real nesta demonstração.** Apenas propostas aceitas viram ações, cujo estado e histórico podem ser atualizados.
+Acesse `http://localhost:3000`. O login é apenas demonstrativo: basta informar um e-mail válido e uma senha não vazia; não há autenticação ou proteção real. A sessão demonstrativa fica no `sessionStorage`, e os dados e alterações ficam no `localStorage` do navegador. Os dados iniciais são fictícios, inclusive contatos, métricas financeiras, SLA e feedbacks. Empresas mostradas na lista são exemplos visuais e não indicam relação comercial confirmada com a CTI.
 
-Execute `npm.cmd test` dentro de `app/` para testar as rotas e os recursos locais.
+A triagem local reúne feedbacks negativos de atendimento com o mesmo motivo quando há pelo menos **3 relatos**; podem ser de empresas diferentes. Isso é uma regra demonstrativa no navegador, não IA nem processo validado pela CTI. O app também não tem banco de dados, integração externa, envio de mensagens ou persistência compartilhada entre usuários. **Não use dados reais ou confidenciais.**
 
-O protótipo **não substitui uma implementação de produção**: não há banco de dados, autenticação no servidor, integrações externas ou envio de comunicação. O plano funcional vigente está em [`docs/REFORMULACAO_CTI_CRM_SGQ.md`](docs/REFORMULACAO_CTI_CRM_SGQ.md).
+## Contexto e documentação
 
-## Materiais do projeto
+- [`docs/contexto/mudanca_de_escopo_cti.md`](docs/contexto/mudanca_de_escopo_cti.md): histórico da mudança Avanade → CTI e hipótese atual.
+- [`config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`](config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md): referência de escopo proposta pelo grupo, pendente de validação pela CTI.
+- [`docs/contexto/backlog_futuro_produto.md`](docs/contexto/backlog_futuro_produto.md): ideias futuras, sem compromisso de implementação.
+- [`docs/README.md`](docs/README.md): mapa dos materiais escolares, entregáveis e scripts.
+- [`config/README.md`](config/README.md): mapa das especificações e registros técnicos.
 
-- [`docs/contexto/`](docs/contexto/) — mudança de escopo e divisão de tarefas.
-- [`docs/cronograma/`](docs/cronograma/) — cronograma da turma.
-- [`docs/entregas/`](docs/entregas/) — entregáveis da CTI e histórico da Avanade.
-- [`config/`](config/) — especificações e planos.
+Os documentos em `config/superpowers/plans/` registram planos e decisões de etapas anteriores; não descrevem necessariamente a implementação atual. Veja `app/` para o comportamento presente. Os arquivos oficiais em `docs/fontes/` e os entregáveis em `docs/entregas/historico_avanade/` são preservados como referência histórica.

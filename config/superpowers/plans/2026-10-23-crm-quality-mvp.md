@@ -1,5 +1,7 @@
 # Plano de implementação: CRM e qualidade CTI
 
+> **Registro histórico — não corresponde ao app atual.** Este plano descreve uma arquitetura Express/SQLite e rotas em `app/src/` que não existem nesta versão. O protótipo presente é local, usa `app/server.js`, `app/public/` e `localStorage`, sem backend de CRM. As caixas e evidências abaixo registram o estado declarado quando o plano foi escrito; não comprovam funcionalidades atuais. Consulte a especificação para a proposta e o README da raiz para o app verificável.
+
 **Objetivo:** continuar o MVP existente com o fluxo cliente → feedback → triagem humana → problema → ação → eficácia.
 **Arquitetura:** manter Express, páginas HTML/JS e SQLite; tabelas adicionais preservam os feedbacks existentes. APIs de gestão exigem a sessão atual. Não há novas dependências.
 **Especificação:** `config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`, aprovada por Caio em 22/10.

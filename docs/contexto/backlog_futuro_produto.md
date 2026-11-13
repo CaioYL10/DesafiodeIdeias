@@ -20,4 +20,4 @@
 - Determinar se mensagens de convite permanecem simuladas na demonstração ou se haverá uma integração real autorizada.
 - Escolher um exemplo de severidade P1–P4 e definir quando uma violação de SLA abre a triagem.
 
-O plano executável atual continua em [`REFORMULACAO_CTI_CRM_SGQ.md`](../REFORMULACAO_CTI_CRM_SGQ.md). Este backlog não o altera nem autoriza a implementação dos itens.
+O escopo proposto pelo grupo está registrado em [`config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md`](../../config/superpowers/specs/2026-10-22-crm-sgq-leve-cti-design.md). O protótipo presente está em `app/` e é demonstrativo. Este backlog não altera a proposta nem autoriza a implementação dos itens.
