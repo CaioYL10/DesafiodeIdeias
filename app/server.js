@@ -8,6 +8,13 @@ const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=
 function createServer() {
   return http.createServer((request, response) => {
     const url = new URL(request.url, 'http://localhost');
+    if (url.pathname === '/assets/vendor/gsap.min.js') {
+      fs.readFile(path.join(__dirname, 'node_modules', 'gsap', 'dist', 'gsap.min.js'), (error, data) => {
+        if (error) return response.writeHead(404).end();
+        response.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' }).end(data);
+      });
+      return;
+    }
     const asset = url.pathname.startsWith('/assets/') ? url.pathname : '/index.html';
     const file = path.resolve(publicDir, '.' + asset);
     if (!file.startsWith(publicDir + path.sep)) {

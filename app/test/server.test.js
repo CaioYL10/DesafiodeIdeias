@@ -13,7 +13,7 @@ test('rotas da aplicação carregam o mesmo documento e os recursos locais', asy
       assert.match(html, /<html lang="pt-BR">/);
       assert.match(html, /rel="icon" type="image\/png" href="\/assets\/favicon-cti.png"/);
     }
-    for (const asset of ['/assets/app.js', '/assets/app.css', '/assets/dashboard.css', '/assets/layout.css', '/assets/home.css', '/assets/public.css', '/assets/repair.css', '/assets/dashboardTrend.svg', '/assets/dashboardMessage.svg', '/assets/imgImage2.png', '/assets/favicon-cti.png', '/assets/imgSaoPaulo.svg']) {
+    for (const asset of ['/assets/app.js', '/assets/motion.js', '/assets/vendor/gsap.min.js', '/assets/app.css', '/assets/dashboard.css', '/assets/layout.css', '/assets/home.css', '/assets/public.css', '/assets/repair.css', '/assets/dashboardTrend.svg', '/assets/dashboardMessage.svg', '/assets/imgImage2.png', '/assets/favicon-cti.png', '/assets/imgSaoPaulo.svg']) {
       const response = await fetch(base + asset);
       assert.equal(response.status, 200, asset);
       assert.ok((await response.arrayBuffer()).byteLength > 0, asset);

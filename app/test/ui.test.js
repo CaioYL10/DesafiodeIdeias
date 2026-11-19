@@ -278,6 +278,8 @@ test('ver perfil abre modal com rolagem própria sobre clientes', () => {
   assert.match(page.root.innerHTML, /Revisão de conectividade/);
   assert.match(page.root.innerHTML, /Internet dedicada/);
   assert.match(page.root.innerHTML, /São Paulo, SP · CEP 01001-000/);
+  assert.match(page.root.innerHTML, /class="profile-head"/);
+  assert.doesNotMatch(page.root.innerHTML, /PERFIL DO CLIENTE/);
   assert.match(page.root.innerHTML, /A conexão se manteve estável/);
   assert.doesNotMatch(page.root.innerHTML, /Revisão de Contrato|Kickoff Projeto Alpha/);
   click('close');
@@ -768,4 +770,28 @@ test('visao interna destaca cliente e relacao no titulo', () => {
   const html = renderRoute('/');
   assert.match(html, /Conhe\u00e7a cada <span>cliente\.<\/span>/);
   assert.match(html, /Cuide de cada <span>rela\u00e7\u00e3o\.<\/span>/);
+});
+
+test('dados de demonstracao existentes recebem uma triagem pendente uma unica vez', () => {
+  const data = { demoDataVersion: 6, clients: [{ id: 1, name: 'Formtap' }], services: [], feedbacks: [], actions: [], repairReviews: [{ key: 'Demora no retorno:1,2,3' }] };
+  const page = createPage('/triagem', data);
+  assert.match(page.root.innerHTML, /Falta de contexto/);
+  const saved = JSON.parse(page.storage.getItem('avaliaplay-data'));
+  assert.equal(saved.repairReviews.length, 1);
+  assert.equal(saved.feedbacks.length, 3);
+  const reopened = createPage('/triagem', saved);
+  assert.equal(JSON.parse(reopened.storage.getItem('avaliaplay-data')).feedbacks.length, 3);
+});
+
+test('limpar filtros restaura todos os feedbacks', () => {
+  const feedbacks = ['Empresa A', 'Empresa B'].map((client, i) => ({ id: 101 + i, client, comment: `Relato ${i}`, service: 'Internet', rating: 4, sentiment: 'Positivo', date: '01/11/2026' }));
+  const page = createPage('/feedbacks', { demoDataVersion: 6, clients: [], services: [], feedbacks });
+  const click = action => page.listeners.click({ target: { closest: selector => selector === '[data-action]' ? { dataset: { action } } : null } });
+  page.fields['#feedback-company-filter'] = { value: 'Empresa B' };
+  click('filter');
+  assert.doesNotMatch(page.root.innerHTML, /Relato 0/);
+  click('clear-feedback-filters');
+  assert.match(page.root.innerHTML, /Relato 0/);
+  assert.match(page.root.innerHTML, /Relato 1/);
+  assert.match(page.root.innerHTML, /value=""/);
 });

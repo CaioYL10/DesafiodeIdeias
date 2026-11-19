@@ -37,3 +37,5 @@
   .repair-row button { margin-left: 0; }
   .repair-feedbacks li { flex-direction: column; gap: 3px; }
 }
+
+.action-modal .modal-body label + label { margin-top: 14px; }

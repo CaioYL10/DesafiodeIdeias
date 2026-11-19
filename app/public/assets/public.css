@@ -1,5 +1,5 @@
 .public-home {
-  min-height: calc(100vh - 90px);
+  min-height: 0;
   background: transparent;
 }
 
@@ -40,10 +40,14 @@
   .public-header nav a::after { transition: none; animation: none !important; }
 }
 
+@media (min-width: 851px) {
+  .public-home { display: flex; align-items: center; }
+}
+
 .public-overview {
   width: min(1100px, calc(100% - clamp(48px, 12vw, 192px)));
   margin: 0 auto;
-  padding: 64px 0 80px;
+  padding: 64px 0 72px;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(340px, 430px);
   gap: clamp(40px, 8vw, 100px);
